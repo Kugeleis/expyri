@@ -22,7 +22,6 @@ const state = {
 const els = {
     sessionInfo: document.getElementById('session-info'),
     fileUpload: document.getElementById('file-upload'),
-    btnUpload: document.getElementById('btn-upload'),
     uploadStatus: document.getElementById('upload-status'),
     datasetDetails: document.getElementById('dataset-details'),
     detailDesc: document.getElementById('detail-desc'),
@@ -254,17 +253,14 @@ function initEventListeners() {
         });
     }
 
-    // Step 1: Upload Data
-    els.btnUpload.addEventListener('click', async () => {
+    // Step 1: Upload Data automatically when file is selected
+    els.fileUpload.addEventListener('change', async () => {
         const file = els.fileUpload.files[0];
-        if (!file) {
-            showError('Please select a file to upload.');
-            return;
-        }
+        if (!file) return;
 
         els.uploadStatus.textContent = 'Uploading...';
         els.uploadStatus.style.color = 'var(--text-secondary)';
-        els.btnUpload.disabled = true;
+        els.fileUpload.disabled = true;
 
         const formData = new FormData();
         formData.append('file', file);
@@ -314,7 +310,7 @@ function initEventListeners() {
             els.datasetDetails.classList.add('hidden');
             els.btnStep1Next.disabled = true;
         } finally {
-            els.btnUpload.disabled = false;
+            els.fileUpload.disabled = false;
         }
     });
     
