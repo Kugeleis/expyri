@@ -87,7 +87,7 @@ def test_list_all_returns_copy() -> None:
         pass
 
     copy = reg.list_all()
-    copy["injected"] = _DummyPlugin()  # type: ignore[assignment]
+    copy["injected"] = _DummyPlugin()
     assert "injected" not in reg.list_all()
 
 

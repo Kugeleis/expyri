@@ -12,6 +12,6 @@ from app.main import create_app
 async def client() -> AsyncIterator[AsyncClient]:
     """Provide an async HTTP test client for the FastAPI app."""
     application = create_app()
-    transport = ASGITransport(app=application)  # type: ignore[arg-type]
+    transport = ASGITransport(app=application)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         yield ac

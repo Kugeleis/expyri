@@ -107,9 +107,9 @@ class Registry[T]:
         """
         result: dict[str, T] = {}
         for name, plugin in self._plugins.items():
-            if isinstance(plugin, Applicable):
-                if plugin.is_applicable(**properties):
-                    result[name] = plugin
-            else:
-                result[name] = plugin
+            if isinstance(plugin, Applicable) and not plugin.is_applicable(
+                **properties
+            ):
+                continue
+            result[name] = plugin
         return result
