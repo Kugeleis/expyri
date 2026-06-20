@@ -303,7 +303,7 @@ function initEventListeners() {
             const payload = {
                 dataset_id: state.selectedDatasetId,
                 group_column: els.groupColSelect.value,
-                value_column: els.valueColSelect.value
+                selected_value_columns: []
             };
             
             const response = await fetch(`/wizard/sessions/${state.sessionId}/dataset`, {

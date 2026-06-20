@@ -122,7 +122,7 @@ def test_e2e_wizard_flow(e2e_server: str) -> None:
             json={
                 "dataset_id": "uploaded_data",
                 "group_column": "group",
-                "value_column": "value",
+                "selected_value_columns": [],
             },
         )
         if resp.status_code != 200:

@@ -67,7 +67,7 @@ def test_full_wizard_flow_success(client: TestClient) -> None:
         json={
             "dataset_id": "uploaded_normal_data",
             "group_column": "group",
-            "value_column": "value",
+            "selected_value_columns": [],
         },
     )
     assert resp.status_code == 200
@@ -178,7 +178,7 @@ def test_wizard_negative_step_guards(client: TestClient) -> None:
         json={
             "dataset_id": "normal_data",
             "group_column": "group",
-            "value_column": "value",
+            "selected_value_columns": [],
         },
     )
 
@@ -210,7 +210,7 @@ def test_wizard_negative_invalid_payloads(client: TestClient) -> None:
         json={
             "dataset_id": "normal_data",
             "group_column": "missing_group",
-            "value_column": "value",
+            "selected_value_columns": [],
         },
     )
     assert resp.status_code == 400
@@ -222,7 +222,7 @@ def test_wizard_negative_invalid_payloads(client: TestClient) -> None:
         json={
             "dataset_id": "normal_data",
             "group_column": "group",
-            "value_column": "value",
+            "selected_value_columns": [],
         },
     )
 
@@ -263,7 +263,7 @@ def test_wizard_back_navigation(client: TestClient) -> None:
         json={
             "dataset_id": "backtest",
             "group_column": "group",
-            "value_column": "value",
+            "selected_value_columns": [],
         },
     )
     assert resp.status_code == 200

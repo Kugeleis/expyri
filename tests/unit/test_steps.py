@@ -139,7 +139,7 @@ def test_reset_to_filters_clears_downstream() -> None:
     session = WizardSession(
         dataset_id="ds1",
         group_column="g",
-        value_column="v",
+        selected_value_columns=["v"],
         filters_config=[{"name": "numeric_range", "params": {"column": "v", "min": 1}}],
         selected_method="ttest",
         stat_result={"p_value": 0.05},
@@ -153,7 +153,7 @@ def test_reset_to_filters_clears_downstream() -> None:
     # Fields for filters step itself and dataset should be preserved
     assert session.dataset_id == "ds1"
     assert session.group_column == "g"
-    assert session.value_column == "v"
+    assert session.selected_value_columns == ["v"]
     expected_filters = [{"name": "numeric_range", "params": {"column": "v", "min": 1}}]
     assert session.filters_config == expected_filters
 
@@ -171,7 +171,7 @@ def test_reset_to_dataset_selection_clears_all_downstream() -> None:
     session = WizardSession(
         dataset_id="ds1",
         group_column="g",
-        value_column="v",
+        selected_value_columns=["v"],
         filters_config=[{"name": "f"}],
         selected_method="ttest",
         stat_result={"p_value": 0.05},
@@ -193,7 +193,7 @@ def test_reset_to_stat_method_preserves_filters() -> None:
     session = WizardSession(
         dataset_id="ds1",
         group_column="g",
-        value_column="v",
+        selected_value_columns=["v"],
         filters_config=[{"name": "f"}],
         selected_method="ttest",
         stat_result={"p_value": 0.05},

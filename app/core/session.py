@@ -20,12 +20,13 @@ class WizardSession(BaseModel):
     current_step: str = "dataset_selection"
     dataset_id: str | None = None
     group_column: str | None = None
-    value_column: str | None = None
+    selected_value_columns: list[str] = Field(default_factory=list)
     filters_config: list[dict[str, Any]] = Field(default_factory=list)
     selected_method: str | None = None
     stat_result: dict[str, Any] | None = None
     selected_plots: list[str] = Field(default_factory=list)
     plot_results: list[dict[str, Any]] = Field(default_factory=list)
+    top_n_columns: int = 1
     export_format: str | None = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))

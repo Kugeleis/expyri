@@ -191,7 +191,7 @@ def test_custom_plugins_in_wizard_flow(client: TestClient) -> None:
         json={
             "dataset_id": "dummy_data",
             "group_column": "group",
-            "value_column": "value",
+            "selected_value_columns": [],
         },
     )
     assert resp.status_code == 200

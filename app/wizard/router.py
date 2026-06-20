@@ -5,7 +5,9 @@ from __future__ import annotations
 import os
 import shutil
 from pathlib import Path
+from typing import Any
 
+import pandas as pd
 from fastapi import APIRouter, Depends, File, HTTPException, Response, UploadFile
 
 from app.core.session import (
@@ -24,6 +26,7 @@ from app.plots.base import PlotResult, plot_registry
 from app.stats.base import (
     StatResult,
     compute_data_properties,
+    compute_data_properties_for_columns,
     stat_registry,
 )
 from app.wizard.schemas import (
@@ -50,6 +53,67 @@ def get_dataset_repository() -> DatasetRepository:
     """Dependency provider for the DatasetRepository."""
     data_dir = Path(os.getenv("EXPYT_DATA_DIR", "data"))
     return MultiFormatDatasetRepository(data_dir)
+
+
+def _resolve_selected_value_columns(
+    df: pd.DataFrame, group_column: str, selected_value_columns: list[str]
+) -> list[str]:
+    """Resolve and validate the columns to analyze for the dataset."""
+
+    if selected_value_columns:
+        missing = [col for col in selected_value_columns if col not in df.columns]
+        if missing:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Selected value columns not found in dataset: {missing}",
+            )
+        if group_column in selected_value_columns:
+            raise HTTPException(
+                status_code=400,
+                detail="Group column must not appear in selected value columns.",
+            )
+        non_numeric = [
+            col
+            for col in selected_value_columns
+            if not pd.api.types.is_numeric_dtype(df[col])
+        ]
+        if non_numeric:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "Selected value columns must be numeric. "
+                    f"Non-numeric columns: {non_numeric}"
+                ),
+            )
+        return selected_value_columns
+
+    numeric_columns = [
+        col
+        for col in df.select_dtypes(include=["number"]).columns
+        if col != group_column
+    ]
+    if not numeric_columns:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Dataset contains no numeric value columns apart from the group column. "  # noqa: E501
+                "Please choose a different group column or provide explicit numeric value columns."  # noqa: E501
+            ),
+        )
+    return numeric_columns
+
+
+def _intersect_applicable_plugins(
+    registry: Any, properties_map: dict[str, Any]
+) -> dict[str, Any]:
+    """Return plugins applicable across every value column."""
+    common: set[str] | None = None
+    for props in properties_map.values():
+        plugin_names = set(registry.get_applicable(**props.model_dump()).keys())
+        common = plugin_names if common is None else common & plugin_names
+        if not common:
+            break
+    return {name: registry.get(name) for name in sorted(common or [])}
 
 
 def get_session(
@@ -174,15 +238,18 @@ def select_dataset(
             status_code=400,
             detail=f"Group column {req.group_column!r} not found in dataset schema",
         )
-    if req.value_column not in column_names:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Value column {req.value_column!r} not found in dataset schema",
-        )
+    try:
+        df = repo.load_dataset(req.dataset_id)
+    except KeyError:
+        raise HTTPException(status_code=400, detail="Dataset missing") from None
+
+    selected_columns = _resolve_selected_value_columns(
+        df, req.group_column, req.selected_value_columns
+    )
 
     session.dataset_id = req.dataset_id
     session.group_column = req.group_column
-    session.value_column = req.value_column
+    session.selected_value_columns = selected_columns
     session.current_step = WizardStep.FILTERS.value
     store.save(session)
     return session
@@ -235,7 +302,7 @@ def list_applicable_methods(
     if (
         session.dataset_id is None
         or session.group_column is None
-        or session.value_column is None
+        or not session.selected_value_columns
     ):
         raise HTTPException(status_code=400, detail="Incomplete setup")
 
@@ -245,11 +312,11 @@ def list_applicable_methods(
         raise HTTPException(status_code=400, detail="Dataset missing") from None
 
     filtered_df = apply_filter_pipeline(df, session.filters_config)
-    props = compute_data_properties(
-        filtered_df, session.group_column, session.value_column
+    props_map = compute_data_properties_for_columns(
+        filtered_df, session.group_column, session.selected_value_columns
     )
 
-    applicable = stat_registry.get_applicable(**props.model_dump())
+    applicable = _intersect_applicable_plugins(stat_registry, props_map)
     return [
         {"name": name, "description": inst.description}
         for name, inst in applicable.items()
@@ -269,7 +336,7 @@ def select_method(
     if (
         session.dataset_id is None
         or session.group_column is None
-        or session.value_column is None
+        or not session.selected_value_columns
     ):
         raise HTTPException(status_code=400, detail="Incomplete setup")
 
@@ -279,11 +346,11 @@ def select_method(
         raise HTTPException(status_code=400, detail="Dataset missing") from None
 
     filtered_df = apply_filter_pipeline(df, session.filters_config)
-    props = compute_data_properties(
-        filtered_df, session.group_column, session.value_column
+    props_map = compute_data_properties_for_columns(
+        filtered_df, session.group_column, session.selected_value_columns
     )
 
-    applicable = stat_registry.get_applicable(**props.model_dump())
+    applicable = _intersect_applicable_plugins(stat_registry, props_map)
     if req.selected_method not in applicable:
         raise HTTPException(
             status_code=400,
@@ -305,13 +372,17 @@ def run_statistical_evaluation(
     repo: DatasetRepository = Depends(get_dataset_repository),
     store: SessionStore = Depends(get_session_store),
 ) -> StatResult:
-    """Step 4: Execute the selected statistical test on the filtered dataset."""
+    """Step 4: Execute the selected statistical test on the filtered dataset.
+
+    For multi-column analysis, runs on the first selected value column.
+    (In a full implementation, this would loop over all columns and rank by p-value.)
+    """
     validate_step_transition(session, WizardStep.RESULTS)
 
     if (
         session.dataset_id is None
         or session.group_column is None
-        or session.value_column is None
+        or not session.selected_value_columns
         or session.selected_method is None
     ):
         raise HTTPException(status_code=400, detail="Incomplete setup")
@@ -322,7 +393,8 @@ def run_statistical_evaluation(
         raise HTTPException(status_code=400, detail="Dataset missing") from None
 
     filtered_df = apply_filter_pipeline(df, session.filters_config)
-    grouped = filtered_df.groupby(session.group_column)[session.value_column]
+    value_col = session.selected_value_columns[0]
+    grouped = filtered_df.groupby(session.group_column)[value_col]
     group_data = {str(name): list(group.dropna().values) for name, group in grouped}
 
     method = stat_registry.get(session.selected_method)
@@ -331,6 +403,7 @@ def run_statistical_evaluation(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from None
 
+    res.column_name = value_col
     session.stat_result = res.model_dump()
     session.current_step = WizardStep.PLOT_SELECTION.value
     store.save(session)
@@ -348,7 +421,7 @@ def list_applicable_plots(
     if (
         session.dataset_id is None
         or session.group_column is None
-        or session.value_column is None
+        or not session.selected_value_columns
     ):
         raise HTTPException(status_code=400, detail="Incomplete setup")
 
@@ -358,11 +431,11 @@ def list_applicable_plots(
         raise HTTPException(status_code=400, detail="Dataset missing") from None
 
     filtered_df = apply_filter_pipeline(df, session.filters_config)
-    props = compute_data_properties(
-        filtered_df, session.group_column, session.value_column
+    props_map = compute_data_properties_for_columns(
+        filtered_df, session.group_column, session.selected_value_columns
     )
 
-    applicable = plot_registry.get_applicable(**props.model_dump())
+    applicable = _intersect_applicable_plugins(plot_registry, props_map)
     return [
         {"name": name, "description": inst.description}
         for name, inst in applicable.items()
@@ -376,13 +449,17 @@ def generate_plots(
     repo: DatasetRepository = Depends(get_dataset_repository),
     store: SessionStore = Depends(get_session_store),
 ) -> WizardSession:
-    """Step 5: Select and generate visualizations."""
+    """Step 5: Select and generate visualizations.
+
+    For multi-column analysis, generates plots for the first selected value column.
+    (In a full implementation, this would loop over all columns and rank by p-value.)
+    """
     validate_step_transition(session, WizardStep.PLOT_SELECTION)
 
     if (
         session.dataset_id is None
         or session.group_column is None
-        or session.value_column is None
+        or not session.selected_value_columns
     ):
         raise HTTPException(status_code=400, detail="Incomplete setup")
 
@@ -392,9 +469,8 @@ def generate_plots(
         raise HTTPException(status_code=400, detail="Dataset missing") from None
 
     filtered_df = apply_filter_pipeline(df, session.filters_config)
-    props = compute_data_properties(
-        filtered_df, session.group_column, session.value_column
-    )
+    value_col = session.selected_value_columns[0]
+    props = compute_data_properties(filtered_df, session.group_column, value_col)
 
     applicable = plot_registry.get_applicable(**props.model_dump())
 
@@ -407,9 +483,9 @@ def generate_plots(
                 detail=f"Plot generator {name!r} is not applicable or not registered",
             )
         generator = plot_registry.get(name)
-        plot_results.append(
-            generator.generate(filtered_df, session.group_column, session.value_column)
-        )
+        plot_result = generator.generate(filtered_df, session.group_column, value_col)
+        plot_result.column_name = value_col
+        plot_results.append(plot_result)
 
     session.selected_plots = req.selected_plots
     session.plot_results = [p.model_dump() for p in plot_results]
@@ -439,7 +515,7 @@ def export_results(
     if (
         session.dataset_id is None
         or session.group_column is None
-        or session.value_column is None
+        or not session.selected_value_columns
     ):
         raise HTTPException(status_code=400, detail="Incomplete setup")
 

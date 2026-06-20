@@ -55,7 +55,7 @@ _STEP_FIELDS: dict[WizardStep, list[str]] = {
     WizardStep.DATASET_SELECTION: [
         "dataset_id",
         "group_column",
-        "value_column",
+        "selected_value_columns",
     ],
     WizardStep.FILTERS: ["filters_config"],
     WizardStep.STAT_METHOD: ["selected_method"],
@@ -68,7 +68,7 @@ _STEP_FIELDS: dict[WizardStep, list[str]] = {
 _FIELD_DEFAULTS: dict[str, object] = {
     "dataset_id": None,
     "group_column": None,
-    "value_column": None,
+    "selected_value_columns": [],
     "filters_config": [],
     "selected_method": None,
     "stat_result": None,
