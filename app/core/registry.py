@@ -7,7 +7,7 @@ themselves via the ``@registry.register("name")`` decorator.
 
 from __future__ import annotations
 
-from typing import Any, Protocol, runtime_checkable
+from typing import Any, Callable, Protocol, runtime_checkable
 
 
 @runtime_checkable
@@ -45,7 +45,7 @@ class Registry[T]:
         """Return the human-readable label for this registry's plugin type."""
         return self._kind
 
-    def register(self, name: str) -> type[T] | Any:
+    def register(self, name: str) -> Callable[[type[T]], type[T]]:
         """Decorator that registers a plugin class under *name*.
 
         The class is instantiated with no arguments and stored.
