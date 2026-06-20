@@ -413,7 +413,7 @@ def generate_plots(
 
     for value_col in top_columns:
         props = compute_data_properties(filtered_df, session.group_column, value_col)
-        props_dict = props.model_dump() if hasattr(props, "model_dump") else props
+        props_dict = props.model_dump()
         applicable = plot_registry.get_applicable(**props_dict)
 
         # Generate selected plots
