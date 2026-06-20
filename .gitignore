@@ -35,3 +35,7 @@ coverage.xml
 
 # pytest
 .pytest_cache/
+
+# Test data
+test_data/
+data/
