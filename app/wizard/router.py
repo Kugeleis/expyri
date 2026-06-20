@@ -33,7 +33,7 @@ from app.wizard.schemas import (
     MethodSelectionRequest,
     PlotSelectionRequest,
 )
-from app.wizard.steps import WizardStep, validate_step_transition
+from app.wizard.steps import WizardStep, reset_to_step, validate_step_transition
 
 router = APIRouter(prefix="/wizard", tags=["wizard"])
 
@@ -72,6 +72,33 @@ def create_session(
 ) -> WizardSession:
     """Create a new experiment evaluation wizard session."""
     return store.create()
+
+
+@router.post("/sessions/{session_id}/go-to/{step}", response_model=WizardSession)
+def go_to_step(
+    step: str,
+    session: WizardSession = Depends(get_session),
+    store: SessionStore = Depends(get_session_store),
+) -> WizardSession:
+    """Navigate back to a previously completed wizard step.
+
+    Resets all session state for steps after the target step so the
+    user can redo them.
+    """
+    try:
+        target = WizardStep(step)
+    except ValueError:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unknown wizard step {step!r}",
+        ) from None
+
+    # Only allow navigating to the current step or an already-completed one
+    validate_step_transition(session, target)
+
+    reset_to_step(session, target)
+    store.save(session)
+    return session
 
 
 @router.get("/sessions/{session_id}", response_model=WizardSession)

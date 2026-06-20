@@ -240,3 +240,111 @@ def test_wizard_negative_invalid_payloads(client: TestClient) -> None:
     )
     assert resp.status_code == 400
     assert "cannot be greater than" in resp.json()["detail"]
+
+
+def test_wizard_back_navigation(client: TestClient) -> None:
+    """Navigate back to a previous step, change data, and re-proceed forward."""
+    # Upload dataset
+    csv_content = (
+        b"group,value\nA,10.0\nA,10.5\nA,11.0\nA,10.2\nA,9.8\n"
+        b"B,12.0\nB,12.5\nB,13.0\nB,12.2\nB,11.8\n"
+    )
+    files = {"file": ("backtest.csv", csv_content, "text/csv")}
+    resp = client.post("/wizard/upload", files=files)
+    assert resp.status_code == 200
+
+    # Create session
+    resp = client.post("/wizard/sessions")
+    session_id = resp.json()["session_id"]
+
+    # Step 1: Select dataset
+    resp = client.post(
+        f"/wizard/sessions/{session_id}/dataset",
+        json={
+            "dataset_id": "backtest",
+            "group_column": "group",
+            "value_column": "value",
+        },
+    )
+    assert resp.status_code == 200
+
+    # Step 2: Configure filters
+    resp = client.post(
+        f"/wizard/sessions/{session_id}/filters",
+        json={"filters_config": []},
+    )
+    assert resp.status_code == 200
+
+    # Step 3: Choose method
+    resp = client.post(
+        f"/wizard/sessions/{session_id}/method",
+        json={"selected_method": "ttest_ind"},
+    )
+    assert resp.status_code == 200
+    assert resp.json()["selected_method"] == "ttest_ind"
+
+    # Step 4: Run results
+    resp = client.get(f"/wizard/sessions/{session_id}/results")
+    assert resp.status_code == 200
+
+    # --- Now go back to filters ---
+    resp = client.post(f"/wizard/sessions/{session_id}/go-to/filters")
+    assert resp.status_code == 200
+    session_data = resp.json()
+    assert session_data["current_step"] == "filters"
+    # Downstream state should be cleared
+    assert session_data["selected_method"] is None
+    assert session_data["stat_result"] is None
+    assert session_data["selected_plots"] == []
+    assert session_data["plot_results"] == []
+    # Upstream state should be preserved
+    assert session_data["dataset_id"] == "backtest"
+    assert session_data["group_column"] == "group"
+
+    # Re-do step 2 with a different filter
+    resp = client.post(
+        f"/wizard/sessions/{session_id}/filters",
+        json={
+            "filters_config": [
+                {
+                    "name": "numeric_range",
+                    "params": {"column": "value", "min": 10.0},
+                }
+            ]
+        },
+    )
+    assert resp.status_code == 200
+
+    # Re-do step 3 with a different method
+    resp = client.post(
+        f"/wizard/sessions/{session_id}/method",
+        json={"selected_method": "mann_whitney"},
+    )
+    assert resp.status_code == 200
+    assert resp.json()["selected_method"] == "mann_whitney"
+
+    # Re-do step 4
+    resp = client.get(f"/wizard/sessions/{session_id}/results")
+    assert resp.status_code == 200
+    assert resp.json()["method_name"] == "mann_whitney"
+
+
+def test_wizard_go_to_invalid_step(client: TestClient) -> None:
+    """Going to an unknown step returns 400."""
+    resp = client.post("/wizard/sessions")
+    session_id = resp.json()["session_id"]
+
+    resp = client.post(f"/wizard/sessions/{session_id}/go-to/nonexistent")
+    assert resp.status_code == 400
+    assert "Unknown wizard step" in resp.json()["detail"]
+
+
+def test_wizard_go_to_uncompleted_step_fails(client: TestClient) -> None:
+    """Cannot go-to a step whose prerequisites are not met."""
+    resp = client.post("/wizard/sessions")
+    session_id = resp.json()["session_id"]
+
+    # Try to go to stat_method without having completed dataset/filters
+    resp = client.post(f"/wizard/sessions/{session_id}/go-to/stat_method")
+    assert resp.status_code == 400
+    assert "prerequisite" in resp.json()["detail"]
