@@ -14,8 +14,13 @@ class DatasetSelectionRequest(BaseModel):
     group_column: str = Field(
         ..., description="Column mapping for grouping (independent variable)."
     )
-    value_column: str = Field(
-        ..., description="Column mapping for values (dependent variable)."
+    selected_value_columns: list[str] = Field(
+        default_factory=list,
+        description=(
+            "List of dependent variable columns to analyze. "
+            "If omitted or empty, all numeric columns except the "
+            "group column are used by default."
+        ),
     )
 
 
@@ -49,6 +54,14 @@ class PlotSelectionRequest(BaseModel):
 
     selected_plots: list[str] = Field(
         ..., description="List of plot names to generate."
+    )
+    top_n_columns: int = Field(
+        1,
+        description=(
+            "Number of top-ranked variables to plot, sorted by "
+            "statistical significance."
+        ),
+        ge=1,
     )
 
 

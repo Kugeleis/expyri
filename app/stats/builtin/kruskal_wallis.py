@@ -67,6 +67,7 @@ class KruskalWallis(StatMethod):
         )
 
         return StatResult(
+            column_name=None,
             method_name=self.name,
             test_statistic=float(h_stat),
             p_value=float(p_val),

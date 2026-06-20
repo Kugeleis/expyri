@@ -73,6 +73,7 @@ class BoxPlot(PlotGenerator):
             plt.close(fig)
 
         return PlotResult(
+            column_name=None,
             plot_type=self.name,
             image_base64=image_base64,
             content_type="image/png",

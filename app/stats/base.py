@@ -34,6 +34,13 @@ class DataProperties(BaseModel):
 class StatResult(BaseModel):
     """The result of executing a statistical method."""
 
+    column_name: str | None = Field(
+        None,
+        description=(
+            "Name of the dependent variable column analyzed by this statistical result."
+        ),
+    )
+
     method_name: str = Field(..., description="Name of the statistical method.")
     test_statistic: float = Field(..., description="Calculated test statistic.")
     p_value: float = Field(..., description="Calculated p-value.")
@@ -155,3 +162,22 @@ def compute_data_properties(
         normality=normality,
         variance_homogeneity=variance_homogeneity,
     )
+
+
+def compute_data_properties_for_columns(
+    df: pd.DataFrame, group_col: str, value_columns: list[str]
+) -> dict[str, DataProperties]:
+    """Compute data properties for multiple numeric value columns.
+
+    Args:
+        df: The dataset DataFrame.
+        group_col: Column name representing the groups.
+        value_columns: List of columns to compute properties for.
+
+    Returns:
+        A mapping from column name to its computed DataProperties.
+    """
+    return {
+        value_col: compute_data_properties(df, group_col, value_col)
+        for value_col in value_columns
+    }

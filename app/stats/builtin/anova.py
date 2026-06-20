@@ -87,6 +87,7 @@ class Anova(StatMethod):
         )
 
         return StatResult(
+            column_name=None,
             method_name=self.name,
             test_statistic=float(f_stat),
             p_value=float(p_val),

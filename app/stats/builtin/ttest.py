@@ -95,6 +95,7 @@ class TTestInd(StatMethod):
         )
 
         return StatResult(
+            column_name=None,
             method_name=self.name,
             test_statistic=float(t_stat),
             p_value=float(p_val),

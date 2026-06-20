@@ -67,7 +67,7 @@ def test_full_wizard_flow_success(client: TestClient) -> None:
         json={
             "dataset_id": "uploaded_normal_data",
             "group_column": "group",
-            "value_column": "value",
+            "selected_value_columns": [],
         },
     )
     assert resp.status_code == 200
@@ -109,9 +109,9 @@ def test_full_wizard_flow_success(client: TestClient) -> None:
     resp = client.get(f"/wizard/sessions/{session_id}/results")
     assert resp.status_code == 200
     res = resp.json()
-    assert res["method_name"] == "ttest_ind"
-    assert "p_value" in res
-    assert "test_statistic" in res
+    assert res[0]["method_name"] == "ttest_ind"
+    assert "p_value" in res[0]
+    assert "test_statistic" in res[0]
 
     # Check applicable plots helper
     resp = client.get(f"/wizard/sessions/{session_id}/plots")
@@ -178,7 +178,7 @@ def test_wizard_negative_step_guards(client: TestClient) -> None:
         json={
             "dataset_id": "normal_data",
             "group_column": "group",
-            "value_column": "value",
+            "selected_value_columns": [],
         },
     )
 
@@ -210,7 +210,7 @@ def test_wizard_negative_invalid_payloads(client: TestClient) -> None:
         json={
             "dataset_id": "normal_data",
             "group_column": "missing_group",
-            "value_column": "value",
+            "selected_value_columns": [],
         },
     )
     assert resp.status_code == 400
@@ -222,7 +222,7 @@ def test_wizard_negative_invalid_payloads(client: TestClient) -> None:
         json={
             "dataset_id": "normal_data",
             "group_column": "group",
-            "value_column": "value",
+            "selected_value_columns": [],
         },
     )
 
@@ -263,7 +263,7 @@ def test_wizard_back_navigation(client: TestClient) -> None:
         json={
             "dataset_id": "backtest",
             "group_column": "group",
-            "value_column": "value",
+            "selected_value_columns": [],
         },
     )
     assert resp.status_code == 200
@@ -294,7 +294,7 @@ def test_wizard_back_navigation(client: TestClient) -> None:
     assert session_data["current_step"] == "filters"
     # Downstream state should be cleared
     assert session_data["selected_method"] is None
-    assert session_data["stat_result"] is None
+    assert not session_data["stat_results"]
     assert session_data["selected_plots"] == []
     assert session_data["plot_results"] == []
     # Upstream state should be preserved
@@ -326,7 +326,7 @@ def test_wizard_back_navigation(client: TestClient) -> None:
     # Re-do step 4
     resp = client.get(f"/wizard/sessions/{session_id}/results")
     assert resp.status_code == 200
-    assert resp.json()["method_name"] == "mann_whitney"
+    assert resp.json()[0]["method_name"] == "mann_whitney"
 
 
 def test_wizard_go_to_invalid_step(client: TestClient) -> None:

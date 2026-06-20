@@ -21,6 +21,11 @@ if TYPE_CHECKING:
 class PlotResult(BaseModel):
     """The result of generating a plot."""
 
+    column_name: str | None = Field(
+        None,
+        description="Name of the dependent variable column shown by this plot.",
+    )
+
     plot_type: str = Field(..., description="Type of the plot (e.g. boxplot).")
     image_base64: str = Field(
         ..., description="Base64 encoded string of the plot image."
