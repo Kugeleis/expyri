@@ -13,10 +13,10 @@ The wizard maintains state using an in-memory session store (interfaced via a pr
 ```mermaid
 graph TD
     subgraph Registries [Plugin Registries]
-        FR["filter_registry: Registry[Filter]"]
-        SR["stat_registry: Registry[StatMethod]"]
-        PR["plot_registry: Registry[PlotGenerator]"]
-        ER["exporter_registry: Registry[Exporter]"]
+        FR["filter_registry: Registry(Filter)"]
+        SR["stat_registry: Registry(StatMethod)"]
+        PR["plot_registry: Registry(PlotGenerator)"]
+        ER["exporter_registry: Registry(Exporter)"]
     end
 
     subgraph Flow [Wizard Steps]
