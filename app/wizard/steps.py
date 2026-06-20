@@ -49,6 +49,34 @@ _PREREQUISITES: dict[WizardStep, set[WizardStep]] = {
 
 _STEP_ORDER = list(WizardStep)
 
+# Fields to clear when resetting to a given step.
+# When navigating back to step X, all fields for steps *after* X are cleared.
+_STEP_FIELDS: dict[WizardStep, list[str]] = {
+    WizardStep.DATASET_SELECTION: [
+        "dataset_id",
+        "group_column",
+        "value_column",
+    ],
+    WizardStep.FILTERS: ["filters_config"],
+    WizardStep.STAT_METHOD: ["selected_method"],
+    WizardStep.RESULTS: ["stat_result"],
+    WizardStep.PLOT_SELECTION: ["selected_plots", "plot_results"],
+    WizardStep.EXPORT: ["export_format"],
+}
+
+# Default values used when clearing session fields.
+_FIELD_DEFAULTS: dict[str, object] = {
+    "dataset_id": None,
+    "group_column": None,
+    "value_column": None,
+    "filters_config": [],
+    "selected_method": None,
+    "stat_result": None,
+    "selected_plots": [],
+    "plot_results": [],
+    "export_format": None,
+}
+
 
 def _completed_steps(session: WizardSession) -> set[WizardStep]:
     """Derive which steps have been completed from session state."""
@@ -82,6 +110,26 @@ def _completed_steps(session: WizardSession) -> set[WizardStep]:
     return completed
 
 
+def reset_to_step(session: WizardSession, target: WizardStep) -> None:
+    """Reset session state so the user can redo *target* and everything after it.
+
+    All session fields belonging to steps **after** *target* are cleared back
+    to their defaults.  The session's ``current_step`` is set to *target*.
+
+    Args:
+        session: The wizard session to mutate.
+        target: The step to navigate back to.
+    """
+    target_idx = _STEP_ORDER.index(target)
+    for step in _STEP_ORDER[target_idx + 1 :]:
+        for field in _STEP_FIELDS[WizardStep(step)]:
+            default = _FIELD_DEFAULTS[field]
+            # Use a fresh copy for mutable defaults.
+            value = list(default) if isinstance(default, list) else default
+            setattr(session, field, value)
+    session.current_step = target.value
+
+
 class StepGuardError(Exception):
     """Raised when a step transition is not allowed."""
 
@@ -103,6 +151,9 @@ class StepGuardError(Exception):
 
 def validate_step_transition(session: WizardSession, target: WizardStep) -> None:
     """Raise ``StepGuardError`` if *session* may not advance to *target*.
+
+    Allows both forward transitions (to the next step) and backward
+    transitions (revisiting a previously completed step).
 
     Args:
         session: Current wizard session state.

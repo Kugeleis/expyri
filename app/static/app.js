@@ -57,6 +57,11 @@ const els = {
     
     btnExportDownload: document.getElementById('btn-export-download'),
     btnRestart: document.getElementById('btn-restart'),
+    btnStep2Back: document.getElementById('btn-step-2-back'),
+    btnStep3Back: document.getElementById('btn-step-3-back'),
+    btnStep4Back: document.getElementById('btn-step-4-back'),
+    btnStep5Back: document.getElementById('btn-step-5-back'),
+    btnStep6Back: document.getElementById('btn-step-6-back'),
     
     errorToast: document.getElementById('error-toast'),
     toastMsg: document.getElementById('toast-msg'),
@@ -139,7 +144,62 @@ function navigateToStep(stepKey) {
                 navEl.className = 'step-nav-item';
             }
         }
+        
+        // Remove old click listeners by cloning
+        const newNavEl = navEl.cloneNode(true);
+        navEl.parentNode.replaceChild(newNavEl, navEl);
+        
+        // Add click handler for completed steps
+        if (idx < activeIndex) {
+            newNavEl.addEventListener('click', () => {
+                goToStep(step.key);
+            });
+        }
     });
+}
+
+// Navigate back to a previously completed step via backend
+async function goToStep(stepKey) {
+    try {
+        const response = await fetch(`/wizard/sessions/${state.sessionId}/go-to/${stepKey}`, {
+            method: 'POST'
+        });
+        
+        if (!response.ok) {
+            const errData = await response.json();
+            throw new Error(errData.detail || 'Failed to navigate to step.');
+        }
+        
+        const data = await response.json();
+        
+        // Update local state from server response
+        state.currentStep = data.current_step;
+        state.selectedMethod = data.selected_method || '';
+        state.activeFilters = data.filters_config || [];
+        state.selectedPlots = data.selected_plots || [];
+        
+        // Re-render UI for the target step
+        navigateToStep(data.current_step);
+        
+        // Restore step-specific UI state
+        if (stepKey === 'filters') {
+            renderActiveFilters();
+        } else if (stepKey === 'stat_method') {
+            await fetchApplicableMethods();
+            // Re-select previously selected method if it's still there
+            if (state.selectedMethod) {
+                const card = document.querySelector(`.method-card[data-name="${state.selectedMethod}"]`);
+                if (card) {
+                    card.classList.add('selected');
+                    els.btnStep3Next.disabled = false;
+                }
+            }
+        } else if (stepKey === 'plot_selection') {
+            await fetchApplicablePlots();
+        }
+    } catch (err) {
+        showError(err.message);
+    }
 }
 
 // Setup Event Listeners
@@ -450,6 +510,13 @@ function initEventListeners() {
             showError(err.message);
         }
     });
+
+    // Back buttons
+    els.btnStep2Back.addEventListener('click', () => goToStep('dataset_selection'));
+    els.btnStep3Back.addEventListener('click', () => goToStep('filters'));
+    els.btnStep4Back.addEventListener('click', () => goToStep('stat_method'));
+    els.btnStep5Back.addEventListener('click', () => goToStep('results'));
+    els.btnStep6Back.addEventListener('click', () => goToStep('plot_selection'));
 }
 
 // Render active filter badges

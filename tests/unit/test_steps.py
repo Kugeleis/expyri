@@ -5,7 +5,12 @@ from __future__ import annotations
 import pytest
 
 from app.core.session import WizardSession
-from app.wizard.steps import StepGuardError, WizardStep, validate_step_transition
+from app.wizard.steps import (
+    StepGuardError,
+    WizardStep,
+    reset_to_step,
+    validate_step_transition,
+)
 
 
 def test_dataset_selection_always_allowed() -> None:
@@ -124,3 +129,105 @@ def test_wizard_step_values() -> None:
     assert WizardStep.RESULTS.value == "results"
     assert WizardStep.PLOT_SELECTION.value == "plot_selection"
     assert WizardStep.EXPORT.value == "export"
+
+
+# --- Back-navigation / reset_to_step tests ---
+
+
+def test_reset_to_filters_clears_downstream() -> None:
+    """Resetting to filters clears method, results, plots, and export."""
+    session = WizardSession(
+        dataset_id="ds1",
+        group_column="g",
+        value_column="v",
+        filters_config=[{"name": "numeric_range", "params": {"column": "v", "min": 1}}],
+        selected_method="ttest",
+        stat_result={"p_value": 0.05},
+        selected_plots=["boxplot"],
+        plot_results=[{"type": "boxplot"}],
+        export_format="pdf",
+        current_step="export",
+    )
+    reset_to_step(session, WizardStep.FILTERS)
+
+    # Fields for filters step itself and dataset should be preserved
+    assert session.dataset_id == "ds1"
+    assert session.group_column == "g"
+    assert session.value_column == "v"
+    expected_filters = [{"name": "numeric_range", "params": {"column": "v", "min": 1}}]
+    assert session.filters_config == expected_filters
+
+    # Everything after filters should be cleared
+    assert session.selected_method is None
+    assert session.stat_result is None
+    assert session.selected_plots == []
+    assert session.plot_results == []
+    assert session.export_format is None
+    assert session.current_step == "filters"
+
+
+def test_reset_to_dataset_selection_clears_all_downstream() -> None:
+    """Resetting to dataset_selection clears everything except dataset fields."""
+    session = WizardSession(
+        dataset_id="ds1",
+        group_column="g",
+        value_column="v",
+        filters_config=[{"name": "f"}],
+        selected_method="ttest",
+        stat_result={"p_value": 0.05},
+        current_step="export",
+    )
+    reset_to_step(session, WizardStep.DATASET_SELECTION)
+
+    # Dataset fields are kept (they belong to dataset_selection step)
+    assert session.dataset_id == "ds1"
+    # Everything after dataset_selection is cleared
+    assert session.filters_config == []
+    assert session.selected_method is None
+    assert session.stat_result is None
+    assert session.current_step == "dataset_selection"
+
+
+def test_reset_to_stat_method_preserves_filters() -> None:
+    """Resetting to stat_method keeps dataset and filters intact."""
+    session = WizardSession(
+        dataset_id="ds1",
+        group_column="g",
+        value_column="v",
+        filters_config=[{"name": "f"}],
+        selected_method="ttest",
+        stat_result={"p_value": 0.05},
+        selected_plots=["boxplot"],
+        plot_results=[{"type": "boxplot"}],
+        current_step="export",
+    )
+    reset_to_step(session, WizardStep.STAT_METHOD)
+
+    assert session.dataset_id == "ds1"
+    assert session.filters_config == [{"name": "f"}]
+    assert session.selected_method == "ttest"  # kept — it's the target step
+    assert session.stat_result is None  # cleared — after target
+    assert session.selected_plots == []
+    assert session.plot_results == []
+    assert session.current_step == "stat_method"
+
+
+def test_reset_to_step_gives_fresh_mutable_defaults() -> None:
+    """Each reset yields independent list instances."""
+    s1 = WizardSession(dataset_id="ds1", current_step="export")
+    s2 = WizardSession(dataset_id="ds2", current_step="export")
+    reset_to_step(s1, WizardStep.FILTERS)
+    reset_to_step(s2, WizardStep.FILTERS)
+    s1.selected_plots.append("boxplot")
+    assert s2.selected_plots == []  # must be independent
+
+
+def test_validate_allows_revisiting_completed_step() -> None:
+    """Validation passes for a step whose prerequisites are still completed."""
+    session = WizardSession(
+        dataset_id="ds1",
+        current_step="stat_method",
+        selected_method="ttest",
+    )
+    # Going back to filters — dataset_selection prerequisite is met
+    validate_step_transition(session, WizardStep.FILTERS)
