@@ -7,6 +7,7 @@ fire before the application routes are requested.
 from __future__ import annotations
 
 import importlib
+import importlib.metadata
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
@@ -20,13 +21,18 @@ importlib.import_module("app.filters.builtin")
 importlib.import_module("app.plots.builtin")
 importlib.import_module("app.stats.builtin")
 
+try:
+    __version__ = importlib.metadata.version("expyt")
+except importlib.metadata.PackageNotFoundError:
+    __version__ = "0.1.0"
+
 
 def create_app() -> FastAPI:
     """Create and configure the FastAPI application."""
     application = FastAPI(
         title="ExpYT — Experiment Evaluation Wizard",
         description="Multi-step wizard for statistical experiment evaluation",
-        version="0.1.0",
+        version=__version__,
     )
 
     # Register router

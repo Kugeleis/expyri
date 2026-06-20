@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException, Response
@@ -33,7 +34,6 @@ router = APIRouter(prefix="/wizard", tags=["wizard"])
 
 # Singletons/Defaults
 _session_store = InMemorySessionStore()
-_data_dir = Path("data")
 
 
 def get_session_store() -> SessionStore:
@@ -43,7 +43,8 @@ def get_session_store() -> SessionStore:
 
 def get_dataset_repository() -> DatasetRepository:
     """Dependency provider for the DatasetRepository."""
-    return CsvDatasetRepository(_data_dir)
+    data_dir = Path(os.getenv("EXPYT_DATA_DIR", "data"))
+    return CsvDatasetRepository(data_dir)
 
 
 def get_session(

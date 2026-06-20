@@ -34,3 +34,14 @@ tasks:
       - task: lint
       - task: typecheck
       - task: test
+
+  dev:
+    desc: Run the FastAPI app locally in development mode (with auto-reload)
+    cmds:
+      - uv run uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+
+  bump:
+    desc: Bump application version using bump-my-version (e.g. task bump -- patch)
+    cmds:
+      - uv run bump-my-version bump {{.CLI_ARGS}}
+
