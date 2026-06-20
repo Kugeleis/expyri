@@ -37,6 +37,9 @@ select = ["E", "F", "I", "UP", "B", "SIM", "C90"]
 [tool.ruff.lint.isort]
 known-first-party = ["app"]
 
+[tool.ruff.lint.flake8-bugbear]
+extend-immutable-calls = ["fastapi.Depends", "fastapi.params.Depends", "fastapi.Query", "fastapi.Path", "fastapi.Body", "fastapi.Header", "fastapi.Cookie", "fastapi.Form", "fastapi.File"]
+
 [tool.mypy]
 strict = true
 plugins = []

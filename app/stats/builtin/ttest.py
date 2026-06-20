@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 import numpy as np
 import scipy.stats as stats
 
@@ -22,12 +24,13 @@ class TTestInd(StatMethod):
         """Return a brief description of the statistical method."""
         return "Independent two-sample t-test (parametric)."
 
-    def is_applicable(self, data_properties: DataProperties) -> bool:
+    def is_applicable(self, **properties: Any) -> bool:
         """Determine whether the t-test is applicable.
 
         Requires exactly 2 groups, each group with >= 2 samples, and all groups
         satisfying Shapiro-Wilk normality test (p > 0.05).
         """
+        data_properties = DataProperties(**properties)
         if data_properties.n_groups != 2:
             return False
 

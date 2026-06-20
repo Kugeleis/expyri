@@ -59,11 +59,11 @@ class StatMethod(ABC):
         ...
 
     @abstractmethod
-    def is_applicable(self, data_properties: DataProperties) -> bool:
+    def is_applicable(self, **properties: Any) -> bool:
         """Determine whether this method is applicable to the given data properties.
 
         Args:
-            data_properties: Inferred properties of the filtered dataset.
+            **properties: Keyword arguments representing data properties.
 
         Returns:
             True if the method can be run on this data, False otherwise.

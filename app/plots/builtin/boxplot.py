@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import base64
 import io
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -15,7 +15,7 @@ from app.plots.base import PlotGenerator, PlotResult, plot_registry
 matplotlib.use("Agg")
 
 if TYPE_CHECKING:
-    from app.stats.base import DataProperties
+    pass
 
 
 @plot_registry.register("boxplot")
@@ -32,14 +32,16 @@ class BoxPlot(PlotGenerator):
         """Return a brief description of what the plot displays."""
         return "Box plot of values grouped by category."
 
-    def is_applicable(self, data_properties: DataProperties) -> bool:
+    def is_applicable(self, **properties: Any) -> bool:
         """Determine whether the box plot is applicable.
 
         Requires at least 1 group, and all groups with size >= 1.
         """
-        if data_properties.n_groups < 1:
+        n_groups = properties.get("n_groups", 0)
+        group_sizes = properties.get("group_sizes", {})
+        if n_groups < 1:
             return False
-        return all(size >= 1 for size in data_properties.group_sizes.values())
+        return all(size >= 1 for size in group_sizes.values())
 
     def generate(self, df: pd.DataFrame, group_col: str, value_col: str) -> PlotResult:
         """Generate a box plot.
