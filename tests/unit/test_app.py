@@ -11,8 +11,9 @@ async def test_app_starts(client: AsyncClient) -> None:
     assert data["info"]["title"] == "ExpYT — Experiment Evaluation Wizard"
 
 
-async def test_root_redirect(client: AsyncClient) -> None:
-    """The root URL should redirect to the API docs."""
-    response = await client.get("/", follow_redirects=False)
-    assert response.status_code == 307
-    assert response.headers["location"] == "/docs"
+async def test_root_serves_homepage(client: AsyncClient) -> None:
+    """The root URL should serve the wizard homepage HTML."""
+    response = await client.get("/")
+    assert response.status_code == 200
+    assert "ExpYT" in response.text
+    assert "Experiment Evaluation Wizard" in response.text

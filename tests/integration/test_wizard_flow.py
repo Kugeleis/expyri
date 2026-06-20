@@ -44,6 +44,13 @@ def client(test_data_dir: Path) -> Generator[TestClient, None, None]:
 
 def test_full_wizard_flow_success(client: TestClient) -> None:
     """Verify a successful walk-through of all wizard steps."""
+    # Check datasets list endpoint
+    resp = client.get("/wizard/datasets")
+    assert resp.status_code == 200
+    datasets = resp.json()
+    assert len(datasets) == 1
+    assert datasets[0]["id"] == "normal_data"
+
     # Create session
     resp = client.post("/wizard/sessions")
     assert resp.status_code == 200

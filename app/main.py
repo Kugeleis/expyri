@@ -10,7 +10,8 @@ import importlib
 import importlib.metadata
 
 from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 
 from app.wizard.router import router
 from app.wizard.steps import StepGuardError
@@ -38,11 +39,10 @@ def create_app() -> FastAPI:
     # Register router
     application.include_router(router)
 
-    # Redirect root to /docs
-    @application.get("/", include_in_schema=False)
-    def redirect_to_docs() -> RedirectResponse:
-        """Redirect the root URL to /docs."""
-        return RedirectResponse(url="/docs")
+    # Mount static files at root
+    application.mount(
+        "/", StaticFiles(directory="app/static", html=True), name="static"
+    )
 
     # Register centralized exception handler for step transitions
     @application.exception_handler(StepGuardError)

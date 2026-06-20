@@ -12,6 +12,7 @@ from app.core.session import (
     SessionStore,
     WizardSession,
 )
+from app.datasets.models import DatasetInfo
 from app.datasets.repository import CsvDatasetRepository, DatasetRepository
 from app.exporters.base import exporter_registry
 from app.filters.base import apply_filter_pipeline
@@ -75,6 +76,14 @@ def get_session_state(
 ) -> WizardSession:
     """Get the current state of a wizard session."""
     return session
+
+
+@router.get("/datasets", response_model=list[DatasetInfo])
+def list_available_datasets(
+    repo: DatasetRepository = Depends(get_dataset_repository),
+) -> list[DatasetInfo]:
+    """Retrieve all available datasets and their metadata schemas."""
+    return repo.list_datasets()
 
 
 @router.post("/sessions/{session_id}/dataset", response_model=WizardSession)

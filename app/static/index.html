@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ExpYT — Experiment Evaluation Wizard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="glow-container">
+        <div class="glow-circle glow-1"></div>
+        <div class="glow-circle glow-2"></div>
+    </div>
+
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="logo">
+                <span class="icon">📊</span>
+                <h1>ExpYT</h1>
+            </div>
+            <div class="session-info" id="session-info">
+                <span class="dot"></span>
+                <span class="text">Initializing session...</span>
+            </div>
+            <nav class="steps-nav">
+                <div class="step-nav-item active" id="nav-step-1">
+                    <span class="step-num">1</span>
+                    <span class="step-name">Select Dataset</span>
+                </div>
+                <div class="step-nav-item" id="nav-step-2">
+                    <span class="step-num">2</span>
+                    <span class="step-name">Configure Filters</span>
+                </div>
+                <div class="step-nav-item" id="nav-step-3">
+                    <span class="step-num">3</span>
+                    <span class="step-name">Choose Method</span>
+                </div>
+                <div class="step-nav-item" id="nav-step-4">
+                    <span class="step-num">4</span>
+                    <span class="step-name">Results</span>
+                </div>
+                <div class="step-nav-item" id="nav-step-5">
+                    <span class="step-num">5</span>
+                    <span class="step-name">Select Plots</span>
+                </div>
+                <div class="step-nav-item" id="nav-step-6">
+                    <span class="step-num">6</span>
+                    <span class="step-name">Export</span>
+                </div>
+            </nav>
+        </aside>
+
+        <!-- Main Workspace -->
+        <main class="main-content">
+            <header class="main-header">
+                <h2>Experiment Evaluation Wizard</h2>
+                <button class="btn btn-secondary btn-restart" id="btn-restart">Restart Session</button>
+            </header>
+
+            <div class="card-workspace">
+                <!-- Step 1 Panel -->
+                <section class="step-panel active" id="panel-step-1">
+                    <h3>Step 1: Select Dataset</h3>
+                    <p class="step-desc">Choose a dataset from the directory and map the group and value columns.</p>
+                    
+                    <div class="form-group">
+                        <label for="dataset-select">Available Dataset</label>
+                        <select id="dataset-select" class="form-control">
+                            <option value="">-- Loading datasets --</option>
+                        </select>
+                    </div>
+
+                    <div class="dataset-details hidden" id="dataset-details">
+                        <div class="details-meta">
+                            <span class="label">Description:</span>
+                            <span id="detail-desc" class="value"></span>
+                        </div>
+                        <div class="columns-grid">
+                            <div class="form-group">
+                                <label for="group-col-select">Group Column (Independent Variable)</label>
+                                <select id="group-col-select" class="form-control"></select>
+                            </div>
+                            <div class="form-group">
+                                <label for="value-col-select">Value Column (Dependent Variable, Numeric)</label>
+                                <select id="value-col-select" class="form-control"></select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="panel-actions">
+                        <button class="btn btn-primary" id="btn-step-1-next" disabled>Confirm Dataset</button>
+                    </div>
+                </section>
+
+                <!-- Step 2 Panel -->
+                <section class="step-panel" id="panel-step-2">
+                    <h3>Step 2: Preprocessing Filters</h3>
+                    <p class="step-desc">Configure one or more filters to preprocess the data before executing the test.</p>
+
+                    <div class="filters-container">
+                        <div class="active-filters" id="active-filters">
+                            <p class="no-filters-msg">No filters configured. Click below to add a filter, or proceed directly.</p>
+                        </div>
+
+                        <div class="add-filter-card">
+                            <h4>Add New Filter</h4>
+                            <div class="filter-inputs">
+                                <div class="form-group">
+                                    <label for="filter-type">Filter Type</label>
+                                    <select id="filter-type" class="form-control">
+                                        <option value="numeric_range">Numeric Range</option>
+                                        <option value="category_filter">Category Filter</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="filter-col">Column</label>
+                                    <select id="filter-col" class="form-control"></select>
+                                </div>
+                            </div>
+
+                            <!-- Inputs for Numeric Range -->
+                            <div class="filter-type-fields" id="fields-numeric_range">
+                                <div class="columns-grid">
+                                    <div class="form-group">
+                                        <label for="filter-num-min">Min Value (Optional)</label>
+                                        <input type="number" id="filter-num-min" class="form-control" placeholder="No minimum">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="filter-num-max">Max Value (Optional)</label>
+                                        <input type="number" id="filter-num-max" class="form-control" placeholder="No maximum">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Inputs for Category Filter -->
+                            <div class="filter-type-fields hidden" id="fields-category_filter">
+                                <div class="form-group">
+                                    <label for="filter-cat-values">Values (comma-separated)</label>
+                                    <input type="text" id="filter-cat-values" class="form-control" placeholder="e.g. Boston, Chicago">
+                                </div>
+                                <div class="form-group checkbox-group">
+                                    <input type="checkbox" id="filter-cat-exclude">
+                                    <label for="filter-cat-exclude">Exclude these values (Exclude mode)</label>
+                                </div>
+                            </div>
+
+                            <button class="btn btn-secondary btn-sm" id="btn-add-filter-action">Add Filter</button>
+                        </div>
+                    </div>
+
+                    <div class="panel-actions">
+                        <button class="btn btn-primary" id="btn-step-2-next">Apply Filters & Continue</button>
+                    </div>
+                </section>
+
+                <!-- Step 3 Panel -->
+                <section class="step-panel" id="panel-step-3">
+                    <h3>Step 3: Statistical Method Selection</h3>
+                    <p class="step-desc">Select an applicable statistical method evaluated against the properties of your filtered data.</p>
+
+                    <div class="methods-list" id="methods-list">
+                        <!-- Populated dynamically -->
+                    </div>
+
+                    <div class="panel-actions">
+                        <button class="btn btn-primary" id="btn-step-3-next" disabled>Select Method</button>
+                    </div>
+                </section>
+
+                <!-- Step 4 Panel -->
+                <section class="step-panel" id="panel-step-4">
+                    <h3>Step 4: Statistical Results</h3>
+                    <p class="step-desc">Below are the execution results of your statistical test.</p>
+
+                    <div class="results-card" id="results-card">
+                        <div class="results-header">
+                            <span class="results-method-name" id="result-method-name">ANOVA</span>
+                            <span class="results-status">Success</span>
+                        </div>
+                        <div class="results-stats-grid">
+                            <div class="stat-box">
+                                <span class="stat-label">Test Statistic</span>
+                                <span class="stat-value" id="result-statistic">-</span>
+                            </div>
+                            <div class="stat-box">
+                                <span class="stat-label">p-value</span>
+                                <span class="stat-value" id="result-p-value">-</span>
+                            </div>
+                        </div>
+                        <div class="results-summary">
+                            <h4>Summary</h4>
+                            <p id="result-summary-text"></p>
+                        </div>
+                    </div>
+
+                    <div class="panel-actions">
+                        <button class="btn btn-primary" id="btn-step-4-next">Continue to Plots</button>
+                    </div>
+                </section>
+
+                <!-- Step 5 Panel -->
+                <section class="step-panel" id="panel-step-5">
+                    <h3>Step 5: Visualizations</h3>
+                    <p class="step-desc">Select from the applicable plot types to generate visualizations of your data.</p>
+
+                    <div class="plots-layout">
+                        <div class="plots-selector" id="plots-selector">
+                            <!-- Populated dynamically -->
+                        </div>
+                        
+                        <div class="plots-display" id="plots-display">
+                            <!-- Plots rendered here -->
+                        </div>
+                    </div>
+
+                    <div class="panel-actions">
+                        <button class="btn btn-primary" id="btn-step-5-next" disabled>Confirm & Go to Export</button>
+                    </div>
+                </section>
+
+                <!-- Step 6 Panel -->
+                <section class="step-panel" id="panel-step-6">
+                    <h3>Step 6: Export & Download</h3>
+                    <p class="step-desc">Choose a format to export your final experiment evaluation report.</p>
+
+                    <div class="exporters-grid">
+                        <div class="exporter-card active" data-format="pdf">
+                            <div class="exporter-icon">📕</div>
+                            <h4>PDF Report</h4>
+                            <p>Visual PDF containing statistical summaries, results, and generated plots.</p>
+                        </div>
+                        <div class="exporter-card" data-format="json">
+                            <div class="exporter-icon">💻</div>
+                            <h4>JSON Schema</h4>
+                            <p>Export all raw results, parameters, and metadata as a standard JSON object.</p>
+                        </div>
+                        <div class="exporter-card" data-format="csv">
+                            <div class="exporter-icon">📊</div>
+                            <h4>CSV Dataset</h4>
+                            <p>Export the cleaned and preprocessed dataset as a CSV file.</p>
+                        </div>
+                    </div>
+
+                    <div class="panel-actions">
+                        <button class="btn btn-primary" id="btn-export-download">Download Report</button>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- Error Toast -->
+    <div class="toast hidden" id="error-toast">
+        <span class="toast-icon">❌</span>
+        <span class="toast-message" id="toast-msg">An error occurred</span>
+        <button class="toast-close" id="btn-toast-close">&times;</button>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
