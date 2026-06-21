@@ -11,6 +11,8 @@ const state = {
     selectedDatasetId: '',
     selectedDatasetColumns: [],
     selectedValueColumns: new Set(),
+    selectedGroups: new Set(),
+    availableGroups: [],
     activeFilters: [],
     applicableMethods: [],
     selectedMethod: '',
@@ -29,7 +31,11 @@ const els = {
     groupColSelect: document.getElementById('group-col-select'),
     valueColSearch: document.getElementById('value-col-search'),
     valueColumnsList: document.getElementById('value-columns-list'),
+    subgroupsSection: document.getElementById('subgroups-section'),
+    subgroupsSearch: document.getElementById('subgroups-search'),
+    subgroupsList: document.getElementById('subgroups-list'),
     btnStep1Next: document.getElementById('btn-step-1-next'),
+
     
     activeFilters: document.getElementById('active-filters'),
     filterType: document.getElementById('filter-type'),
@@ -213,8 +219,13 @@ function initEventListeners() {
             state.selectedMethod = '';
             state.selectedPlots = [];
             state.selectedValueColumns = new Set();
+            state.selectedGroups = new Set();
+            state.availableGroups = [];
             if (els.valueColSearch) {
                 els.valueColSearch.value = '';
+            }
+            if (els.subgroupsSearch) {
+                els.subgroupsSearch.value = '';
             }
             
             // Clean active filters panel
@@ -226,6 +237,8 @@ function initEventListeners() {
             els.fileUpload.value = '';
             els.uploadStatus.textContent = '';
             els.datasetDetails.classList.add('hidden');
+            els.subgroupsSection.classList.add('hidden');
+            els.subgroupsList.innerHTML = '';
             
             await startNewSession();
         }
@@ -236,17 +249,24 @@ function initEventListeners() {
         els.errorToast.classList.add('hidden');
     });
 
-    els.groupColSelect.addEventListener('change', () => {
+    els.groupColSelect.addEventListener('change', async () => {
         const selectedGroupCol = els.groupColSelect.value;
         if (selectedGroupCol) {
             state.selectedValueColumns.delete(selectedGroupCol);
         }
         updateValueColumnsList();
+        await updateSubgroupsList();
     });
 
     if (els.valueColSearch) {
         els.valueColSearch.addEventListener('input', () => {
             updateValueColumnsList();
+        });
+    }
+
+    if (els.subgroupsSearch) {
+        els.subgroupsSearch.addEventListener('input', () => {
+            renderSubgroupsList();
         });
     }
 
@@ -274,6 +294,32 @@ function initEventListeners() {
             validateStep1Next();
         });
     }
+
+    const selectAllGroupsBtn = document.getElementById('btn-select-all-groups');
+    const deselectAllGroupsBtn = document.getElementById('btn-deselect-all-groups');
+
+    if (selectAllGroupsBtn) {
+        selectAllGroupsBtn.addEventListener('click', () => {
+            const checkboxes = els.subgroupsList.querySelectorAll('input[type="checkbox"]');
+            checkboxes.forEach(cb => {
+                cb.checked = true;
+                state.selectedGroups.add(cb.value);
+            });
+            validateStep1Next();
+        });
+    }
+
+    if (deselectAllGroupsBtn) {
+        deselectAllGroupsBtn.addEventListener('click', () => {
+            const checkboxes = els.subgroupsList.querySelectorAll('input[type="checkbox"]');
+            checkboxes.forEach(cb => {
+                cb.checked = false;
+                state.selectedGroups.delete(cb.value);
+            });
+            validateStep1Next();
+        });
+    }
+
 
     // Step 1: Upload Data automatically when file is selected
     els.fileUpload.addEventListener('change', async () => {
@@ -337,6 +383,7 @@ function initEventListeners() {
             }
 
             updateValueColumnsList();
+            await updateSubgroupsList();
 
             els.datasetDetails.classList.remove('hidden');
             els.btnStep1Next.disabled = false;
@@ -361,7 +408,8 @@ function initEventListeners() {
             const payload = {
                 dataset_id: state.selectedDatasetId,
                 group_column: els.groupColSelect.value,
-                selected_value_columns: selectedCols
+                selected_value_columns: selectedCols,
+                selected_groups: Array.from(state.selectedGroups)
             };
             
             const response = await fetch(`/wizard/sessions/${state.sessionId}/dataset`, {
@@ -910,10 +958,92 @@ function updateValueColumnsList() {
 
 function validateStep1Next() {
     const selectedGroupCol = els.groupColSelect.value;
-    if (!selectedGroupCol || state.selectedValueColumns.size === 0) {
+    if (!selectedGroupCol || state.selectedValueColumns.size === 0 || state.selectedGroups.size === 0) {
         els.btnStep1Next.disabled = true;
     } else {
         els.btnStep1Next.disabled = false;
     }
 }
+
+async function updateSubgroupsList() {
+    const datasetId = state.selectedDatasetId;
+    const groupCol = els.groupColSelect.value;
+    
+    if (!datasetId || !groupCol) {
+        els.subgroupsSection.classList.add('hidden');
+        els.subgroupsList.innerHTML = '';
+        state.selectedGroups = new Set();
+        state.availableGroups = [];
+        validateStep1Next();
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/wizard/datasets/${datasetId}/columns/${groupCol}/unique`);
+        if (!response.ok) throw new Error('Failed to fetch unique values for group column.');
+        
+        const groups = await response.json();
+        
+        state.availableGroups = groups;
+        state.selectedGroups = new Set(groups);
+        
+        if (els.subgroupsSearch) {
+            els.subgroupsSearch.value = '';
+        }
+        
+        renderSubgroupsList();
+    } catch (err) {
+        showError(err.message);
+        els.subgroupsSection.classList.add('hidden');
+    }
+}
+
+function renderSubgroupsList() {
+    els.subgroupsList.innerHTML = '';
+    const filterText = (els.subgroupsSearch?.value || '').toLowerCase().trim();
+    
+    let hasVisibleGroups = false;
+    
+    state.availableGroups.forEach(groupVal => {
+        if (filterText && !groupVal.toLowerCase().includes(filterText)) {
+            return;
+        }
+        
+        hasVisibleGroups = true;
+        
+        const item = document.createElement('label');
+        item.className = 'value-column-item';
+        
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.value = groupVal;
+        cb.checked = state.selectedGroups.has(groupVal);
+        cb.addEventListener('change', (e) => {
+            if (e.target.checked) {
+                state.selectedGroups.add(groupVal);
+            } else {
+                state.selectedGroups.delete(groupVal);
+            }
+            validateStep1Next();
+        });
+        
+        const span = document.createElement('span');
+        span.textContent = groupVal;
+        
+        item.appendChild(cb);
+        item.appendChild(span);
+        els.subgroupsList.appendChild(item);
+    });
+    
+    if (state.availableGroups.length === 0) {
+        els.subgroupsList.innerHTML = '<span class="no-columns-msg" style="color: var(--text-secondary); font-size: 0.95rem;">No values available in this column.</span>';
+    } else if (!hasVisibleGroups) {
+        els.subgroupsList.innerHTML = '<span class="no-columns-msg" style="color: var(--text-secondary); font-size: 0.95rem;">No subgroups match search.</span>';
+    }
+    
+    els.subgroupsSection.classList.remove('hidden');
+    validateStep1Next();
+}
+
+
 

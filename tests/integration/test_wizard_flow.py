@@ -373,3 +373,74 @@ def test_select_dataset_numeric_group_column_fails(client: TestClient) -> None:
     )
     assert resp.status_code == 400
     assert "must be discrete/categorical, but it is numeric" in resp.json()["detail"]
+
+
+def test_get_column_unique_values(client: TestClient) -> None:
+    """Verify unique values endpoint returns sorted non-null values of a column."""
+    # Upload dataset
+    csv_content = b"group,value\nB,1.0\nA,2.0\nB,3.0\nC,\n"
+    files = {"file": ("uniquetest.csv", csv_content, "text/csv")}
+    resp = client.post("/wizard/upload", files=files)
+    assert resp.status_code == 200
+
+    # Fetch unique values
+    resp = client.get("/wizard/datasets/uniquetest/columns/group/unique")
+    assert resp.status_code == 200
+    assert resp.json() == ["A", "B", "C"]
+
+
+def test_wizard_subgroup_selection_filtering(client: TestClient) -> None:
+    """Verify that statistical analysis is executed using only the selected subgroups."""
+    # Upload dataset with groups A, B, C
+    csv_content = (
+        b"group,value\n"
+        b"A,10.0\nA,10.5\nA,11.0\nA,10.2\nA,9.8\n"
+        b"B,12.0\nB,12.5\nB,13.0\nB,12.2\nB,11.8\n"
+        b"C,100.0\nC,105.0\nC,110.0\nC,102.0\nC,98.0\n"
+    )
+    files = {"file": ("subgroup_test.csv", csv_content, "text/csv")}
+    resp = client.post("/wizard/upload", files=files)
+    assert resp.status_code == 200
+
+    # Create session
+    resp = client.post("/wizard/sessions")
+    session_id = resp.json()["session_id"]
+
+    # Step 1: Select dataset, but only include subgroups A and B (exclude C)
+    resp = client.post(
+        f"/wizard/sessions/{session_id}/dataset",
+        json={
+            "dataset_id": "subgroup_test",
+            "group_column": "group",
+            "selected_value_columns": ["value"],
+            "selected_groups": ["A", "B"],
+        },
+    )
+    assert resp.status_code == 200
+    assert resp.json()["selected_groups"] == ["A", "B"]
+
+    # Step 2: Configure empty filters
+    resp = client.post(
+        f"/wizard/sessions/{session_id}/filters",
+        json={"filters_config": []},
+    )
+    assert resp.status_code == 200
+
+    # Step 3: Choose method (ttest_ind)
+    resp = client.post(
+        f"/wizard/sessions/{session_id}/method",
+        json={"selected_method": "ttest_ind"},
+    )
+    assert resp.status_code == 200
+
+    # Step 4: Run statistical results
+    resp = client.get(f"/wizard/sessions/{session_id}/results")
+    assert resp.status_code == 200
+    results = resp.json()
+    assert len(results) == 1
+    # Group A mean ~10.3, Group B mean ~12.3. Test statistic is ~-6.742
+    assert results[0]["test_statistic"] < 0
+    assert abs(results[0]["test_statistic"] - (-6.741998624632423)) < 1e-3
+    assert results[0]["p_value"] < 0.001
+
+

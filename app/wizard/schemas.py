@@ -22,6 +22,11 @@ class DatasetSelectionRequest(BaseModel):
             "group column are used by default."
         ),
     )
+    selected_groups: list[str] = Field(
+        default_factory=list,
+        description="List of selected subgroup values to include in the analysis.",
+    )
+
 
 
 class FilterConfigEntry(BaseModel):

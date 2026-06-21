@@ -761,3 +761,26 @@ body {
         opacity: 1;
     }
 }
+
+/* Custom styling to link the Group Column select and the Subgroups checklist using a blue accent */
+#group-col-select,
+#subgroups-section {
+    --pico-primary: var(--accent-blue);
+    --pico-primary-hover: #338fff;
+    --pico-primary-border: var(--accent-blue);
+    --pico-primary-background: rgba(0, 112, 243, 0.15);
+    --pico-form-element-active-border-color: var(--accent-blue);
+    --pico-form-element-focus-color: rgba(0, 112, 243, 0.15);
+}
+
+/* Give the subgroups list container border a blue accent color */
+#subgroups-section .value-columns-list {
+    border-color: rgba(0, 112, 243, 0.25);
+    background-color: rgba(0, 112, 243, 0.02);
+}
+
+/* Visual color coordination labels to clarify relationship */
+#subgroups-section .value-columns-header label {
+    color: var(--accent-blue);
+}
+

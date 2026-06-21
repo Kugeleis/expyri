@@ -83,13 +83,18 @@ def get_filtered_dataset(
         raise HTTPException(status_code=400, detail="Dataset missing") from None
 
     try:
-        return apply_filter_pipeline(df, session.filters_config)
+        df = apply_filter_pipeline(df, session.filters_config)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from None
     except KeyError as e:
         raise HTTPException(
             status_code=400, detail=f"Filter registration missing: {e}"
         ) from None
+
+    if session.group_column and session.selected_groups:
+        df = df[df[session.group_column].astype(str).isin(session.selected_groups)]
+    return df
+
 
 
 @router.post("/sessions", response_model=WizardSession)
@@ -176,6 +181,36 @@ def upload_dataset(
         raise HTTPException(status_code=400, detail="Unsupported file format") from None
 
 
+@router.get("/datasets/{dataset_id}/columns/{column_name}/unique")
+def get_column_unique_values(
+    dataset_id: str,
+    column_name: str,
+    repo: DatasetRepository = Depends(get_dataset_repository),
+) -> list[str]:
+    """Retrieve unique non-null values of a column in a dataset, sorted as strings."""
+    try:
+        df = repo.load_dataset(dataset_id)
+    except KeyError:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Dataset {dataset_id!r} not found",
+        ) from None
+
+    if column_name not in df.columns:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Column {column_name!r} not found in dataset",
+        )
+
+    unique_vals = df[column_name].dropna().unique()
+    try:
+        sorted_vals = sorted(unique_vals)
+    except TypeError:
+        sorted_vals = sorted(unique_vals, key=str)
+
+    return [str(v) for v in sorted_vals]
+
+
 @router.post("/sessions/{session_id}/dataset", response_model=WizardSession)
 def select_dataset(
     req: DatasetSelectionRequest,
@@ -225,9 +260,11 @@ def select_dataset(
     session.dataset_id = req.dataset_id
     session.group_column = req.group_column
     session.selected_value_columns = selected_columns
+    session.selected_groups = req.selected_groups
     session.current_step = WizardStep.FILTERS.value
     store.save(session)
     return session
+
 
 
 @router.post("/sessions/{session_id}/filters", response_model=WizardSession)

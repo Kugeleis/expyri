@@ -80,11 +80,25 @@
                             <span class="label">Dataset:</span>
                             <span id="detail-desc" class="value"></span>
                         </div>
+                        <div style="margin-top: 1rem; margin-bottom: 1.5rem;">
+                            <label for="group-col-select">Group Column (Independent Variable)</label>
+                            <select id="group-col-select"></select>
+                        </div>
+
                         <div class="grid">
-                            <div>
-                                <label for="group-col-select">Group Column (Independent Variable)</label>
-                                <select id="group-col-select"></select>
+                            <div id="subgroups-section" class="hidden">
+                                <div class="value-columns-header">
+                                    <label>Subgroups to Include (Selected Group Column Values)</label>
+                                    <div class="value-columns-actions">
+                                        <button type="button" class="btn-link" id="btn-select-all-groups">Select All</button>
+                                        <span class="divider">/</span>
+                                        <button type="button" class="btn-link" id="btn-deselect-all-groups">Deselect All</button>
+                                    </div>
+                                </div>
+                                <input type="search" id="subgroups-search" placeholder="Filter subgroups..." style="margin-bottom: 0.75rem;">
+                                <div id="subgroups-list" class="value-columns-list"></div>
                             </div>
+
                             <div>
                                 <div class="value-columns-header">
                                     <label>Value Columns (Dependent Variables, Numeric)</label>
