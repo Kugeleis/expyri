@@ -7,14 +7,14 @@ import { fetchApplicableMethods, fetchApplicablePlots } from './api.js';
 // Navigate to a specific step panel
 export function navigateToStep(stepKey) {
     state.currentStep = stepKey;
-    
+
     let activeIndex = stepsConfig.findIndex(s => s.key === stepKey);
     if (activeIndex === -1) activeIndex = 0;
-    
+
     stepsConfig.forEach((step, idx) => {
         const navEl = document.getElementById(step.navId);
         const panelEl = document.getElementById(step.panelId);
-        
+
         // Manage Panel Views
         if (idx === activeIndex) {
             panelEl.classList.add('active');
@@ -27,11 +27,11 @@ export function navigateToStep(stepKey) {
                 navEl.className = 'step-nav-item';
             }
         }
-        
+
         // Remove old click listeners by cloning
         const newNavEl = navEl.cloneNode(true);
         navEl.parentNode.replaceChild(newNavEl, navEl);
-        
+
         // Add click handler for completed steps
         if (idx < activeIndex) {
             newNavEl.addEventListener('click', () => {
@@ -47,23 +47,23 @@ export async function goToStep(stepKey) {
         const response = await fetch(`/wizard/sessions/${state.sessionId}/go-to/${stepKey}`, {
             method: 'POST'
         });
-        
+
         if (!response.ok) {
             const errData = await response.json();
             throw new Error(errData.detail || 'Failed to navigate to step.');
         }
-        
+
         const data = await response.json();
-        
+
         // Update local state from server response
         state.currentStep = data.current_step;
         state.selectedMethod = data.selected_method || '';
         state.activeFilters = data.filters_config || [];
         state.selectedPlots = data.selected_plots || [];
-        
+
         // Re-render UI for the target step
         navigateToStep(data.current_step);
-        
+
         // Restore step-specific UI state
         if (stepKey === 'filters') {
             renderActiveFilters();

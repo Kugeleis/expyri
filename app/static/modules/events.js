@@ -37,7 +37,7 @@ export function initEventListeners() {
                 if (els.subgroupsSearch) {
                     els.subgroupsSearch.value = '';
                 }
-                
+
                 // Clean active filters panel
                 renderActiveFilters();
                 els.plotsDisplay.innerHTML = '<span class="no-plots-msg">No plots generated yet.</span>';
@@ -49,12 +49,12 @@ export function initEventListeners() {
                 els.datasetDetails.classList.add('hidden');
                 els.subgroupsSection.classList.add('hidden');
                 els.subgroupsList.innerHTML = '';
-                
+
                 await startNewSession();
             }
         });
     }
-    
+
     // Toast close
     if (els.btnToastClose) {
         els.btnToastClose.addEventListener('click', () => {
@@ -160,11 +160,11 @@ export function initEventListeners() {
                 }
 
                 const dataset = await response.json();
-                
+
                 state.selectedDatasetId = dataset.id;
                 state.selectedDatasetColumns = dataset.columns;
                 els.detailDesc.textContent = dataset.description;
-                
+
                 // Populate group and value columns
                 els.groupColSelect.innerHTML = '';
                 els.valueColumnsList.innerHTML = '';
@@ -215,7 +215,7 @@ export function initEventListeners() {
             }
         });
     }
-    
+
     // Step 1: Submit dataset
     if (els.btnStep1Next) {
         els.btnStep1Next.addEventListener('click', async () => {
@@ -228,18 +228,18 @@ export function initEventListeners() {
                     selected_value_columns: selectedCols,
                     selected_groups: Array.from(state.selectedGroups)
                 };
-                
+
                 const response = await fetch(`/wizard/sessions/${state.sessionId}/dataset`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
-                
+
                 if (!response.ok) {
                     const errData = await response.json();
                     throw new Error(errData.detail || 'Failed to select dataset.');
                 }
-                
+
                 const data = await response.json();
                 navigateToStep(data.current_step);
             } catch (err) {
@@ -267,15 +267,15 @@ export function initEventListeners() {
         els.btnAddFilterAction.addEventListener('click', () => {
             const type = els.filterType.value;
             const col = els.filterCol.value;
-            
+
             if (!col) return;
-            
+
             let filterObj = { name: type, params: { column: col } };
-            
+
             if (type === 'numeric_range') {
                 const min = els.filterNumMin.value ? parseFloat(els.filterNumMin.value) : null;
                 const max = els.filterNumMax.value ? parseFloat(els.filterNumMax.value) : null;
-                
+
                 if (min === null && max === null) {
                     showError('You must specify at least a minimum or maximum value.');
                     return;
@@ -284,10 +284,10 @@ export function initEventListeners() {
                     showError('Minimum value cannot exceed maximum value.');
                     return;
                 }
-                
+
                 if (min !== null) filterObj.params.min = min;
                 if (max !== null) filterObj.params.max = max;
-                
+
                 // Clear inputs
                 els.filterNumMin.value = '';
                 els.filterNumMax.value = '';
@@ -297,21 +297,21 @@ export function initEventListeners() {
                     showError('Please input at least one categorical value.');
                     return;
                 }
-                
+
                 const values = valsStr.split(',').map(v => v.trim()).filter(v => v.length > 0);
                 filterObj.params.categories = values;
                 filterObj.params.exclude = els.filterCatExclude.checked;
-                
+
                 // Clear inputs
                 els.filterCatValues.value = '';
                 els.filterCatExclude.checked = false;
             }
-            
+
             state.activeFilters.push(filterObj);
             renderActiveFilters();
         });
     }
-    
+
     // Step 2: Submit filters
     if (els.btnStep2Next) {
         els.btnStep2Next.addEventListener('click', async () => {
@@ -321,14 +321,14 @@ export function initEventListeners() {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ filters_config: state.activeFilters })
                 });
-                
+
                 if (!response.ok) {
                     const errData = await response.json();
                     throw new Error(errData.detail || 'Filter configuration failed validation.');
                 }
-                
+
                 const data = await response.json();
-                
+
                 // Immediately fetch applicable methods for step 3
                 await fetchApplicableMethods();
                 navigateToStep(data.current_step);
@@ -347,14 +347,14 @@ export function initEventListeners() {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ selected_method: state.selectedMethod })
                 });
-                
+
                 if (!response.ok) {
                     const errData = await response.json();
                     throw new Error(errData.detail || 'Method selection rejected.');
                 }
-                
+
                 const data = await response.json();
-                
+
                 // Execute results immediately to show in Step 4
                 await executeStatisticalMethod();
                 navigateToStep(data.current_step);
@@ -385,12 +385,12 @@ export function initEventListeners() {
                         top_n_columns: state.plotsTopN
                     })
                 });
-                
+
                 if (!response.ok) {
                     const errData = await response.json();
                     throw new Error(errData.detail || 'Failed to register selected plots.');
                 }
-                
+
                 const data = await response.json();
                 navigateToStep(data.current_step);
             } catch (err) {
@@ -425,18 +425,18 @@ export function initEventListeners() {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ export_format: state.selectedExportFormat })
                 });
-                
+
                 if (!response.ok) {
                     const errData = await response.json();
                     throw new Error(errData.detail || 'Export compilation failed.');
                 }
-                
+
                 // Trigger browser download dialog
                 const blob = await response.blob();
                 const url = window.URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                
+
                 // Extract filename from headers if possible
                 const disposition = response.headers.get('content-disposition');
                 let filename = `experiment_report.${state.selectedExportFormat}`;
@@ -447,7 +447,7 @@ export function initEventListeners() {
                         filename = matches[1].replace(/['"]/g, '');
                     }
                 }
-                
+
                 a.download = filename;
                 document.body.appendChild(a);
                 a.click();

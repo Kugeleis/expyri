@@ -61,5 +61,3 @@ tasks:
     desc: Bump application version using bump-my-version (e.g. task bump -- patch)
     cmds:
       - uv run bump-my-version bump {{.CLI_ARGS}}
-
-

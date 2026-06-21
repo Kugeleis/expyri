@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+
 from app.main import app
+
 
 def main() -> None:
     # Ensure target directories exist
@@ -13,7 +15,7 @@ def main() -> None:
 
     # Generate openapi.json
     openapi_data = app.openapi()
-    
+
     # Save the OpenAPI schema
     openapi_file = api_dir / "openapi.json"
     openapi_file.write_text(json.dumps(openapi_data, indent=2))
@@ -57,6 +59,7 @@ def main() -> None:
     html_file = api_dir / "index.html"
     html_file.write_text(redoc_html)
     print(f"Generated {html_file}")
+
 
 if __name__ == "__main__":
     main()
