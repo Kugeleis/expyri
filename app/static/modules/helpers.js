@@ -5,7 +5,7 @@ export function showError(message) {
     if (!els.toastMsg || !els.errorToast) return;
     els.toastMsg.textContent = message;
     els.errorToast.classList.remove('hidden');
-    
+
     // Automatically hide after 5 seconds
     setTimeout(() => {
         els.errorToast.classList.add('hidden');
@@ -18,10 +18,10 @@ export function setSessionStatus(text, type) {
     const textEl = els.sessionInfo.querySelector('.text');
     const dotEl = els.sessionInfo.querySelector('.dot');
     if (textEl) textEl.textContent = text;
-    
+
     if (dotEl) {
-        dotEl.style.backgroundColor = 
-            type === 'active' ? 'var(--success-green)' : 
+        dotEl.style.backgroundColor =
+            type === 'active' ? 'var(--success-green)' :
             type === 'waiting' ? 'orange' : 'red';
     }
 }

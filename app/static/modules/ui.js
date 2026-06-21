@@ -9,12 +9,12 @@ export function renderActiveFilters() {
         els.activeFilters.innerHTML = '<p class="no-filters-msg">No filters configured. Click below to add a filter, or proceed directly.</p>';
         return;
     }
-    
+
     els.activeFilters.innerHTML = '';
     state.activeFilters.forEach((filter, idx) => {
         const badge = document.createElement('div');
         badge.className = 'filter-badge';
-        
+
         let descText = '';
         if (filter.name === 'numeric_range') {
             const hasMin = filter.params.min !== undefined;
@@ -34,14 +34,14 @@ export function renderActiveFilters() {
             </div>
             <button class="btn-remove-filter" data-index="${idx}">&times;</button>
         `;
-        
+
         // Remove handler
         badge.querySelector('.btn-remove-filter').addEventListener('click', (e) => {
             const removeIdx = parseInt(e.target.dataset.index);
             state.activeFilters.splice(removeIdx, 1);
             renderActiveFilters();
         });
-        
+
         els.activeFilters.appendChild(badge);
     });
 }
@@ -54,11 +54,11 @@ export function sortResults(field) {
         state.sortColumn = field;
         state.sortAsc = true;
     }
-    
+
     state.statResults.sort((a, b) => {
         let valA = a[field];
         let valB = b[field];
-        
+
         // Keep null/undefined values always at the bottom of the table
         if (valA === null || valA === undefined) {
             if (valB === null || valB === undefined) return 0;
@@ -67,7 +67,7 @@ export function sortResults(field) {
         if (valB === null || valB === undefined) {
             return -1;
         }
-        
+
         if (typeof valA === 'number' && typeof valB === 'number') {
             return state.sortAsc ? valA - valB : valB - valA;
         } else {
@@ -79,7 +79,7 @@ export function sortResults(field) {
             return 0;
         }
     });
-    
+
     renderResultsTable();
 }
 
@@ -99,10 +99,10 @@ export function renderResultsTable() {
 
     const table = document.createElement('table');
     table.className = 'results-table striped';
-    
+
     const thead = document.createElement('thead');
     const tr = document.createElement('tr');
-    
+
     const headers = [
         { label: 'Column', field: 'column_name' },
         { label: 'Method', field: 'method_name' },
@@ -110,27 +110,27 @@ export function renderResultsTable() {
         { label: 'p-value', field: 'p_value' },
         { label: 'Effect Size', field: 'effect_size' }
     ];
-    
+
     headers.forEach(h => {
         const th = document.createElement('th');
         th.setAttribute('scope', 'col');
         th.style.cursor = 'pointer';
         th.style.userSelect = 'none';
         th.dataset.field = h.field;
-        
+
         let indicator = '';
         if (state.sortColumn === h.field) {
             indicator = state.sortAsc ? ' ▲' : ' ▼';
         }
         th.textContent = h.label + indicator;
-        
+
         th.addEventListener('click', () => {
             sortResults(h.field);
         });
-        
+
         tr.appendChild(th);
     });
-    
+
     thead.appendChild(tr);
     table.appendChild(thead);
 
@@ -155,21 +155,21 @@ export function renderResultsTable() {
 export function updatePlotsFilter() {
     const filterInput = els.plotsSigFilter;
     if (!filterInput) return;
-    
+
     let threshold = parseFloat(filterInput.value);
     if (isNaN(threshold) || threshold < 0) {
         threshold = 0.05;
     }
-    
+
     const matchingResults = state.statResults.filter(res => res.p_value !== null && res.p_value !== undefined && res.p_value <= threshold);
     const count = matchingResults.length;
-    
+
     state.plotsTopN = count;
-    
+
     if (els.filteredPlotsCounter) {
         els.filteredPlotsCounter.textContent = `Matches ${count} variable${count !== 1 ? 's' : ''}`;
     }
-    
+
     // Update step 5 plots count if needed
     updatePlotsCounter();
 }
@@ -179,11 +179,11 @@ export function updatePlotsCounter() {
     const numVariables = state.plotsTopN;
     const numPlots = state.selectedPlots.length;
     const totalPlots = numVariables * numPlots;
-    
+
     if (els.plotsGenerationCounter) {
         els.plotsGenerationCounter.textContent = `Will generate ${totalPlots} plot${totalPlots !== 1 ? 's' : ''} (${numVariables} variable${numVariables !== 1 ? 's' : ''} × ${numPlots} plot type${numPlots !== 1 ? 's' : ''})`;
     }
-    
+
     if (els.btnGeneratePlots) {
         els.btnGeneratePlots.disabled = totalPlots === 0;
     }
@@ -195,24 +195,24 @@ export function updateValueColumnsList() {
     const filterText = (els.valueColSearch?.value || '').toLowerCase().trim();
 
     els.valueColumnsList.innerHTML = '';
-    
+
     let hasNumeric = false;
     let hasVisibleNumeric = false;
-    
+
     state.selectedDatasetColumns.forEach(col => {
         if (col.is_numeric && col.name !== selectedGroupCol) {
             hasNumeric = true;
-            
+
             // Check if column name matches filter text
             if (filterText && !col.name.toLowerCase().includes(filterText)) {
                 return;
             }
-            
+
             hasVisibleNumeric = true;
-            
+
             const item = document.createElement('label');
             item.className = 'value-column-item';
-            
+
             const cb = document.createElement('input');
             cb.type = 'checkbox';
             cb.value = col.name;
@@ -225,22 +225,22 @@ export function updateValueColumnsList() {
                 }
                 validateStep1Next();
             });
-            
+
             const span = document.createElement('span');
             span.textContent = `${col.name} (${col.dtype})`;
-            
+
             item.appendChild(cb);
             item.appendChild(span);
             els.valueColumnsList.appendChild(item);
         }
     });
-    
+
     if (!hasNumeric) {
         els.valueColumnsList.innerHTML = '<span class="no-columns-msg" style="color: var(--text-secondary); font-size: 0.95rem;">No numeric columns available.</span>';
     } else if (!hasVisibleNumeric) {
         els.valueColumnsList.innerHTML = '<span class="no-columns-msg" style="color: var(--text-secondary); font-size: 0.95rem;">No columns match search.</span>';
     }
-    
+
     validateStep1Next();
 }
 
@@ -258,19 +258,19 @@ export function validateStep1Next() {
 export function renderSubgroupsList() {
     els.subgroupsList.innerHTML = '';
     const filterText = (els.subgroupsSearch?.value || '').toLowerCase().trim();
-    
+
     let hasVisibleGroups = false;
-    
+
     state.availableGroups.forEach(groupVal => {
         if (filterText && !groupVal.toLowerCase().includes(filterText)) {
             return;
         }
-        
+
         hasVisibleGroups = true;
-        
+
         const item = document.createElement('label');
         item.className = 'value-column-item';
-        
+
         const cb = document.createElement('input');
         cb.type = 'checkbox';
         cb.value = groupVal;
@@ -283,21 +283,21 @@ export function renderSubgroupsList() {
             }
             validateStep1Next();
         });
-        
+
         const span = document.createElement('span');
         span.textContent = groupVal;
-        
+
         item.appendChild(cb);
         item.appendChild(span);
         els.subgroupsList.appendChild(item);
     });
-    
+
     if (state.availableGroups.length === 0) {
         els.subgroupsList.innerHTML = '<span class="no-columns-msg" style="color: var(--text-secondary); font-size: 0.95rem;">No values available in this column.</span>';
     } else if (!hasVisibleGroups) {
         els.subgroupsList.innerHTML = '<span class="no-columns-msg" style="color: var(--text-secondary); font-size: 0.95rem;">No subgroups match search.</span>';
     }
-    
+
     els.subgroupsSection.classList.remove('hidden');
     validateStep1Next();
 }

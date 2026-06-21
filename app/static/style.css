@@ -6,24 +6,24 @@
     --pico-border-color: rgba(255, 255, 255, 0.06);
     --pico-color: #f1f3f9;
     --pico-muted-color: #9aa0a6;
-    
+
     /* Brand Accent Colors (Green Theme) */
     --pico-primary: #10b981;
     --pico-primary-hover: #059669;
     --pico-primary-border: #10b981;
     --pico-primary-background: rgba(16, 185, 129, 0.12);
-    
+
     /* Form Element Customizations */
     --pico-form-element-background-color: rgba(255, 255, 255, 0.02);
     --pico-form-element-border-color: rgba(255, 255, 255, 0.08);
     --pico-form-element-active-border-color: #10b981;
     --pico-form-element-focus-color: rgba(16, 185, 129, 0.12);
-    
+
     /* Semantic utility colors */
     --success-green: #10b981;
     --error-red: #ef4444;
     --accent-blue: #34d399; /* Lighter green gradient */
-    
+
     /* Global screen real estate optimization rules */
     --pico-spacing: 0.5rem;
     --pico-block-spacing-vertical: 0.75rem;
