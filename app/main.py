@@ -40,9 +40,7 @@ def create_app() -> FastAPI:
     application.include_router(router)
 
     # Mount static files at root
-    application.mount(
-        "/", StaticFiles(directory="app/static", html=True), name="static"
-    )
+    application.mount("/", StaticFiles(directory="app/static", html=True), name="static")
 
     # Register centralized exception handler for step transitions
     @application.exception_handler(StepGuardError)

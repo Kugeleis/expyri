@@ -38,11 +38,13 @@ class Anova(StatMethod):
             return False
 
         # All groups must be normal
-        if any(p_val <= 0.05 for p_val in data_properties.normality.values()):
+        if any(not res.is_normal for res in data_properties.normality.values()):
             return False
 
         # Homogeneous variance
-        return data_properties.variance_homogeneity > 0.05
+        if data_properties.variance_homogeneity is None:
+            return False
+        return data_properties.variance_homogeneity.equal_variances
 
     def run(self, groups: dict[str, list[float]]) -> StatResult:
         """Run the One-way ANOVA test.

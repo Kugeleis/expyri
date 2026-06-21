@@ -61,9 +61,7 @@ class Filter(ABC):
 filter_registry: Registry[Filter] = Registry("filter")
 
 
-def apply_filter_pipeline(
-    df: pd.DataFrame, filter_configs: list[dict[str, Any]]
-) -> pd.DataFrame:
+def apply_filter_pipeline(df: pd.DataFrame, filter_configs: list[dict[str, Any]]) -> pd.DataFrame:
     """Apply a sequence of filter configurations to a DataFrame.
 
     Each configuration is a dictionary specifying the filter "name"

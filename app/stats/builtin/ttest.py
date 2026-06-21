@@ -39,7 +39,7 @@ class TTestInd(StatMethod):
             return False
 
         # All groups must be approximately normal
-        return all(p_val > 0.05 for p_val in data_properties.normality.values())
+        return all(res.is_normal for res in data_properties.normality.values())
 
     def run(self, groups: dict[str, list[float]]) -> StatResult:
         """Run the independent t-test.
@@ -82,11 +82,7 @@ class TTestInd(StatMethod):
         pooled_se = float(np.sqrt(((n1 - 1) * v1 + (n2 - 1) * v2) / (n1 + n2 - 2)))
         effect_size = (m1 - m2) / pooled_se if pooled_se > 0 else 0.0
 
-        var_type = (
-            "equal variance assumed"
-            if equal_var
-            else "Welch's t-test (unequal variance)"
-        )
+        var_type = "equal variance assumed" if equal_var else "Welch's t-test (unequal variance)"
         summary = (
             f"Independent two-sample t-test ({var_type}) between "
             f"{g1_name!r} (mean={m1:.4f}, N={n1}) and "

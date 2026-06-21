@@ -96,18 +96,11 @@ class XptLoader:
         """Load a DataFrame from a SAS XPT file, decoding bytes."""
         df = pd.read_sas(path, format="xport")
         # Decode byte columns
-        df.columns = pd.Index(
-            [
-                col.decode("utf-8") if isinstance(col, bytes) else str(col)
-                for col in df.columns
-            ]
-        )
+        df.columns = pd.Index([col.decode("utf-8") if isinstance(col, bytes) else str(col) for col in df.columns])
         # Decode string data values if they are bytes
         for col in df.columns:
             if df[col].dtype == object:
-                df[col] = df[col].apply(
-                    lambda x: x.decode("utf-8") if isinstance(x, bytes) else x
-                )
+                df[col] = df[col].apply(lambda x: x.decode("utf-8") if isinstance(x, bytes) else x)
         return df
 
     def get_schema(self, path: Path) -> list[ColumnInfo]:

@@ -100,10 +100,7 @@ def test_e2e_wizard_flow(e2e_server: str) -> None:
     """
     with httpx.Client(base_url=e2e_server) as client:
         # Upload a dataset first
-        csv_content = (
-            b"group,value\nA,10.0\nA,10.5\nA,11.0\nA,10.2\nA,9.8\n"
-            b"B,12.0\nB,12.5\nB,13.0\nB,12.2\nB,11.8\n"
-        )
+        csv_content = b"group,value\nA,10.0\nA,10.5\nA,11.0\nA,10.2\nA,9.8\nB,12.0\nB,12.5\nB,13.0\nB,12.2\nB,11.8\n"
         files = {"file": ("uploaded_data.csv", csv_content, "text/csv")}
         resp = client.post("/wizard/upload", files=files)
         assert resp.status_code == 200

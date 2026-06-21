@@ -27,9 +27,7 @@ class PlotResult(BaseModel):
     )
 
     plot_type: str = Field(..., description="Type of the plot (e.g. boxplot).")
-    image_base64: str = Field(
-        ..., description="Base64 encoded string of the plot image."
-    )
+    image_base64: str = Field(..., description="Base64 encoded string of the plot image.")
     content_type: str = Field("image/png", description="MIME type of the image.")
 
 

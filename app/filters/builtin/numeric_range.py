@@ -65,16 +65,8 @@ class NumericRangeFilter(Filter):
                 msg = f"Parameter 'max' must be numeric, got {type(max_val).__name__}"
                 raise ValueError(msg)
 
-        if (
-            has_min
-            and has_max
-            and min_val is not None
-            and max_val is not None
-            and min_val > max_val
-        ):
-            msg = (
-                f"Parameter 'min' ({min_val}) cannot be greater than 'max' ({max_val})."
-            )
+        if has_min and has_max and min_val is not None and max_val is not None and min_val > max_val:
+            msg = f"Parameter 'min' ({min_val}) cannot be greater than 'max' ({max_val})."
             raise ValueError(msg)
 
     def apply(self, df: pd.DataFrame, params: dict[str, Any]) -> pd.DataFrame:

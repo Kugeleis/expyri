@@ -87,10 +87,7 @@ def _completed_steps(session: WizardSession) -> set[WizardStep]:
         completed.add(WizardStep.DATASET_SELECTION)
     # Filters step is considered complete once dataset is chosen
     # (filters may be empty — that's a valid choice).
-    if (
-        session.dataset_id is not None
-        and session.current_step != WizardStep.DATASET_SELECTION.value
-    ):
+    if session.dataset_id is not None and session.current_step != WizardStep.DATASET_SELECTION.value:
         current_idx = _STEP_ORDER.index(WizardStep(session.current_step))
         filter_idx = _STEP_ORDER.index(WizardStep.FILTERS)
         if current_idx > filter_idx:
@@ -145,10 +142,7 @@ class StepGuardError(Exception):
         self.target = target
         self.missing = missing
         names = ", ".join(sorted(s.value for s in missing))
-        super().__init__(
-            f"Cannot advance to {target.value!r}: "
-            f"prerequisite steps not completed: {names}"
-        )
+        super().__init__(f"Cannot advance to {target.value!r}: prerequisite steps not completed: {names}")
 
 
 def validate_step_transition(session: WizardSession, target: WizardStep) -> None:

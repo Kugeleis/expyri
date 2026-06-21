@@ -73,21 +73,15 @@ class PdfExporter(Exporter):
         if stat_results:
             story.append(Paragraph("Statistical Analysis Results", styles["Heading2"]))
             for res in stat_results:
-                story.append(
-                    Paragraph(f"<b>Column:</b> {res.column_name}", styles["Heading3"])
-                )
-                story.append(
-                    Paragraph(f"<b>Method:</b> {res.method_name}", styles["BodyText"])
-                )
+                story.append(Paragraph(f"<b>Column:</b> {res.column_name}", styles["Heading3"]))
+                story.append(Paragraph(f"<b>Method:</b> {res.method_name}", styles["BodyText"]))
                 story.append(
                     Paragraph(
                         f"<b>Test Statistic:</b> {res.test_statistic:.4f}",
                         styles["BodyText"],
                     )
                 )
-                story.append(
-                    Paragraph(f"<b>p-value:</b> {res.p_value:.4f}", styles["BodyText"])
-                )
+                story.append(Paragraph(f"<b>p-value:</b> {res.p_value:.4f}", styles["BodyText"]))
                 if res.effect_size is not None:
                     story.append(
                         Paragraph(

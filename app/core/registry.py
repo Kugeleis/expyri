@@ -97,9 +97,7 @@ class Registry[T]:
         common: set[str] | None = None
         for props in properties_map.values():
             plugin_names = set(
-                self.get_applicable(
-                    **(props.model_dump() if hasattr(props, "model_dump") else props)
-                ).keys()
+                self.get_applicable(**(props.model_dump() if hasattr(props, "model_dump") else props)).keys()
             )
             common = plugin_names if common is None else common & plugin_names
             if not common:
@@ -121,9 +119,7 @@ class Registry[T]:
         """
         result: dict[str, T] = {}
         for name, plugin in self._plugins.items():
-            if isinstance(plugin, Applicable) and not plugin.is_applicable(
-                **properties
-            ):
+            if isinstance(plugin, Applicable) and not plugin.is_applicable(**properties):
                 continue
             result[name] = plugin
         return result

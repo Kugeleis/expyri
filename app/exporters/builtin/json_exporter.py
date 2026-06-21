@@ -47,10 +47,7 @@ class JsonExporter(Exporter):
         data: dict[str, Any] = {
             "dataset": df.to_dict(orient="records"),
             "statistical_results": [r.model_dump() for r in stat_results],
-            "plots": [
-                {"plot_type": p.plot_type, "image_base64": p.image_base64}
-                for p in plots
-            ],
+            "plots": [{"plot_type": p.plot_type, "image_base64": p.image_base64} for p in plots],
         }
 
         json_str = json.dumps(data, indent=2)
