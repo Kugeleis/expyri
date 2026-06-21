@@ -297,7 +297,7 @@ body {
     border: 1px solid var(--pico-border-color);
     border-radius: 10px;
     padding: 0.85rem 1rem;
-    max-height: 180px;
+    max-height: 320px;
     overflow-y: auto;
     display: flex;
     flex-direction: column;

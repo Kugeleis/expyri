@@ -348,3 +348,28 @@ def test_wizard_go_to_uncompleted_step_fails(client: TestClient) -> None:
     resp = client.post(f"/wizard/sessions/{session_id}/go-to/stat_method")
     assert resp.status_code == 400
     assert "prerequisite" in resp.json()["detail"]
+
+
+def test_select_dataset_numeric_group_column_fails(client: TestClient) -> None:
+    """Selecting a numeric column as group column returns 400."""
+    # Upload dataset via endpoint
+    csv_content = b"group,value\n1.0,10.0\n1.0,10.5\n2.0,11.0\n2.0,10.2\n"
+    files = {"file": ("uploaded_numeric_group.csv", csv_content, "text/csv")}
+    resp = client.post("/wizard/upload", files=files)
+    assert resp.status_code == 200
+
+    # Create session
+    resp = client.post("/wizard/sessions")
+    session_id = resp.json()["session_id"]
+
+    # Try to select numeric 'group' column (which is float64) as grouping column
+    resp = client.post(
+        f"/wizard/sessions/{session_id}/dataset",
+        json={
+            "dataset_id": "uploaded_numeric_group",
+            "group_column": "group",
+            "selected_value_columns": ["value"],
+        },
+    )
+    assert resp.status_code == 400
+    assert "must be discrete/categorical, but it is numeric" in resp.json()["detail"]

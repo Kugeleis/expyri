@@ -10,6 +10,7 @@ const state = {
     currentStep: 'dataset_selection',
     selectedDatasetId: '',
     selectedDatasetColumns: [],
+    selectedValueColumns: new Set(),
     activeFilters: [],
     applicableMethods: [],
     selectedMethod: '',
@@ -26,6 +27,7 @@ const els = {
     datasetDetails: document.getElementById('dataset-details'),
     detailDesc: document.getElementById('detail-desc'),
     groupColSelect: document.getElementById('group-col-select'),
+    valueColSearch: document.getElementById('value-col-search'),
     valueColumnsList: document.getElementById('value-columns-list'),
     btnStep1Next: document.getElementById('btn-step-1-next'),
     
@@ -210,6 +212,10 @@ function initEventListeners() {
             state.activeFilters = [];
             state.selectedMethod = '';
             state.selectedPlots = [];
+            state.selectedValueColumns = new Set();
+            if (els.valueColSearch) {
+                els.valueColSearch.value = '';
+            }
             
             // Clean active filters panel
             renderActiveFilters();
@@ -231,8 +237,18 @@ function initEventListeners() {
     });
 
     els.groupColSelect.addEventListener('change', () => {
+        const selectedGroupCol = els.groupColSelect.value;
+        if (selectedGroupCol) {
+            state.selectedValueColumns.delete(selectedGroupCol);
+        }
         updateValueColumnsList();
     });
+
+    if (els.valueColSearch) {
+        els.valueColSearch.addEventListener('input', () => {
+            updateValueColumnsList();
+        });
+    }
 
     const selectAllBtn = document.getElementById('btn-select-all-cols');
     const deselectAllBtn = document.getElementById('btn-deselect-all-cols');
@@ -240,7 +256,10 @@ function initEventListeners() {
     if (selectAllBtn) {
         selectAllBtn.addEventListener('click', () => {
             const checkboxes = els.valueColumnsList.querySelectorAll('input[type="checkbox"]');
-            checkboxes.forEach(cb => cb.checked = true);
+            checkboxes.forEach(cb => {
+                cb.checked = true;
+                state.selectedValueColumns.add(cb.value);
+            });
             validateStep1Next();
         });
     }
@@ -248,7 +267,10 @@ function initEventListeners() {
     if (deselectAllBtn) {
         deselectAllBtn.addEventListener('click', () => {
             const checkboxes = els.valueColumnsList.querySelectorAll('input[type="checkbox"]');
-            checkboxes.forEach(cb => cb.checked = false);
+            checkboxes.forEach(cb => {
+                cb.checked = false;
+                state.selectedValueColumns.delete(cb.value);
+            });
             validateStep1Next();
         });
     }
@@ -288,14 +310,31 @@ function initEventListeners() {
             els.filterCol.innerHTML = '';
 
             dataset.columns.forEach(col => {
-                const opt1 = document.createElement('option');
-                opt1.value = col.name;
-                opt1.textContent = `${col.name} (${col.dtype})`;
-                els.groupColSelect.appendChild(opt1);
+                if (col.is_discrete) {
+                    const opt1 = document.createElement('option');
+                    opt1.value = col.name;
+                    opt1.textContent = `${col.name} (${col.dtype})`;
+                    els.groupColSelect.appendChild(opt1);
+                }
 
-                const opt3 = opt1.cloneNode(true);
+                const opt3 = document.createElement('option');
+                opt3.value = col.name;
+                opt3.textContent = `${col.name} (${col.dtype})`;
                 els.filterCol.appendChild(opt3);
             });
+
+            // Initialize state.selectedValueColumns
+            state.selectedValueColumns = new Set();
+            const selectedGroupCol = els.groupColSelect.value;
+            dataset.columns.forEach(col => {
+                if (col.is_numeric && col.name !== selectedGroupCol) {
+                    state.selectedValueColumns.add(col.name);
+                }
+            });
+
+            if (els.valueColSearch) {
+                els.valueColSearch.value = '';
+            }
 
             updateValueColumnsList();
 
@@ -317,8 +356,7 @@ function initEventListeners() {
     // Step 1: Submit dataset
     els.btnStep1Next.addEventListener('click', async () => {
         try {
-            const checkedBoxes = els.valueColumnsList.querySelectorAll('input[type="checkbox"]:checked');
-            const selectedCols = Array.from(checkedBoxes).map(cb => cb.value);
+            const selectedCols = Array.from(state.selectedValueColumns);
 
             const payload = {
                 dataset_id: state.selectedDatasetId,
@@ -807,39 +845,34 @@ function showError(message) {
 }
 
 // Helpers for Multi-column select checklist
-function isNumericDtype(dtype) {
-    if (!dtype) return false;
-    const lower = dtype.toLowerCase();
-    return lower.startsWith('int') || lower.startsWith('uint') || lower.startsWith('float') || lower.startsWith('double') || lower === 'number';
+// Helpers for Multi-column select checklist
+function isNumericDtype(col) {
+    return col && col.is_numeric;
+}
+
+function isDiscreteDtype(col) {
+    return col && col.is_discrete;
 }
 
 function updateValueColumnsList() {
     const selectedGroupCol = els.groupColSelect.value;
-    
-    // Remember which ones were checked before
-    const previouslyChecked = new Set();
-    const checkboxes = els.valueColumnsList.querySelectorAll('input[type="checkbox"]');
-    if (checkboxes.length > 0) {
-        checkboxes.forEach(cb => {
-            if (cb.checked) {
-                previouslyChecked.add(cb.value);
-            }
-        });
-    } else {
-        // First time populating, check all by default
-        state.selectedDatasetColumns.forEach(col => {
-            if (isNumericDtype(col.dtype) && col.name !== selectedGroupCol) {
-                previouslyChecked.add(col.name);
-            }
-        });
-    }
+    const filterText = (els.valueColSearch?.value || '').toLowerCase().trim();
 
     els.valueColumnsList.innerHTML = '';
     
     let hasNumeric = false;
+    let hasVisibleNumeric = false;
+    
     state.selectedDatasetColumns.forEach(col => {
-        if (isNumericDtype(col.dtype) && col.name !== selectedGroupCol) {
+        if (col.is_numeric && col.name !== selectedGroupCol) {
             hasNumeric = true;
+            
+            // Check if column name matches filter text
+            if (filterText && !col.name.toLowerCase().includes(filterText)) {
+                return;
+            }
+            
+            hasVisibleNumeric = true;
             
             const item = document.createElement('label');
             item.className = 'value-column-item';
@@ -847,8 +880,15 @@ function updateValueColumnsList() {
             const cb = document.createElement('input');
             cb.type = 'checkbox';
             cb.value = col.name;
-            cb.checked = previouslyChecked.has(col.name);
-            cb.addEventListener('change', validateStep1Next);
+            cb.checked = state.selectedValueColumns.has(col.name);
+            cb.addEventListener('change', (e) => {
+                if (e.target.checked) {
+                    state.selectedValueColumns.add(col.name);
+                } else {
+                    state.selectedValueColumns.delete(col.name);
+                }
+                validateStep1Next();
+            });
             
             const span = document.createElement('span');
             span.textContent = `${col.name} (${col.dtype})`;
@@ -861,6 +901,8 @@ function updateValueColumnsList() {
     
     if (!hasNumeric) {
         els.valueColumnsList.innerHTML = '<span class="no-columns-msg" style="color: var(--text-secondary); font-size: 0.95rem;">No numeric columns available.</span>';
+    } else if (!hasVisibleNumeric) {
+        els.valueColumnsList.innerHTML = '<span class="no-columns-msg" style="color: var(--text-secondary); font-size: 0.95rem;">No columns match search.</span>';
     }
     
     validateStep1Next();
@@ -868,9 +910,7 @@ function updateValueColumnsList() {
 
 function validateStep1Next() {
     const selectedGroupCol = els.groupColSelect.value;
-    const checkedBoxes = els.valueColumnsList.querySelectorAll('input[type="checkbox"]:checked');
-    
-    if (!selectedGroupCol || checkedBoxes.length === 0) {
+    if (!selectedGroupCol || state.selectedValueColumns.size === 0) {
         els.btnStep1Next.disabled = true;
     } else {
         els.btnStep1Next.disabled = false;

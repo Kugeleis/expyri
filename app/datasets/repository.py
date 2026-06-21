@@ -76,6 +76,8 @@ class CsvLoader:
             ColumnInfo(
                 name=str(col),
                 dtype=str(df[col].dtype),
+                is_numeric=bool(pd.api.types.is_numeric_dtype(df[col])),
+                is_discrete=bool(not pd.api.types.is_numeric_dtype(df[col])),
                 nullable=True,
             )
             for col in df.columns
@@ -115,6 +117,8 @@ class XptLoader:
             ColumnInfo(
                 name=str(col),
                 dtype=str(df[col].dtype),
+                is_numeric=bool(pd.api.types.is_numeric_dtype(df[col])),
+                is_discrete=bool(not pd.api.types.is_numeric_dtype(df[col])),
                 nullable=True,
             )
             for col in df.columns
@@ -164,6 +168,8 @@ class HdfLoader:
             ColumnInfo(
                 name=str(col),
                 dtype=str(df[col].dtype),
+                is_numeric=bool(pd.api.types.is_numeric_dtype(df[col])),
+                is_discrete=bool(not pd.api.types.is_numeric_dtype(df[col])),
                 nullable=True,
             )
             for col in df.columns
@@ -190,6 +196,8 @@ class ParquetLoader:
             ColumnInfo(
                 name=str(col),
                 dtype=str(df[col].dtype),
+                is_numeric=bool(pd.api.types.is_numeric_dtype(df[col])),
+                is_discrete=bool(not pd.api.types.is_numeric_dtype(df[col])),
                 nullable=True,
             )
             for col in df.columns

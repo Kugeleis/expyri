@@ -194,11 +194,21 @@ def select_dataset(
             detail=f"Dataset {req.dataset_id!r} not found",
         ) from None
 
-    column_names = {col.name for col in schema.columns or []}
-    if req.group_column not in column_names:
+    group_col_info = next(
+        (col for col in schema.columns or [] if col.name == req.group_column), None
+    )
+    if not group_col_info:
         raise HTTPException(
             status_code=400,
             detail=f"Group column {req.group_column!r} not found in dataset schema",
+        )
+    if group_col_info.is_numeric:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                f"Group column {req.group_column!r} must be "
+                "discrete/categorical, but it is numeric."
+            ),
         )
     try:
         df = repo.load_dataset(req.dataset_id)
