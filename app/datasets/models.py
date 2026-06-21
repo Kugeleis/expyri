@@ -10,6 +10,8 @@ class ColumnInfo(BaseModel):
 
     name: str
     dtype: str
+    is_numeric: bool = False
+    is_discrete: bool = False
     nullable: bool = True
 
 

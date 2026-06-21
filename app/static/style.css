@@ -1,39 +1,65 @@
 :root {
-    --bg-dark: #0f1015;
-    --card-bg: rgba(22, 24, 33, 0.7);
-    --border-color: rgba(255, 255, 255, 0.08);
-    --text-primary: #f1f3f9;
-    --text-secondary: #9aa0a6;
-    --accent-purple: #8a2be2;
-    --accent-blue: #0070f3;
-    --accent-glow: rgba(138, 43, 226, 0.15);
-    --success-green: #00e676;
-    --error-red: #ff3d00;
-    --font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-}
-
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
+    /* Pico CSS Theme Overrides */
+    --pico-font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --pico-background-color: #0b0c10;
+    --pico-card-background-color: rgba(17, 20, 28, 0.85);
+    --pico-border-color: rgba(255, 255, 255, 0.06);
+    --pico-color: #f1f3f9;
+    --pico-muted-color: #9aa0a6;
+    
+    /* Brand Accent Colors (Green Theme) */
+    --pico-primary: #10b981;
+    --pico-primary-hover: #059669;
+    --pico-primary-border: #10b981;
+    --pico-primary-background: rgba(16, 185, 129, 0.12);
+    
+    /* Form Element Customizations */
+    --pico-form-element-background-color: rgba(255, 255, 255, 0.02);
+    --pico-form-element-border-color: rgba(255, 255, 255, 0.08);
+    --pico-form-element-active-border-color: #10b981;
+    --pico-form-element-focus-color: rgba(16, 185, 129, 0.12);
+    
+    /* Semantic utility colors */
+    --success-green: #10b981;
+    --error-red: #ef4444;
+    --accent-blue: #34d399; /* Lighter green gradient */
+    
+    /* Global screen real estate optimization rules */
+    --pico-spacing: 0.5rem;
+    --pico-block-spacing-vertical: 0.75rem;
+    --pico-block-spacing-horizontal: 1rem;
+    --pico-form-element-spacing-vertical: 0.4rem;
+    --pico-form-element-spacing-horizontal: 0.75rem;
 }
 
 body {
-    background-color: var(--bg-dark);
-    color: var(--text-primary);
-    font-family: var(--font-family);
     min-height: 100vh;
     overflow-x: hidden;
     position: relative;
+    font-family: var(--pico-font-family);
+}
+
+/* Global button and input density overrides */
+button, input[type="submit"], input[type="button"], a[role="button"] {
+    padding: 0.4rem 0.8rem !important;
+    font-size: 0.85rem !important;
+}
+
+input, select, textarea {
+    padding: 0.4rem 0.75rem !important;
+    font-size: 0.85rem !important;
+}
+
+label {
+    font-size: 0.8rem !important;
+    margin-bottom: 0.25rem !important;
 }
 
 /* Background Glow Effects */
 .glow-container {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
     z-index: -1;
     overflow: hidden;
     pointer-events: none;
@@ -43,155 +69,153 @@ body {
     position: absolute;
     border-radius: 50%;
     filter: blur(120px);
-    opacity: 0.35;
+    opacity: 0.25;
 }
 
 .glow-1 {
-    width: 400px;
-    height: 400px;
-    background: radial-gradient(circle, var(--accent-purple) 0%, transparent 70%);
-    top: -100px;
-    right: 5%;
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, var(--pico-primary) 0%, transparent 70%);
+    top: -100px; right: 5%;
 }
 
 .glow-2 {
-    width: 500px;
-    height: 500px;
+    width: 500px; height: 500px;
     background: radial-gradient(circle, var(--accent-blue) 0%, transparent 70%);
-    bottom: -150px;
-    left: 5%;
+    bottom: -150px; left: 5%;
 }
 
-/* App Container */
+/* App Container Layout */
 .app-container {
     display: flex;
     min-height: 100vh;
     width: 100%;
 }
 
-/* Sidebar Navigation */
 .sidebar {
-    width: 280px;
-    background-color: rgba(15, 16, 21, 0.85);
-    border-right: 1px solid var(--border-color);
-    padding: 2.5rem 1.5rem;
+    width: 220px;
+    background-color: rgba(11, 12, 16, 0.95);
+    border-right: 1px solid var(--pico-border-color);
+    padding: 1rem 0.75rem;
     display: flex;
     flex-direction: column;
-    gap: 2rem;
+    gap: 1rem;
     backdrop-filter: blur(10px);
 }
 
 .logo {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: 0.5rem;
 }
 
-.logo .icon {
-    font-size: 1.8rem;
-}
+.logo .icon { font-size: 1.4rem; }
 
 .logo h1 {
-    font-size: 1.5rem;
+    font-size: 1.3rem;
     font-weight: 700;
     letter-spacing: -0.5px;
-    background: linear-gradient(135deg, #fff 0%, #b8c1ec 100%);
+    background: linear-gradient(135deg, #fff 0%, #a7f3d0 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
+    margin: 0;
 }
 
 .session-info {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    background-color: rgba(255, 255, 255, 0.03);
-    padding: 0.5rem 0.75rem;
-    border-radius: 8px;
-    border: 1px solid var(--border-color);
-    font-size: 0.8rem;
+    gap: 0.4rem;
+    background-color: rgba(255, 255, 255, 0.02);
+    padding: 0.35rem 0.5rem;
+    border-radius: 6px;
+    border: 1px solid var(--pico-border-color);
+    font-size: 0.75rem;
 }
 
 .session-info .dot {
-    width: 8px;
-    height: 8px;
+    width: 6px; height: 6px;
     border-radius: 50%;
     background-color: var(--success-green);
-    box-shadow: 0 0 8px var(--success-green);
+    box-shadow: 0 0 6px var(--success-green);
 }
 
 .session-info .text {
-    color: var(--text-secondary);
+    color: var(--pico-muted-color);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
+/* Step Navigation */
 .steps-nav {
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
-    margin-top: 1rem;
+    gap: 0.4rem;
+    margin-top: 0.5rem;
 }
 
 .step-nav-item {
     display: flex;
     align-items: center;
-    gap: 1rem;
-    padding: 0.85rem 1rem;
-    border-radius: 12px;
-    color: var(--text-secondary);
+    gap: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
+    color: var(--pico-muted-color);
     font-weight: 500;
-    font-size: 0.95rem;
+    font-size: 0.85rem;
     transition: all 0.3s ease;
     cursor: default;
     border: 1px solid transparent;
 }
 
 .step-nav-item .step-num {
-    width: 24px;
-    height: 24px;
+    width: 20px; height: 20px;
     border-radius: 50%;
-    background-color: rgba(255, 255, 255, 0.05);
-    border: 1px solid var(--border-color);
+    background-color: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--pico-border-color);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     font-weight: 600;
-    transition: all 0.3s ease;
 }
 
 .step-nav-item.active {
-    color: var(--text-primary);
-    background-color: rgba(255, 255, 255, 0.04);
-    border-color: var(--border-color);
+    color: var(--pico-color);
+    background-color: rgba(255, 255, 255, 0.03);
+    border-color: var(--pico-border-color);
 }
 
 .step-nav-item.active .step-num {
-    background-color: var(--accent-purple);
-    border-color: var(--accent-purple);
+    background-color: var(--pico-primary);
+    border-color: var(--pico-primary);
     color: white;
-    box-shadow: 0 0 12px rgba(138, 43, 226, 0.4);
+    box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
 }
 
 .step-nav-item.completed {
-    color: var(--text-secondary);
+    color: var(--pico-muted-color);
+    cursor: pointer;
 }
 
 .step-nav-item.completed .step-num {
-    background-color: rgba(0, 230, 118, 0.15);
+    background-color: rgba(16, 185, 129, 0.12);
     border-color: var(--success-green);
     color: var(--success-green);
 }
 
-/* Main Workspace */
+.step-nav-item.completed:hover {
+    background: rgba(255, 255, 255, 0.05);
+    transform: translateX(2px);
+}
+
+/* Workspace Layout */
 .main-content {
     flex: 1;
-    padding: 3rem 4rem;
+    padding: 1rem 1.5rem;
     display: flex;
     flex-direction: column;
-    gap: 2rem;
-    max-width: 1200px;
+    gap: 1rem;
+    max-width: 100%;
 }
 
 .main-header {
@@ -201,673 +225,138 @@ body {
 }
 
 .main-header h2 {
-    font-size: 1.8rem;
+    font-size: 1.4rem;
     font-weight: 600;
+    margin: 0;
 }
 
 .card-workspace {
-    background-color: var(--card-bg);
-    border: 1px solid var(--border-color);
-    border-radius: 20px;
-    padding: 2.5rem;
+    background-color: var(--pico-card-background-color);
+    border: 1px solid var(--pico-border-color);
+    border-radius: 12px;
+    padding: 1.25rem;
     backdrop-filter: blur(12px);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-    min-height: 500px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    min-height: 400px;
     display: flex;
     flex-direction: column;
+    margin: 0;
 }
 
 .step-panel {
     display: none;
     flex-direction: column;
-    gap: 1.5rem;
+    gap: 0.75rem;
     flex: 1;
 }
 
-.step-panel.active {
-    display: flex;
-}
+.step-panel.active { display: flex; }
 
 .step-panel h3 {
-    font-size: 1.4rem;
+    font-size: 1.15rem;
     font-weight: 600;
+    margin-bottom: 0.25rem;
 }
 
 .step-desc {
-    color: var(--text-secondary);
-    font-size: 0.95rem;
-    line-height: 1.5;
-}
-
-/* Form Controls */
-.form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-}
-
-.form-group label {
+    color: var(--pico-muted-color);
     font-size: 0.85rem;
-    font-weight: 550;
-    color: var(--text-secondary);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.form-control {
-    background-color: rgba(255, 255, 255, 0.03);
-    border: 1px solid var(--border-color);
-    border-radius: 10px;
-    padding: 0.85rem 1rem;
-    color: var(--text-primary);
-    font-family: var(--font-family);
-    font-size: 0.95rem;
-    outline: none;
-    transition: all 0.3s ease;
-}
-
-.form-control:focus {
-    border-color: var(--accent-purple);
-    background-color: rgba(255, 255, 255, 0.05);
-    box-shadow: 0 0 10px rgba(138, 43, 226, 0.2);
-}
-
-select.form-control option {
-    background-color: var(--bg-dark);
-    color: var(--text-primary);
-}
-
-.columns-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1.5rem;
-}
-
-/* Buttons */
-.btn {
-    font-family: var(--font-family);
-    font-size: 0.95rem;
-    font-weight: 550;
-    padding: 0.85rem 1.75rem;
-    border-radius: 10px;
-    border: 1px solid transparent;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.btn-primary {
-    background-color: var(--accent-purple);
-    color: white;
-    box-shadow: 0 4px 14px rgba(138, 43, 226, 0.3);
-}
-
-.btn-primary:hover:not(:disabled) {
-    background-color: #9d4edd;
-    box-shadow: 0 6px 20px rgba(138, 43, 226, 0.5);
-    transform: translateY(-1px);
-}
-
-.btn-primary:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-    box-shadow: none;
-}
-
-.btn-secondary {
-    background-color: rgba(255, 255, 255, 0.05);
-    color: var(--text-primary);
-    border-color: var(--border-color);
-}
-
-.btn-secondary:hover {
-    background-color: rgba(255, 255, 255, 0.1);
-    border-color: rgba(255, 255, 255, 0.2);
-}
-
-.btn-sm {
-    padding: 0.5rem 1rem;
-    font-size: 0.85rem;
-    border-radius: 8px;
+    line-height: 1.4;
 }
 
 .panel-actions {
     margin-top: auto;
-    padding-top: 2rem;
-    border-top: 1px solid var(--border-color);
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--pico-border-color);
     display: flex;
     justify-content: flex-end;
-    gap: 0.75rem;
+    gap: 0.5rem;
     align-items: center;
 }
 
-/* Dataset Details */
+.panel-actions button, .panel-actions a[role="button"] {
+    width: auto;
+    margin-bottom: 0;
+}
+
+/* Step 1: Column/Subgroup Checklists */
 .dataset-details {
-    background-color: rgba(255, 255, 255, 0.02);
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
-    padding: 1.5rem;
+    background-color: rgba(255, 255, 255, 0.01);
+    border: 1px solid var(--pico-border-color);
+    border-radius: 8px;
+    padding: 0.75rem;
     display: flex;
     flex-direction: column;
-    gap: 1.25rem;
+    gap: 0.75rem;
 }
 
-.details-meta {
-    font-size: 0.9rem;
-}
-
+.details-meta { font-size: 0.9rem; }
 .details-meta .label {
-    color: var(--text-secondary);
+    color: var(--pico-muted-color);
     margin-right: 0.5rem;
 }
 
-/* Filters Layout */
-.filters-container {
-    display: grid;
-    grid-template-columns: 1fr 1.2fr;
-    gap: 2rem;
-}
-
-.active-filters {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-    max-height: 350px;
-    overflow-y: auto;
-    padding-right: 0.5rem;
-}
-
-.no-filters-msg {
-    color: var(--text-secondary);
-    font-size: 0.9rem;
-    text-align: center;
-    margin: 3rem 0;
-    line-height: 1.6;
-}
-
-.filter-badge {
-    background-color: rgba(255, 255, 255, 0.03);
-    border: 1px solid var(--border-color);
-    border-radius: 10px;
-    padding: 0.75rem 1rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    transition: all 0.3s ease;
-}
-
-.filter-badge:hover {
-    background-color: rgba(255, 255, 255, 0.05);
-    border-color: rgba(255, 255, 255, 0.15);
-}
-
-.filter-info h5 {
-    font-size: 0.9rem;
-    font-weight: 600;
-}
-
-.filter-info p {
-    font-size: 0.8rem;
-    color: var(--text-secondary);
-    margin-top: 0.25rem;
-}
-
-.btn-remove-filter {
-    background: none;
-    border: none;
-    color: var(--text-secondary);
-    font-size: 1.2rem;
-    cursor: pointer;
-    padding: 0.25rem;
-    transition: color 0.3s ease;
-}
-
-.btn-remove-filter:hover {
-    color: var(--error-red);
-}
-
-.add-filter-card {
-    background-color: rgba(255, 255, 255, 0.02);
-    border: 1px solid var(--border-color);
-    border-radius: 15px;
-    padding: 1.5rem;
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-}
-
-.add-filter-card h4 {
-    font-size: 1rem;
-    font-weight: 600;
-}
-
-.filter-inputs {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;
-}
-
-.checkbox-group {
-    flex-direction: row;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.checkbox-group input {
-    cursor: pointer;
-    width: 16px;
-    height: 16px;
-}
-
-.checkbox-group label {
-    text-transform: none;
-    cursor: pointer;
-}
-
-/* Statistical Methods */
-.methods-list {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    max-height: 400px;
-    overflow-y: auto;
-    padding-right: 0.5rem;
-}
-
-.method-card {
-    background-color: rgba(255, 255, 255, 0.02);
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
-    padding: 1.25rem;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-}
-
-.method-card:hover {
-    background-color: rgba(255, 255, 255, 0.04);
-    border-color: rgba(255, 255, 255, 0.15);
-}
-
-.method-card.selected {
-    background-color: rgba(138, 43, 226, 0.05);
-    border-color: var(--accent-purple);
-    box-shadow: 0 0 15px rgba(138, 43, 226, 0.15);
-}
-
-.method-title {
-    font-size: 1.05rem;
-    font-weight: 600;
-}
-
-.method-desc {
-    font-size: 0.85rem;
-    color: var(--text-secondary);
-    line-height: 1.4;
-}
-
-/* Results Display */
-.results-card {
-    background-color: rgba(255, 255, 255, 0.02);
-    border: 1px solid var(--border-color);
-    border-radius: 15px;
-    padding: 2rem;
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-}
-
-.results-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid var(--border-color);
-    padding-bottom: 1rem;
-}
-
-.results-method-name {
-    font-size: 1.25rem;
-    font-weight: 600;
-    color: var(--accent-purple);
-}
-
-.results-status {
-    background-color: rgba(0, 230, 118, 0.1);
-    color: var(--success-green);
-    border: 1px solid rgba(0, 230, 118, 0.2);
-    padding: 0.25rem 0.75rem;
-    border-radius: 20px;
-    font-size: 0.75rem;
-    font-weight: 600;
-}
-
-.results-stats-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1.5rem;
-}
-
-.stat-box {
-    background-color: rgba(255, 255, 255, 0.02);
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
-    padding: 1.25rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-}
-
-.stat-box .stat-label {
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    color: var(--text-secondary);
-    letter-spacing: 0.5px;
-}
-
-.stat-box .stat-value {
-    font-size: 1.8rem;
-    font-weight: 700;
-    color: var(--text-primary);
-}
-
-.results-summary h4 {
-    font-size: 0.9rem;
-    text-transform: uppercase;
-    color: var(--text-secondary);
-    margin-bottom: 0.5rem;
-}
-
-.results-summary p {
-    font-size: 0.95rem;
-    line-height: 1.6;
-}
-
-/* Plots Step Layout */
-.plots-layout {
-    display: grid;
-    grid-template-columns: 280px 1fr;
-    gap: 2rem;
-}
-
-.plots-selector {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-}
-
-.plot-select-item {
-    background-color: rgba(255, 255, 255, 0.02);
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
-    padding: 1rem;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    transition: all 0.3s ease;
-}
-
-.plot-select-item:hover {
-    background-color: rgba(255, 255, 255, 0.04);
-}
-
-.plot-select-item input {
-    cursor: pointer;
-    width: 18px;
-    height: 18px;
-}
-
-.plot-select-item.selected {
-    border-color: var(--accent-purple);
-    background-color: rgba(138, 43, 226, 0.03);
-}
-
-.plot-select-info h5 {
-    font-size: 0.9rem;
-    font-weight: 600;
-}
-
-.plot-select-info p {
-    font-size: 0.75rem;
-    color: var(--text-secondary);
-    margin-top: 0.25rem;
-}
-
-.plots-display {
-    background-color: rgba(255, 255, 255, 0.02);
-    border: 1px solid var(--border-color);
-    border-radius: 15px;
-    padding: 1.5rem;
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
-    min-height: 300px;
-    align-items: center;
-    justify-items: center;
-}
-
-.plots-display img {
-    max-width: 100%;
-    height: auto;
-    border-radius: 10px;
-    border: 1px solid var(--border-color);
-}
-
-.no-plots-msg {
-    color: var(--text-secondary);
-    font-size: 0.9rem;
-}
-
-/* Exporters Grid */
-.exporters-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 1.5rem;
-}
-
-.exporter-card {
-    background-color: rgba(255, 255, 255, 0.02);
-    border: 1px solid var(--border-color);
-    border-radius: 15px;
-    padding: 2rem;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    gap: 1rem;
-}
-
-.exporter-card:hover {
-    background-color: rgba(255, 255, 255, 0.04);
-    border-color: rgba(255, 255, 255, 0.15);
-    transform: translateY(-2px);
-}
-
-.exporter-card.active {
-    border-color: var(--accent-purple);
-    background-color: rgba(138, 43, 226, 0.04);
-    box-shadow: 0 0 20px rgba(138, 43, 226, 0.15);
-}
-
-.exporter-icon {
-    font-size: 2.5rem;
-}
-
-.exporter-card h4 {
-    font-size: 1.1rem;
-    font-weight: 600;
-}
-
-.exporter-card p {
-    font-size: 0.8rem;
-    color: var(--text-secondary);
-    line-height: 1.5;
-}
-
-/* Toast System */
-.toast {
-    position: fixed;
-    bottom: 2rem;
-    right: 2rem;
-    background-color: #1a1515;
-    border: 1px solid rgba(255, 61, 0, 0.3);
-    border-radius: 10px;
-    padding: 1rem 1.5rem;
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
-    z-index: 1000;
-    animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.toast-message {
-    font-size: 0.9rem;
-    color: var(--text-primary);
-}
-
-.toast-close {
-    background: none;
-    border: none;
-    color: var(--text-secondary);
-    font-size: 1.2rem;
-    cursor: pointer;
-    transition: color 0.3s ease;
-}
-
-.toast-close:hover {
-    color: var(--text-primary);
-}
-
-/* Utils classes */
-.hidden {
-    display: none !important;
-}
-
-@keyframes slideIn {
-    from {
-        transform: translateY(100px);
-        opacity: 0;
-    }
-    to {
-        transform: translateY(0);
-        opacity: 1;
-    }
-}
-
-/* Back navigation */
-.btn-back {
-    background: transparent;
-    color: var(--text-secondary);
-    border: 1px solid var(--border-subtle);
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.btn-back:hover {
-    color: var(--text-primary);
-    border-color: var(--text-primary);
-    background: rgba(255, 255, 255, 0.05);
-}
-
-.step-nav-item.completed {
-    cursor: pointer;
-}
-
-.step-nav-item.completed:hover {
-    background: rgba(255, 255, 255, 0.08);
-    transform: translateX(2px);
-}
-
-.results-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 15px;
-}
-.results-table th, .results-table td {
-    padding: 10px;
-    border: 1px solid #ddd;
-    text-align: left;
-}
-.results-table th {
-    background-color: #f4f4f4;
-}
-
-/* Value Columns Checklist */
 .value-columns-list {
-    background-color: rgba(255, 255, 255, 0.03);
-    border: 1px solid var(--border-color);
-    border-radius: 10px;
-    padding: 0.85rem 1rem;
-    max-height: 180px;
+    background-color: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--pico-border-color);
+    border-radius: 8px;
+    padding: 0.5rem 0.75rem;
+    max-height: 380px;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
+    gap: 0.4rem;
 }
 
 .value-column-item {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: 0.5rem;
     cursor: pointer;
-    padding: 0.25rem 0;
+    padding: 0.15rem 0;
     transition: color 0.2s ease;
 }
 
-.value-column-item:hover {
-    color: var(--text-primary);
-}
-
+.value-column-item:hover { color: var(--pico-color); }
 .value-column-item input[type="checkbox"] {
     cursor: pointer;
-    width: 16px;
-    height: 16px;
-    accent-color: var(--accent-purple);
+    margin-bottom: 0;
+    width: 16px; height: 16px;
 }
 
 .value-column-item span {
-    font-size: 0.95rem;
-    color: var(--text-secondary);
+    font-size: 0.85rem;
+    color: var(--pico-muted-color);
     user-select: none;
-    transition: color 0.2s ease;
 }
 
 .value-column-item input[type="checkbox"]:checked + span {
-    color: var(--text-primary);
+    color: var(--pico-color);
 }
 
 .value-columns-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 0.25rem;
+    margin-bottom: 0.2rem;
 }
 
 .value-columns-actions {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    font-size: 0.75rem;
+    gap: 0.4rem;
+    font-size: 0.7rem;
 }
 
 .value-columns-actions .divider {
-    color: var(--text-secondary);
+    color: var(--pico-muted-color);
     opacity: 0.5;
 }
 
 .btn-link {
-    background: none;
-    border: none;
-    color: var(--text-secondary);
+    background: none; border: none;
+    color: var(--pico-muted-color);
     cursor: pointer;
-    font-family: var(--font-family);
     font-size: 0.75rem;
     font-weight: 550;
     padding: 0;
@@ -875,10 +364,314 @@ select.form-control option {
     text-transform: uppercase;
     letter-spacing: 0.5px;
     transition: color 0.2s ease;
+    width: auto; margin-bottom: 0;
 }
 
 .btn-link:hover {
-    color: var(--accent-purple);
+    color: var(--pico-primary-hover);
+    background: none;
 }
 
+/* Step 2: Preprocessing Filters */
+.filters-container {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr;
+    gap: 1.5rem;
+}
 
+.active-filters {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    max-height: 350px;
+    overflow-y: auto;
+    padding-right: 0.5rem;
+}
+
+.no-filters-msg {
+    color: var(--pico-muted-color);
+    font-size: 0.85rem;
+    text-align: center;
+    margin: 2rem 0;
+}
+
+.filter-badge {
+    background-color: var(--pico-card-background-color);
+    border: 1px solid var(--pico-border-color);
+    border-radius: 8px;
+    padding: 0.5rem 0.75rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.filter-badge:hover { border-color: var(--pico-primary-hover); }
+
+.filter-info h5 {
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 0.15rem;
+}
+
+.filter-info p {
+    font-size: 0.75rem;
+    color: var(--pico-muted-color);
+    margin: 0;
+}
+
+.btn-remove-filter {
+    background: none; border: none;
+    color: var(--pico-muted-color);
+    font-size: 1rem;
+    cursor: pointer;
+    padding: 0.25rem;
+    transition: color 0.2s ease;
+    width: auto; margin-bottom: 0;
+}
+
+.btn-remove-filter:hover {
+    color: var(--error-red);
+    background: none;
+}
+
+.add-filter-card {
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin: 0;
+}
+
+.add-filter-card h4 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 0.2rem;
+}
+
+/* Step 3: Statistical Methods */
+.methods-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    max-height: 400px;
+    overflow-y: auto;
+    padding-right: 0.5rem;
+}
+
+.method-card {
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    margin: 0;
+    padding: 1rem;
+}
+
+.method-card:hover { border-color: var(--pico-primary-hover); }
+
+.method-card.selected {
+    background-color: var(--pico-primary-background);
+    border-color: var(--pico-primary-border);
+    box-shadow: 0 0 12px rgba(16, 185, 129, 0.15);
+}
+
+.method-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+.method-desc {
+    font-size: 0.8rem;
+    color: var(--pico-muted-color);
+    line-height: 1.4;
+}
+
+/* Step 4: Results Display */
+.results-card {
+    padding: 1.25rem;
+    margin: 0;
+}
+
+.results-table {
+    margin-top: 10px;
+}
+
+.results-table th {
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.results-table th:hover {
+    background-color: rgba(16, 185, 129, 0.08);
+    color: var(--pico-primary);
+}
+
+/* Step 5: Visualizations */
+.plots-layout {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    gap: 1.5rem;
+}
+
+.plots-selector {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.plot-select-item {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.2s ease;
+    margin: 0;
+    padding: 0.75rem;
+}
+
+.plot-select-item:hover { border-color: var(--pico-primary-hover); }
+
+.plot-select-item input {
+    cursor: pointer;
+    margin-bottom: 0;
+}
+
+.plot-select-item.selected {
+    border-color: var(--pico-primary-border);
+    background-color: var(--pico-primary-background);
+}
+
+.plot-select-info h5 {
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 0.15rem;
+}
+
+.plot-select-info p {
+    font-size: 0.75rem;
+    color: var(--pico-muted-color);
+    margin: 0;
+}
+
+.plots-display {
+    background-color: rgba(255, 255, 255, 0.01);
+    border: 1px solid var(--pico-border-color);
+    border-radius: 8px;
+    padding: 1rem;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    min-height: 250px;
+    align-items: center;
+    justify-items: center;
+}
+
+.plots-display img {
+    max-width: 100%; height: auto;
+    border-radius: 8px;
+    border: 1px solid var(--pico-border-color);
+}
+
+.no-plots-msg {
+    color: var(--pico-muted-color);
+    font-size: 0.85rem;
+}
+
+/* Step 6: Exporters */
+.exporter-card {
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0.5rem;
+    margin: 0;
+    padding: 1rem;
+}
+
+.exporter-card:hover {
+    transform: translateY(-1px);
+    border-color: var(--pico-primary-hover);
+}
+
+.exporter-card.active {
+    border-color: var(--pico-primary-border);
+    background-color: var(--pico-primary-background);
+    box-shadow: 0 0 12px rgba(16, 185, 129, 0.15);
+}
+
+.exporter-icon { font-size: 2rem; }
+
+.exporter-card h4 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 0.15rem;
+}
+
+.exporter-card p {
+    font-size: 0.75rem;
+    color: var(--pico-muted-color);
+    margin: 0;
+}
+
+/* Toast/Alerts */
+.toast {
+    position: fixed;
+    bottom: 1.5rem; right: 1.5rem;
+    background-color: #1a1212;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 8px;
+    padding: 0.75rem 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+    animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.toast-message {
+    font-size: 0.85rem;
+    color: var(--pico-color);
+}
+
+.toast-close {
+    background: none; border: none;
+    color: var(--pico-muted-color);
+    font-size: 1.1rem;
+    cursor: pointer;
+    width: auto; margin-bottom: 0;
+}
+
+.toast-close:hover {
+    color: var(--pico-color);
+    background: none;
+}
+
+.hidden { display: none !important; }
+
+@keyframes slideIn {
+    from { transform: translateY(50px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+/* Custom styling to link the Group Column select and the Subgroups checklist using a lighter green accent */
+#group-col-select,
+#subgroups-section {
+    --pico-primary: var(--accent-blue);
+    --pico-primary-hover: #059669;
+    --pico-primary-border: var(--accent-blue);
+    --pico-primary-background: rgba(52, 211, 153, 0.12);
+    --pico-form-element-active-border-color: var(--accent-blue);
+    --pico-form-element-focus-color: rgba(52, 211, 153, 0.12);
+}
+
+#subgroups-section .value-columns-list {
+    border-color: rgba(52, 211, 153, 0.25);
+    background-color: rgba(52, 211, 153, 0.02);
+}
+
+#subgroups-section .value-columns-header label {
+    color: var(--accent-blue);
+}

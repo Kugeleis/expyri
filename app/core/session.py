@@ -21,6 +21,7 @@ class WizardSession(BaseModel):
     dataset_id: str | None = None
     group_column: str | None = None
     selected_value_columns: list[str] = Field(default_factory=list)
+    selected_groups: list[str] = Field(default_factory=list)
     filters_config: list[dict[str, Any]] = Field(default_factory=list)
     selected_method: str | None = None
     stat_results: list[dict[str, Any]] = Field(default_factory=list)

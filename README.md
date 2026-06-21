@@ -35,6 +35,38 @@ graph TD
 
 ---
 
+## App Structure
+
+Here is an overview of the directory structure of the application:
+
+```text
+├── app/                      # Core FastAPI web application
+│   ├── core/                 # Session models, step definitions, and storage interfaces
+│   ├── datasets/             # Dataset loading and data property computation
+│   ├── exporters/            # Extensible export plugins (built-in: JSON, PDF, HTML, etc.)
+│   ├── filters/              # Extensible preprocessing filters (numeric ranges, category filters)
+│   ├── main.py               # Application factory and startup orchestrator
+│   ├── plots/                # Extensible plot generators (built-in: boxplot, scatter, etc.)
+│   ├── static/               # Client-side single-page application
+│   │   ├── modules/          # Modular ES6 frontend submodules
+│   │   │   ├── api.js        # Backend fetch request wrappers
+│   │   │   ├── elements.js   # Cached DOM element references
+│   │   │   ├── events.js     # Event listeners registration
+│   │   │   ├── helpers.js    # Shared helper utilities and error handlers
+│   │   │   ├── navigation.js # Step-by-step panel navigation handlers
+│   │   │   ├── state.js      # Global reactive state
+│   │   │   └── ui.js         # DOM updates and visual rendering
+│   │   ├── app.js            # Main bootstrap entry point
+│   │   ├── index.html        # Wizard layout interface
+│   │   └── style.css         # Single-green custom-themed Pico CSS overrides
+│   ├── stats/                # Extensible statistical plugins (ANOVA, T-Test, etc.)
+│   └── wizard/               # Router endpoints, request schemas, and transition controls
+├── test_data/                # CSV datasets used for verification (e.g., nycflights.csv)
+└── tests/                    # QA verification suite (unit, integration, and end-to-end)
+```
+
+---
+
 ## Getting Started
 
 ### Prerequisites
