@@ -45,10 +45,7 @@ def client(test_data_dir: Path) -> Generator[TestClient, None, None]:
 def test_full_wizard_flow_success(client: TestClient) -> None:
     """Verify a successful walk-through of all wizard steps."""
     # Upload dataset via endpoint
-    csv_content = (
-        b"group,value\nA,10.0\nA,10.5\nA,11.0\nA,10.2\nA,9.8\n"
-        b"B,12.0\nB,12.5\nB,13.0\nB,12.2\nB,11.8\n"
-    )
+    csv_content = b"group,value\nA,10.0\nA,10.5\nA,11.0\nA,10.2\nA,9.8\nB,12.0\nB,12.5\nB,13.0\nB,12.2\nB,11.8\n"
     files = {"file": ("uploaded_normal_data.csv", csv_content, "text/csv")}
     resp = client.post("/wizard/upload", files=files)
     assert resp.status_code == 200
@@ -165,10 +162,7 @@ def test_wizard_negative_step_guards(client: TestClient) -> None:
     assert "dataset_selection" in err["missing"]
 
     # Upload dataset via endpoint first
-    csv_content = (
-        b"group,value\nA,10.0\nA,10.5\nA,11.0\nA,10.2\nA,9.8\n"
-        b"B,12.0\nB,12.5\nB,13.0\nB,12.2\nB,11.8\n"
-    )
+    csv_content = b"group,value\nA,10.0\nA,10.5\nA,11.0\nA,10.2\nA,9.8\nB,12.0\nB,12.5\nB,13.0\nB,12.2\nB,11.8\n"
     files = {"file": ("normal_data.csv", csv_content, "text/csv")}
     client.post("/wizard/upload", files=files)
 
@@ -197,10 +191,7 @@ def test_wizard_negative_invalid_payloads(client: TestClient) -> None:
     session_id = resp.json()["session_id"]
 
     # Upload dataset via endpoint first
-    csv_content = (
-        b"group,value\nA,10.0\nA,10.5\nA,11.0\nA,10.2\nA,9.8\n"
-        b"B,12.0\nB,12.5\nB,13.0\nB,12.2\nB,11.8\n"
-    )
+    csv_content = b"group,value\nA,10.0\nA,10.5\nA,11.0\nA,10.2\nA,9.8\nB,12.0\nB,12.5\nB,13.0\nB,12.2\nB,11.8\n"
     files = {"file": ("normal_data.csv", csv_content, "text/csv")}
     client.post("/wizard/upload", files=files)
 
@@ -245,10 +236,7 @@ def test_wizard_negative_invalid_payloads(client: TestClient) -> None:
 def test_wizard_back_navigation(client: TestClient) -> None:
     """Navigate back to a previous step, change data, and re-proceed forward."""
     # Upload dataset
-    csv_content = (
-        b"group,value\nA,10.0\nA,10.5\nA,11.0\nA,10.2\nA,9.8\n"
-        b"B,12.0\nB,12.5\nB,13.0\nB,12.2\nB,11.8\n"
-    )
+    csv_content = b"group,value\nA,10.0\nA,10.5\nA,11.0\nA,10.2\nA,9.8\nB,12.0\nB,12.5\nB,13.0\nB,12.2\nB,11.8\n"
     files = {"file": ("backtest.csv", csv_content, "text/csv")}
     resp = client.post("/wizard/upload", files=files)
     assert resp.status_code == 200
@@ -390,7 +378,10 @@ def test_get_column_unique_values(client: TestClient) -> None:
 
 
 def test_wizard_subgroup_selection_filtering(client: TestClient) -> None:
-    """Verify that statistical analysis is executed using only the selected subgroups."""
+    """Verify that statistical analysis is executed.
+
+    Uses only the selected subgroups.
+    """
     # Upload dataset with groups A, B, C
     csv_content = (
         b"group,value\n"
@@ -442,5 +433,3 @@ def test_wizard_subgroup_selection_filtering(client: TestClient) -> None:
     assert results[0]["test_statistic"] < 0
     assert abs(results[0]["test_statistic"] - (-6.741998624632423)) < 1e-3
     assert results[0]["p_value"] < 0.001
-
-

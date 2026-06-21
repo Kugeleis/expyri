@@ -45,10 +45,7 @@ def sample_stat_results() -> list[StatResult]:
 def sample_plots() -> list[PlotResult]:
     """Return a list with a dummy PlotResult for exporter testing."""
     # A tiny 1x1 transparent PNG base64 string
-    dummy_png_b64 = (
-        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8"
-        "AAAAASUVORK5CYII="
-    )
+    dummy_png_b64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII="
     return [
         PlotResult(
             plot_type="boxplot",

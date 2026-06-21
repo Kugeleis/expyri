@@ -206,9 +206,7 @@ def test_pipeline_valid(sample_df: pd.DataFrame) -> None:
         ([{"name": "numeric_range", "params": "invalid"}], "must be a dictionary"),
     ],
 )
-def test_pipeline_errors(
-    sample_df: pd.DataFrame, configs: list[dict[str, Any]], match_str: str
-) -> None:
+def test_pipeline_errors(sample_df: pd.DataFrame, configs: list[dict[str, Any]], match_str: str) -> None:
     """Test error handling in apply_filter_pipeline."""
     with pytest.raises(ValueError, match=match_str):
         apply_filter_pipeline(sample_df, configs)

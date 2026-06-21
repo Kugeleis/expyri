@@ -143,3 +143,26 @@ The same recipe applies to:
 - **Filters**: Inherit `Filter`, register to `filter_registry`.
 - **Plots**: Inherit `PlotGenerator`, register to `plot_registry`.
 - **Exporters**: Inherit `Exporter`, register to `exporter_registry`.
+
+---
+
+## Statistical Method Selection
+
+In Step 3, the wizard dynamically queries the backend to determine which statistical methods are applicable to your filtered dataset. This process relies on automated data property computation and applicability rules:
+
+1. **Auto-Computation (`compute_data_properties`)**:
+   When moving to Step 3, the backend evaluates the dataset properties including:
+   - **Normality**: Shapiro-Wilk or D'Agostino-Pearson tests per group.
+   - **Variance Homogeneity**: Levene's test to ensure groups have equal variances.
+   - **Sphericity**: Mauchly's test for repeated measures (with 3+ conditions).
+   - **Expected Cell Counts**: Contingency table evaluation for categorical outcomes.
+   - **Missing Data & Outliers**: Automated checks to summarize dataset health.
+
+2. **Applicability Checking (`is_applicable`)**:
+   Each registered statistical method implements `is_applicable(**properties)` to declare its preconditions:
+   - **Independent Two-Sample t-test**: Requires exactly 2 groups of numeric data, with $n \ge 2$ per group, and normality satisfied for all groups.
+   - **One-way ANOVA**: Requires $\ge 2$ groups of numeric data, with $n \ge 2$ per group, normality satisfied, and homogeneous variance.
+   - **Mann-Whitney U**: Non-parametric; requires exactly 2 groups of numeric data with $n \ge 2$ per group.
+   - **Kruskal-Wallis H**: Non-parametric; requires $\ge 2$ groups of numeric data with $n \ge 2$ per group.
+
+If any preconditions are not met, the method is filtered out from the list of selectable options in the GUI.

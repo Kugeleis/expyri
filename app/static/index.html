@@ -188,6 +188,17 @@
                     <h3>Step 3: Statistical Method Selection</h3>
                     <p class="step-desc">Select an applicable statistical method evaluated against the properties of your filtered data.</p>
 
+                    <div class="info-callout" style="background: var(--pico-primary-background); border-left: 4px solid var(--pico-primary); padding: 0.75rem 1rem; border-radius: 4px; margin-bottom: 1rem; font-size: 0.8rem;">
+                        <strong style="color: var(--pico-primary); display: block; margin-bottom: 0.25rem;">ℹ️ Why are some methods not listed?</strong>
+                        <span style="color: var(--pico-muted-color);">Statistical methods only appear here if their applicability rules are satisfied by the current properties of your filtered data:</span>
+                        <ul style="margin: 0.5rem 0 0 1rem; padding: 0; color: var(--pico-muted-color); font-size: 0.75rem;">
+                            <li><strong>Independent Two-Sample t-test:</strong> Requires exactly 2 groups of numeric data, with $n \ge 2$ per group, and normality satisfied for all groups.</li>
+                            <li><strong>One-way ANOVA:</strong> Requires $\ge 2$ groups of numeric data, with $n \ge 2$ per group, normality satisfied, and homogeneous variance.</li>
+                            <li><strong>Mann-Whitney U:</strong> Non-parametric alternative to t-test; requires exactly 2 groups of numeric data with $n \ge 2$ per group.</li>
+                            <li><strong>Kruskal-Wallis H:</strong> Non-parametric alternative to ANOVA; requires $\ge 2$ groups of numeric data with $n \ge 2$ per group.</li>
+                        </ul>
+                    </div>
+
                     <div class="methods-list" id="methods-list">
                         <!-- Populated dynamically -->
                     </div>

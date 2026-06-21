@@ -21,10 +21,7 @@ class CategoryFilter(Filter):
     @property
     def description(self) -> str:
         """Return a brief description of what the filter does."""
-        return (
-            "Filters rows by matching values in a categorical column "
-            "(include or exclude)."
-        )
+        return "Filters rows by matching values in a categorical column (include or exclude)."
 
     def validate_params(self, params: dict[str, Any]) -> None:
         """Validate parameters for the category filter.
@@ -53,9 +50,7 @@ class CategoryFilter(Filter):
 
         mode = params.get("mode", "include")
         if mode not in ("include", "exclude"):
-            msg = (
-                f"Parameter 'mode' must be either 'include' or 'exclude', got {mode!r}"
-            )
+            msg = f"Parameter 'mode' must be either 'include' or 'exclude', got {mode!r}"
             raise ValueError(msg)
 
     def apply(self, df: pd.DataFrame, params: dict[str, Any]) -> pd.DataFrame:
