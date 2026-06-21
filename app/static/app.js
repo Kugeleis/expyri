@@ -60,6 +60,8 @@ const els = {
     
     plotsSelector: document.getElementById('plots-selector'),
     plotsDisplay: document.getElementById('plots-display'),
+    btnGeneratePlots: document.getElementById('btn-generate-plots'),
+    plotsGenerationCounter: document.getElementById('plots-generation-counter'),
     btnStep5Next: document.getElementById('btn-step-5-next'),
     
     btnExportDownload: document.getElementById('btn-export-download'),
@@ -551,7 +553,10 @@ function initEventListeners() {
             const response = await fetch(`/wizard/sessions/${state.sessionId}/plots`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ selected_plots: state.selectedPlots })
+                body: JSON.stringify({
+                    selected_plots: state.selectedPlots,
+                    top_n_columns: state.selectedValueColumns.size
+                })
             });
             
             if (!response.ok) {
@@ -565,6 +570,12 @@ function initEventListeners() {
             showError(err.message);
         }
     });
+
+    // Step 5: Click Generate Plots button
+    els.btnGeneratePlots.addEventListener('click', async () => {
+        await generatePlotsPreview();
+    });
+
 
     // Step 6: Exporter select card
     document.querySelectorAll('.exporter-card').forEach(card => {
@@ -775,10 +786,16 @@ async function fetchApplicablePlots() {
         els.plotsSelector.innerHTML = '';
         els.btnStep5Next.disabled = true;
         state.selectedPlots = [];
-        els.plotsDisplay.innerHTML = '<span class="no-plots-msg">Select one or more plots to generate.</span>';
+        els.plotsDisplay.innerHTML = '<span class="no-plots-msg">Select plot types and click Generate Plots above.</span>';
         
         if (state.applicablePlots.length === 0) {
             els.plotsSelector.innerHTML = '<p class="no-filters-msg">No visualizations applicable.</p>';
+            if (els.plotsGenerationCounter) {
+                els.plotsGenerationCounter.textContent = 'Will generate 0 plots';
+            }
+            if (els.btnGeneratePlots) {
+                els.btnGeneratePlots.disabled = true;
+            }
             return;
         }
 
@@ -787,8 +804,15 @@ async function fetchApplicablePlots() {
             card.className = 'plot-select-item';
             card.dataset.name = plot.name;
             
+            // Check if this is the boxplot and preselect it
+            const isBoxplot = plot.name === 'boxplot';
+            if (isBoxplot) {
+                state.selectedPlots.push(plot.name);
+                card.classList.add('selected');
+            }
+            
             card.innerHTML = `
-                <input type="checkbox" id="chk-plot-${plot.name}">
+                <input type="checkbox" id="chk-plot-${plot.name}" ${isBoxplot ? 'checked' : ''}>
                 <div class="plot-select-info">
                     <h5>${plot.name}</h5>
                     <p>${plot.description}</p>
@@ -806,9 +830,7 @@ async function fetchApplicablePlots() {
                 } else {
                     state.selectedPlots = state.selectedPlots.filter(p => p !== plot.name);
                 }
-                
-                els.btnStep5Next.disabled = state.selectedPlots.length === 0;
-                generatePlotsPreview();
+                updatePlotsCounter();
             };
             
             card.addEventListener('click', (e) => {
@@ -824,12 +846,13 @@ async function fetchApplicablePlots() {
                 } else {
                     state.selectedPlots = state.selectedPlots.filter(p => p !== plot.name);
                 }
-                els.btnStep5Next.disabled = state.selectedPlots.length === 0;
-                generatePlotsPreview();
+                updatePlotsCounter();
             });
             
             els.plotsSelector.appendChild(card);
         });
+        
+        updatePlotsCounter();
     } catch (err) {
         showError(err.message);
     }
@@ -844,11 +867,16 @@ async function generatePlotsPreview() {
     
     try {
         els.plotsDisplay.innerHTML = '<span class="no-plots-msg">Generating plots...</span>';
+        els.btnGeneratePlots.disabled = true;
+        els.btnStep5Next.disabled = true;
         
         const response = await fetch(`/wizard/sessions/${state.sessionId}/plots`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ selected_plots: state.selectedPlots })
+            body: JSON.stringify({
+                selected_plots: state.selectedPlots,
+                top_n_columns: state.selectedValueColumns.size
+            })
         });
         
         if (!response.ok) throw new Error('Plot rendering failed.');
@@ -856,30 +884,93 @@ async function generatePlotsPreview() {
         const data = await response.json();
         els.plotsDisplay.innerHTML = '';
         
+        // Group plots by variable (column_name)
+        const plotsByVar = {};
         data.plot_results.forEach(plot => {
-            const container = document.createElement('div');
-            container.className = 'plot-image-wrapper';
-            container.style.textAlign = 'center';
-            container.style.width = '100%';
-            
-            const img = document.createElement('img');
-            img.src = `data:${plot.content_type};base64,${plot.image_base64}`;
-            img.alt = plot.plot_type;
-            
-            const title = document.createElement('div');
-            title.style.marginTop = '0.5rem';
-            title.style.fontSize = '0.8rem';
-            title.style.color = 'var(--text-secondary)';
-            title.textContent = `${plot.plot_type.toUpperCase()} Generator`;
-            
-            container.appendChild(img);
-            container.appendChild(title);
-            els.plotsDisplay.appendChild(container);
+            const col = plot.column_name || 'General';
+            if (!plotsByVar[col]) {
+                plotsByVar[col] = [];
+            }
+            plotsByVar[col].push(plot);
         });
+        
+        Object.entries(plotsByVar).forEach(([colName, plots]) => {
+            const card = document.createElement('article');
+            card.className = 'variable-plots-card';
+            card.style.margin = '0 0 1rem 0';
+            card.style.width = '100%';
+            
+            const header = document.createElement('header');
+            header.style.padding = '0.5rem 0.75rem';
+            header.style.marginBottom = '0.75rem';
+            header.style.backgroundColor = 'rgba(255, 255, 255, 0.02)';
+            header.style.borderBottom = '1px solid var(--pico-border-color)';
+            
+            const title = document.createElement('h4');
+            title.style.margin = '0';
+            title.style.fontSize = '0.95rem';
+            title.style.fontWeight = '600';
+            title.textContent = colName;
+            header.appendChild(title);
+            card.appendChild(header);
+            
+            // Grid row for plots - up to 3 columns
+            const row = document.createElement('div');
+            row.style.display = 'grid';
+            row.style.gridTemplateColumns = 'repeat(auto-fit, minmax(200px, 1fr))';
+            row.style.gap = '1rem';
+            row.style.width = '100%';
+            
+            plots.forEach(plot => {
+                const plotWrapper = document.createElement('div');
+                plotWrapper.className = 'plot-image-wrapper';
+                plotWrapper.style.textAlign = 'center';
+                
+                const img = document.createElement('img');
+                img.src = `data:${plot.content_type};base64,${plot.image_base64}`;
+                img.alt = `${plot.plot_type} for ${colName}`;
+                img.style.maxWidth = '100%';
+                img.style.height = 'auto';
+                img.style.borderRadius = '8px';
+                img.style.border = '1px solid var(--pico-border-color)';
+                
+                const label = document.createElement('div');
+                label.style.marginTop = '0.25rem';
+                label.style.fontSize = '0.75rem';
+                label.style.color = 'var(--pico-muted-color)';
+                label.textContent = plot.plot_type.toUpperCase();
+                
+                plotWrapper.appendChild(img);
+                plotWrapper.appendChild(label);
+                row.appendChild(plotWrapper);
+            });
+            
+            card.appendChild(row);
+            els.plotsDisplay.appendChild(card);
+        });
+        
+        els.btnStep5Next.disabled = false;
     } catch (err) {
         els.plotsDisplay.innerHTML = `<span class="no-plots-msg text-error">Failed to render plots: ${err.message}</span>`;
+    } finally {
+        els.btnGeneratePlots.disabled = false;
     }
 }
+
+function updatePlotsCounter() {
+    const numVariables = state.selectedValueColumns.size;
+    const numPlots = state.selectedPlots.length;
+    const totalPlots = numVariables * numPlots;
+    
+    if (els.plotsGenerationCounter) {
+        els.plotsGenerationCounter.textContent = `Will generate ${totalPlots} plot${totalPlots !== 1 ? 's' : ''} (${numVariables} variable${numVariables !== 1 ? 's' : ''} × ${numPlots} plot type${numPlots !== 1 ? 's' : ''})`;
+    }
+    
+    if (els.btnGeneratePlots) {
+        els.btnGeneratePlots.disabled = totalPlots === 0;
+    }
+}
+
 
 // Show Error Toast UI
 function showError(message) {

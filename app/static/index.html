@@ -217,14 +217,19 @@
                     <h3>Step 5: Visualizations</h3>
                     <p class="step-desc">Select from the applicable plot types to generate visualizations of your data.</p>
 
-                    <div class="plots-layout">
-                        <div class="plots-selector" id="plots-selector">
+                    <div class="plots-selector-row" style="background-color: rgba(255, 255, 255, 0.01); padding: 0.75rem; border: 1px solid var(--pico-border-color); border-radius: 8px; margin-bottom: 1rem;">
+                        <div style="font-weight: 600; font-size: 0.85rem; margin-bottom: 0.5rem;">Available Plot Types</div>
+                        <div id="plots-selector" style="display: flex; flex-wrap: wrap; gap: 1.5rem; align-items: center; margin-bottom: 0.75rem;">
                             <!-- Populated dynamically -->
                         </div>
-                        
-                        <div class="plots-display" id="plots-display">
-                            <!-- Plots rendered here -->
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 0.5rem; border-top: 1px solid var(--pico-border-color); padding-top: 0.5rem;">
+                            <span id="plots-generation-counter" style="font-size: 0.85rem; color: var(--pico-muted-color);">Will generate 0 plots</span>
+                            <button id="btn-generate-plots" disabled style="width: auto; margin: 0;">Generate Plots</button>
                         </div>
+                    </div>
+                    
+                    <div id="plots-display" style="display: flex; flex-direction: column; gap: 1rem; width: 100%;">
+                        <span class="no-plots-msg">Select plot types and click Generate Plots above.</span>
                     </div>
 
                     <div class="panel-actions">
