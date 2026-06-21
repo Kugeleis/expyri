@@ -599,7 +599,7 @@ async function fetchApplicableMethods() {
         }
 
         state.applicableMethods.forEach(method => {
-            const card = document.createElement('div');
+            const card = document.createElement('article');
             card.className = 'method-card';
             card.dataset.name = method.name;
             
@@ -640,17 +640,20 @@ async function executeStatisticalMethod() {
             return;
         }
 
+        const wrapper = document.createElement('div');
+        wrapper.className = 'overflow-auto';
+
         const table = document.createElement('table');
-        table.className = 'results-table';
+        table.className = 'results-table striped';
         const thead = document.createElement('thead');
         thead.innerHTML = `
             <tr>
-                <th>Column</th>
-                <th>Method</th>
-                <th>Statistic</th>
-                <th>p-value</th>
-                <th>Effect Size</th>
-                <th>Summary</th>
+                <th scope="col">Column</th>
+                <th scope="col">Method</th>
+                <th scope="col">Statistic</th>
+                <th scope="col">p-value</th>
+                <th scope="col">Effect Size</th>
+                <th scope="col">Summary</th>
             </tr>
         `;
         table.appendChild(thead);
@@ -669,7 +672,8 @@ async function executeStatisticalMethod() {
             tbody.appendChild(tr);
         });
         table.appendChild(tbody);
-        container.appendChild(table);
+        wrapper.appendChild(table);
+        container.appendChild(wrapper);
     } catch (err) {
         showError(err.message);
     }
@@ -693,7 +697,7 @@ async function fetchApplicablePlots() {
         }
 
         state.applicablePlots.forEach(plot => {
-            const card = document.createElement('div');
+            const card = document.createElement('article');
             card.className = 'plot-select-item';
             card.dataset.name = plot.name;
             
