@@ -35,6 +35,13 @@ tasks:
       - task: typecheck
       - task: test
 
+  clean:
+    desc: Clean ruff, pytest, uv caches and remove merged local branches
+    cmds:
+      - rm -rf .ruff_cache .pytest_cache
+      - timeout 10 uv cache clean || true
+      - git branch --merged | grep -v -E "^\*|master|main|develop" | xargs -r git branch -d || true
+
   dev:
     desc: Run the FastAPI app locally in development mode (with auto-reload)
     cmds:
@@ -61,3 +68,14 @@ tasks:
     desc: Bump application version using bump-my-version (e.g. task bump -- patch)
     cmds:
       - uv run bump-my-version bump {{.CLI_ARGS}}
+
+  b-m:
+    desc: Bump minor version using bump-my-version
+    cmds:
+      - uv run bump-my-version bump minor
+
+  b-p:
+    desc: Bump patch version using bump-my-version
+    cmds:
+      - uv run bump-my-version bump patch
+
