@@ -66,6 +66,10 @@ ignore_missing_imports = true
 asyncio_mode = "auto"
 testpaths = ["tests"]
 addopts = "--strict-markers -ra"
+filterwarnings = [
+    "ignore::DeprecationWarning:websockets.*:",
+    "ignore::DeprecationWarning:uvicorn.*:",
+]
 
 [tool.coverage.run]
 source = ["app"]
@@ -77,6 +81,7 @@ exclude_lines = [
     "pragma: no cover",
     "if TYPE_CHECKING:",
     "pass",
+    "\\.\\.\\.",
 ]
 
 [tool.hatch.build.targets.wheel]
