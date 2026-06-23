@@ -192,23 +192,23 @@ export function updatePlotsCounter() {
 // Render the checkbox list of value columns in Step 1
 export function updateValueColumnsList() {
     const selectedGroupCol = els.groupColSelect.value;
+    
+    // --- Render Continuous Columns ---
     const filterText = (els.valueColSearch?.value || '').toLowerCase().trim();
-
     els.valueColumnsList.innerHTML = '';
-
-    let hasNumeric = false;
-    let hasVisibleNumeric = false;
+    let hasColumns = false;
+    let hasVisibleColumns = false;
 
     state.selectedDatasetColumns.forEach(col => {
         if (col.is_numeric && col.name !== selectedGroupCol) {
-            hasNumeric = true;
+            hasColumns = true;
 
             // Check if column name matches filter text
             if (filterText && !col.name.toLowerCase().includes(filterText)) {
                 return;
             }
 
-            hasVisibleNumeric = true;
+            hasVisibleColumns = true;
 
             const item = document.createElement('label');
             item.className = 'value-column-item';
@@ -235,10 +235,58 @@ export function updateValueColumnsList() {
         }
     });
 
-    if (!hasNumeric) {
-        els.valueColumnsList.innerHTML = '<span class="no-columns-msg" style="color: var(--text-secondary); font-size: 0.95rem;">No numeric columns available.</span>';
-    } else if (!hasVisibleNumeric) {
+    if (!hasColumns) {
+        els.valueColumnsList.innerHTML = '<span class="no-columns-msg" style="color: var(--text-secondary); font-size: 0.95rem;">No continuous columns available.</span>';
+    } else if (!hasVisibleColumns) {
         els.valueColumnsList.innerHTML = '<span class="no-columns-msg" style="color: var(--text-secondary); font-size: 0.95rem;">No columns match search.</span>';
+    }
+
+    // --- Render Discrete Columns ---
+    const filterDiscreteText = (els.discreteColSearch?.value || '').toLowerCase().trim();
+    els.discreteColumnsList.innerHTML = '';
+    let hasDiscreteColumns = false;
+    let hasVisibleDiscreteColumns = false;
+
+    state.selectedDatasetColumns.forEach(col => {
+        if (col.is_discrete && col.name !== selectedGroupCol) {
+            hasDiscreteColumns = true;
+
+            // Check if column name matches filter text
+            if (filterDiscreteText && !col.name.toLowerCase().includes(filterDiscreteText)) {
+                return;
+            }
+
+            hasVisibleDiscreteColumns = true;
+
+            const item = document.createElement('label');
+            item.className = 'value-column-item';
+
+            const cb = document.createElement('input');
+            cb.type = 'checkbox';
+            cb.value = col.name;
+            cb.checked = state.selectedDiscreteColumns.has(col.name);
+            cb.addEventListener('change', (e) => {
+                if (e.target.checked) {
+                    state.selectedDiscreteColumns.add(col.name);
+                } else {
+                    state.selectedDiscreteColumns.delete(col.name);
+                }
+                validateStep1Next();
+            });
+
+            const span = document.createElement('span');
+            span.textContent = `${col.name} (${col.dtype})`;
+
+            item.appendChild(cb);
+            item.appendChild(span);
+            els.discreteColumnsList.appendChild(item);
+        }
+    });
+
+    if (!hasDiscreteColumns) {
+        els.discreteColumnsList.innerHTML = '<span class="no-columns-msg" style="color: var(--text-secondary); font-size: 0.95rem;">No discrete columns available.</span>';
+    } else if (!hasVisibleDiscreteColumns) {
+        els.discreteColumnsList.innerHTML = '<span class="no-columns-msg" style="color: var(--text-secondary); font-size: 0.95rem;">No columns match search.</span>';
     }
 
     validateStep1Next();
@@ -247,7 +295,8 @@ export function updateValueColumnsList() {
 // Validate if Step 1 transitions are allowed
 export function validateStep1Next() {
     const selectedGroupCol = els.groupColSelect.value;
-    if (!selectedGroupCol || state.selectedValueColumns.size === 0 || state.selectedGroups.size === 0) {
+    const hasDependentCol = state.selectedValueColumns.size > 0 || state.selectedDiscreteColumns.size > 0;
+    if (!selectedGroupCol || !hasDependentCol || state.selectedGroups.size === 0) {
         els.btnStep1Next.disabled = true;
     } else {
         els.btnStep1Next.disabled = false;

@@ -39,37 +39,106 @@ export async function fetchApplicableMethods() {
         const response = await fetch(`/wizard/sessions/${state.sessionId}/methods`);
         if (!response.ok) throw new Error('Failed to retrieve applicable methods list.');
 
-        state.applicableMethods = await response.json();
+        const rawMethods = await response.json();
+        state.applicableMethods = rawMethods;
         els.methodsList.innerHTML = '';
         els.btnStep3Next.disabled = true;
         state.selectedMethod = '';
+        state.selectedDiscreteMethod = '';
 
-        if (state.applicableMethods.length === 0) {
+        const hasContinuous = state.selectedValueColumns.size > 0;
+        const hasDiscrete = state.selectedDiscreteColumns.size > 0;
+
+        const continuousMethods = rawMethods.filter(m => m.variable_type === 'continuous');
+        const discreteMethods = rawMethods.filter(m => m.variable_type === 'discrete');
+
+        let totalContinuousApplicable = continuousMethods.length;
+        let totalDiscreteApplicable = discreteMethods.length;
+
+        if ((hasContinuous && totalContinuousApplicable === 0) || (hasDiscrete && totalDiscreteApplicable === 0)) {
             els.methodsList.innerHTML = '<p class="no-filters-msg">No statistical methods are applicable to your current dataset properties. Please check your data or adjust preprocessing filters.</p>';
             return;
         }
 
-        state.applicableMethods.forEach(method => {
-            const card = document.createElement('article');
-            card.className = 'method-card';
-            card.dataset.name = method.name;
+        const checkStep3NextState = () => {
+            const continuousValid = !hasContinuous || state.selectedMethod !== '';
+            const discreteValid = !hasDiscrete || state.selectedDiscreteMethod !== '';
+            els.btnStep3Next.disabled = !(continuousValid && discreteValid);
+        };
 
-            card.innerHTML = `
-                <div class="method-title">${method.name}</div>
-                <div class="method-desc">${method.description}</div>
-            `;
+        // Render Continuous Methods
+        if (hasContinuous && totalContinuousApplicable > 0) {
+            const header = document.createElement('h4');
+            header.textContent = 'Continuous Columns Method';
+            header.style.marginTop = '1rem';
+            els.methodsList.appendChild(header);
 
-            card.addEventListener('click', (e) => {
-                document.querySelectorAll('.method-card').forEach(c => c.classList.remove('selected'));
-                const activeCard = e.currentTarget;
-                activeCard.classList.add('selected');
+            const container = document.createElement('div');
+            container.className = 'methods-sub-container';
+            container.style.display = 'flex';
+            container.style.flexDirection = 'column';
+            container.style.gap = '0.75rem';
 
-                state.selectedMethod = activeCard.dataset.name;
-                els.btnStep3Next.disabled = false;
+            continuousMethods.forEach(method => {
+                const card = document.createElement('article');
+                card.className = 'method-card continuous-method-card';
+                card.dataset.name = method.name;
+
+                card.innerHTML = `
+                    <div class="method-title">${method.name}</div>
+                    <div class="method-desc">${method.description}</div>
+                `;
+
+                card.addEventListener('click', (e) => {
+                    container.querySelectorAll('.continuous-method-card').forEach(c => c.classList.remove('selected'));
+                    const activeCard = e.currentTarget;
+                    activeCard.classList.add('selected');
+
+                    state.selectedMethod = activeCard.dataset.name;
+                    checkStep3NextState();
+                });
+
+                container.appendChild(card);
             });
+            els.methodsList.appendChild(container);
+        }
 
-            els.methodsList.appendChild(card);
-        });
+        // Render Discrete Methods
+        if (hasDiscrete && totalDiscreteApplicable > 0) {
+            const header = document.createElement('h4');
+            header.textContent = 'Discrete Columns Method';
+            header.style.marginTop = '1.5rem';
+            els.methodsList.appendChild(header);
+
+            const container = document.createElement('div');
+            container.className = 'methods-sub-container';
+            container.style.display = 'flex';
+            container.style.flexDirection = 'column';
+            container.style.gap = '0.75rem';
+
+            discreteMethods.forEach(method => {
+                const card = document.createElement('article');
+                card.className = 'method-card discrete-method-card';
+                card.dataset.name = method.name;
+
+                card.innerHTML = `
+                    <div class="method-title">${method.name}</div>
+                    <div class="method-desc">${method.description}</div>
+                `;
+
+                card.addEventListener('click', (e) => {
+                    container.querySelectorAll('.discrete-method-card').forEach(c => c.classList.remove('selected'));
+                    const activeCard = e.currentTarget;
+                    activeCard.classList.add('selected');
+
+                    state.selectedDiscreteMethod = activeCard.dataset.name;
+                    checkStep3NextState();
+                });
+
+                container.appendChild(card);
+            });
+            els.methodsList.appendChild(container);
+        }
     } catch (err) {
         showError(err.message);
     }

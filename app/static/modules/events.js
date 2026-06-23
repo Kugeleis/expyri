@@ -27,12 +27,17 @@ export function initEventListeners() {
                 // Reset state
                 state.activeFilters = [];
                 state.selectedMethod = '';
+                state.selectedDiscreteMethod = '';
                 state.selectedPlots = [];
                 state.selectedValueColumns = new Set();
+                state.selectedDiscreteColumns = new Set();
                 state.selectedGroups = new Set();
                 state.availableGroups = [];
                 if (els.valueColSearch) {
                     els.valueColSearch.value = '';
+                }
+                if (els.discreteColSearch) {
+                    els.discreteColSearch.value = '';
                 }
                 if (els.subgroupsSearch) {
                     els.subgroupsSearch.value = '';
@@ -64,10 +69,23 @@ export function initEventListeners() {
 
     if (els.groupColSelect) {
         els.groupColSelect.addEventListener('change', async () => {
+            const prevGroupCol = els.groupColSelect.dataset.prevValue;
             const selectedGroupCol = els.groupColSelect.value;
+            if (prevGroupCol && prevGroupCol !== selectedGroupCol) {
+                const colMeta = state.selectedDatasetColumns.find(c => c.name === prevGroupCol);
+                if (colMeta) {
+                    if (colMeta.is_numeric) {
+                        state.selectedValueColumns.add(prevGroupCol);
+                    } else if (colMeta.is_discrete) {
+                        state.selectedDiscreteColumns.add(prevGroupCol);
+                    }
+                }
+            }
             if (selectedGroupCol) {
                 state.selectedValueColumns.delete(selectedGroupCol);
+                state.selectedDiscreteColumns.delete(selectedGroupCol);
             }
+            els.groupColSelect.dataset.prevValue = selectedGroupCol;
             updateValueColumnsList();
             await updateSubgroupsList();
         });
@@ -75,6 +93,12 @@ export function initEventListeners() {
 
     if (els.valueColSearch) {
         els.valueColSearch.addEventListener('input', () => {
+            updateValueColumnsList();
+        });
+    }
+
+    if (els.discreteColSearch) {
+        els.discreteColSearch.addEventListener('input', () => {
             updateValueColumnsList();
         });
     }
@@ -105,6 +129,31 @@ export function initEventListeners() {
             checkboxes.forEach(cb => {
                 cb.checked = false;
                 state.selectedValueColumns.delete(cb.value);
+            });
+            validateStep1Next();
+        });
+    }
+
+    const selectAllDiscreteBtn = document.getElementById('btn-select-all-discrete');
+    const deselectAllDiscreteBtn = document.getElementById('btn-deselect-all-discrete');
+
+    if (selectAllDiscreteBtn) {
+        selectAllDiscreteBtn.addEventListener('click', () => {
+            const checkboxes = els.discreteColumnsList.querySelectorAll('input[type="checkbox"]');
+            checkboxes.forEach(cb => {
+                cb.checked = true;
+                state.selectedDiscreteColumns.add(cb.value);
+            });
+            validateStep1Next();
+        });
+    }
+
+    if (deselectAllDiscreteBtn) {
+        deselectAllDiscreteBtn.addEventListener('click', () => {
+            const checkboxes = els.discreteColumnsList.querySelectorAll('input[type="checkbox"]');
+            checkboxes.forEach(cb => {
+                cb.checked = false;
+                state.selectedDiscreteColumns.delete(cb.value);
             });
             validateStep1Next();
         });
@@ -162,7 +211,11 @@ export function initEventListeners() {
                 const dataset = await response.json();
 
                 state.selectedDatasetId = dataset.id;
-                state.selectedDatasetColumns = dataset.columns;
+                state.selectedDatasetColumns = dataset.columns.map(col => ({
+                    ...col,
+                    is_numeric: col.is_numeric === true || col.is_numeric === 'true',
+                    is_discrete: col.is_discrete === true || col.is_discrete === 'true'
+                }));
                 els.detailDesc.textContent = dataset.description;
 
                 // Populate group and value columns
@@ -170,7 +223,7 @@ export function initEventListeners() {
                 els.valueColumnsList.innerHTML = '';
                 els.filterCol.innerHTML = '';
 
-                dataset.columns.forEach(col => {
+                state.selectedDatasetColumns.forEach(col => {
                     if (col.is_discrete) {
                         const opt1 = document.createElement('option');
                         opt1.value = col.name;
@@ -184,17 +237,30 @@ export function initEventListeners() {
                     els.filterCol.appendChild(opt3);
                 });
 
-                // Initialize state.selectedValueColumns
+                // Initialize state.selectedValueColumns and state.selectedDiscreteColumns
                 state.selectedValueColumns = new Set();
-                const selectedGroupCol = els.groupColSelect.value;
-                dataset.columns.forEach(col => {
-                    if (col.is_numeric && col.name !== selectedGroupCol) {
-                        state.selectedValueColumns.add(col.name);
+                state.selectedDiscreteColumns = new Set();
+                const firstDiscreteCol = state.selectedDatasetColumns.find(col => col.is_discrete);
+                const selectedGroupCol = firstDiscreteCol ? firstDiscreteCol.name : '';
+                if (firstDiscreteCol) {
+                    els.groupColSelect.value = firstDiscreteCol.name;
+                }
+                els.groupColSelect.dataset.prevValue = selectedGroupCol;
+                state.selectedDatasetColumns.forEach(col => {
+                    if (col.name !== selectedGroupCol) {
+                        if (col.is_numeric) {
+                            state.selectedValueColumns.add(col.name);
+                        } else if (col.is_discrete) {
+                            state.selectedDiscreteColumns.add(col.name);
+                        }
                     }
                 });
 
                 if (els.valueColSearch) {
                     els.valueColSearch.value = '';
+                }
+                if (els.discreteColSearch) {
+                    els.discreteColSearch.value = '';
                 }
 
                 updateValueColumnsList();
@@ -220,12 +286,11 @@ export function initEventListeners() {
     if (els.btnStep1Next) {
         els.btnStep1Next.addEventListener('click', async () => {
             try {
-                const selectedCols = Array.from(state.selectedValueColumns);
-
                 const payload = {
                     dataset_id: state.selectedDatasetId,
                     group_column: els.groupColSelect.value,
-                    selected_value_columns: selectedCols,
+                    selected_value_columns: Array.from(state.selectedValueColumns),
+                    selected_discrete_columns: Array.from(state.selectedDiscreteColumns),
                     selected_groups: Array.from(state.selectedGroups)
                 };
 
@@ -342,10 +407,18 @@ export function initEventListeners() {
     if (els.btnStep3Next) {
         els.btnStep3Next.addEventListener('click', async () => {
             try {
+                const payload = {};
+                if (state.selectedValueColumns.size > 0) {
+                    payload.selected_method = state.selectedMethod;
+                }
+                if (state.selectedDiscreteColumns.size > 0) {
+                    payload.selected_discrete_method = state.selectedDiscreteMethod;
+                }
+
                 const response = await fetch(`/wizard/sessions/${state.sessionId}/method`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ selected_method: state.selectedMethod })
+                    body: JSON.stringify(payload)
                 });
 
                 if (!response.ok) {

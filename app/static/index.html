@@ -101,15 +101,28 @@
 
                             <div>
                                 <div class="value-columns-header">
-                                    <label>Value Columns (Dependent Variables, Numeric)</label>
+                                    <label>Continuous Dependent Columns (Numeric)</label>
                                     <div class="value-columns-actions">
                                         <button type="button" class="btn-link" id="btn-select-all-cols">Select All</button>
                                         <span class="divider">/</span>
                                         <button type="button" class="btn-link" id="btn-deselect-all-cols">Deselect All</button>
                                     </div>
                                 </div>
-                                <input type="search" id="value-col-search" placeholder="Filter columns..." style="margin-bottom: 0.75rem;">
+                                <input type="search" id="value-col-search" placeholder="Filter continuous..." style="margin-bottom: 0.75rem;">
                                 <div id="value-columns-list" class="value-columns-list"></div>
+                            </div>
+
+                            <div>
+                                <div class="value-columns-header">
+                                    <label>Discrete Dependent Columns (Categorical)</label>
+                                    <div class="value-columns-actions">
+                                        <button type="button" class="btn-link" id="btn-select-all-discrete">Select All</button>
+                                        <span class="divider">/</span>
+                                        <button type="button" class="btn-link" id="btn-deselect-all-discrete">Deselect All</button>
+                                    </div>
+                                </div>
+                                <input type="search" id="discrete-col-search" placeholder="Filter discrete..." style="margin-bottom: 0.75rem;">
+                                <div id="discrete-columns-list" class="value-columns-list"></div>
                             </div>
                         </div>
                     </div>
@@ -195,7 +208,8 @@
                             <li><strong>Independent Two-Sample t-test:</strong> Requires exactly 2 groups of numeric data, with $n \ge 2$ per group, and normality satisfied for all groups.</li>
                             <li><strong>One-way ANOVA:</strong> Requires $\ge 2$ groups of numeric data, with $n \ge 2$ per group, normality satisfied, and homogeneous variance.</li>
                             <li><strong>Mann-Whitney U:</strong> Non-parametric alternative to t-test; requires exactly 2 groups of numeric data with $n \ge 2$ per group.</li>
-                            <li><strong>Kruskal-Wallis H:</strong> Non-parametric alternative to ANOVA; requires $\ge 2$ groups of numeric data with $n \ge 2$ per group.</li>
+                            <li><strong>Kruskal-Wallis H:</strong> Non-parametric alternative to ANOVA; requires &ge; 2 groups of numeric data with $n \ge 2$ per group.</li>
+                            <li><strong>Chi-Square test:</strong> Requires discrete/categorical outcome data across &ge; 2 groups.</li>
                         </ul>
                     </div>
 
