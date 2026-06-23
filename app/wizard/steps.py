@@ -56,10 +56,11 @@ _STEP_FIELDS: dict[WizardStep, list[str]] = {
         "dataset_id",
         "group_column",
         "selected_value_columns",
+        "selected_discrete_columns",
         "selected_groups",
     ],
     WizardStep.FILTERS: ["filters_config"],
-    WizardStep.STAT_METHOD: ["selected_method"],
+    WizardStep.STAT_METHOD: ["selected_method", "selected_discrete_method"],
     WizardStep.RESULTS: ["stat_results"],
     WizardStep.PLOT_SELECTION: ["selected_plots", "plot_results"],
     WizardStep.EXPORT: ["export_format"],
@@ -70,9 +71,11 @@ _FIELD_DEFAULTS: dict[str, object] = {
     "dataset_id": None,
     "group_column": None,
     "selected_value_columns": [],
+    "selected_discrete_columns": [],
     "selected_groups": [],
     "filters_config": [],
     "selected_method": None,
+    "selected_discrete_method": None,
     "stat_results": None,
     "selected_plots": [],
     "plot_results": [],
@@ -92,7 +95,18 @@ def _completed_steps(session: WizardSession) -> set[WizardStep]:
         filter_idx = _STEP_ORDER.index(WizardStep.FILTERS)
         if current_idx > filter_idx:
             completed.add(WizardStep.FILTERS)
-    if session.selected_method is not None:
+
+    has_continuous = bool(session.selected_value_columns)
+    has_discrete = bool(session.selected_discrete_columns)
+
+    if not has_continuous and not has_discrete:
+        method_selected = session.selected_method is not None or session.selected_discrete_method is not None
+    else:
+        method_selected = (not has_continuous or session.selected_method is not None) and (
+            not has_discrete or session.selected_discrete_method is not None
+        )
+
+    if method_selected:
         completed.add(WizardStep.STAT_METHOD)
     if session.stat_results:
         completed.add(WizardStep.RESULTS)

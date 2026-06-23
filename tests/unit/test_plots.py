@@ -27,9 +27,20 @@ def sample_df() -> pd.DataFrame:
 
 def test_registrations() -> None:
     """Verify built-in plot generators are registered."""
-    assert isinstance(plot_registry.get("boxplot"), BoxPlot)
-    assert isinstance(plot_registry.get("violinplot"), ViolinPlot)
-    assert isinstance(plot_registry.get("ecdf"), EcdfPlot)
+    bp = plot_registry.get("boxplot")
+    assert isinstance(bp, BoxPlot)
+    assert bp.name == "boxplot"
+    assert bp.description == "Box plot of values grouped by category."
+
+    vp = plot_registry.get("violinplot")
+    assert isinstance(vp, ViolinPlot)
+    assert vp.name == "violinplot"
+    assert vp.description == "Violin plot of values grouped by category."
+
+    ep = plot_registry.get("ecdf")
+    assert isinstance(ep, EcdfPlot)
+    assert ep.name == "ecdf"
+    assert ep.description == "Empirical Cumulative Distribution Function (ECDF) plot."
 
 
 def test_boxplot_applicability() -> None:
@@ -85,6 +96,9 @@ def test_violin_applicability() -> None:
         variance_homogeneity=0.8,
     )
     assert vp.is_applicable(**props_small_group.model_dump()) is False
+
+    # Inapplicable: n_groups < 1
+    assert vp.is_applicable(n_groups=0, group_sizes={}) is False
 
 
 def test_ecdf_applicability() -> None:

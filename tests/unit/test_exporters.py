@@ -57,9 +57,20 @@ def sample_plots() -> list[PlotResult]:
 
 def test_registrations() -> None:
     """Verify built-in exporters are registered."""
-    assert isinstance(exporter_registry.get("csv"), CsvExporter)
-    assert isinstance(exporter_registry.get("json"), JsonExporter)
-    assert isinstance(exporter_registry.get("pdf"), PdfExporter)
+    csv_exp = exporter_registry.get("csv")
+    assert isinstance(csv_exp, CsvExporter)
+    assert csv_exp.name == "csv"
+    assert csv_exp.content_type == "text/csv"
+
+    json_exp = exporter_registry.get("json")
+    assert isinstance(json_exp, JsonExporter)
+    assert json_exp.name == "json"
+    assert json_exp.content_type == "application/json"
+
+    pdf_exp = exporter_registry.get("pdf")
+    assert isinstance(pdf_exp, PdfExporter)
+    assert pdf_exp.name == "pdf"
+    assert pdf_exp.content_type == "application/pdf"
 
 
 def test_csv_exporter(

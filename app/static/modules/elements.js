@@ -8,6 +8,8 @@ export const els = {
     groupColSelect: document.getElementById('group-col-select'),
     valueColSearch: document.getElementById('value-col-search'),
     valueColumnsList: document.getElementById('value-columns-list'),
+    discreteColSearch: document.getElementById('discrete-col-search'),
+    discreteColumnsList: document.getElementById('discrete-columns-list'),
     subgroupsSection: document.getElementById('subgroups-section'),
     subgroupsSearch: document.getElementById('subgroups-search'),
     subgroupsList: document.getElementById('subgroups-list'),

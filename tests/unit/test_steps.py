@@ -231,3 +231,18 @@ def test_validate_allows_revisiting_completed_step() -> None:
     )
     # Going back to filters — dataset_selection prerequisite is met
     validate_step_transition(session, WizardStep.FILTERS)
+
+
+def test_get_completed_steps_with_export_format() -> None:
+    """Test get_completed_steps when export_format is set."""
+    from app.wizard.steps import _completed_steps
+
+    session = WizardSession(
+        dataset_id="ds1",
+        selected_method="ttest",
+        stat_results=[{"p_value": 0.05}],
+        plot_results=[{"type": "boxplot"}],
+        export_format="pdf",
+    )
+    completed = _completed_steps(session)
+    assert WizardStep.EXPORT in completed

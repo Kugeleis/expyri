@@ -120,3 +120,39 @@ def test_kind_property() -> None:
     """Registry exposes its kind label."""
     reg: Registry[_DummyPlugin] = Registry("filter")
     assert reg.kind == "filter"
+
+
+def test_get_applicable_intersect() -> None:
+    """Test get_applicable_intersect returns common plugins or breaks early."""
+    reg: Registry[_ApplicablePlugin] = Registry("test")
+
+    class _CustomPlugin:
+        def __init__(self, accept_cols: list[str]) -> None:
+            self._accept_cols = accept_cols
+
+        def is_applicable(self, **properties: Any) -> bool:
+            col = properties.get("column")
+            return col in self._accept_cols
+
+    reg._plugins["p1"] = _CustomPlugin(["col1"])  # type: ignore[assignment]
+    reg._plugins["p2"] = _CustomPlugin(["col2"])  # type: ignore[assignment]
+    reg._plugins["p3"] = _CustomPlugin(["col1", "col2"])  # type: ignore[assignment]
+
+    # Map of column names to properties
+    properties_map = {
+        "col1": {"column": "col1"},
+        "col2": {"column": "col2"},
+    }
+
+    # Intersect of {"p1", "p3"} and {"p2", "p3"} is {"p3"}
+    intersect = reg.get_applicable_intersect(properties_map)
+    assert set(intersect.keys()) == {"p3"}
+
+    # Test early break where intersection is empty
+    properties_map_empty = {
+        "col1": {"column": "col1"},
+        "col2": {"column": "col2"},
+        "col3": {"column": "col3"},
+    }
+    intersect_empty = reg.get_applicable_intersect(properties_map_empty)
+    assert intersect_empty == {}

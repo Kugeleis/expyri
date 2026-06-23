@@ -17,3 +17,24 @@ async def test_root_serves_homepage(client: AsyncClient) -> None:
     assert response.status_code == 200
     assert "ExpYT" in response.text
     assert "Experiment Evaluation Wizard" in response.text
+
+
+def test_app_version_fallback() -> None:
+    """Test fallback version if package is not installed."""
+    import importlib.metadata
+    import sys
+    from unittest.mock import patch
+
+    original_main = sys.modules.get("app.main")
+    try:
+        with patch("importlib.metadata.version", side_effect=importlib.metadata.PackageNotFoundError):
+            if "app.main" in sys.modules:
+                del sys.modules["app.main"]
+            import app.main
+
+            assert app.main.__version__ == "0.1.0"
+    finally:
+        if original_main is not None:
+            sys.modules["app.main"] = original_main
+        else:
+            sys.modules.pop("app.main", None)

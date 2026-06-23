@@ -224,3 +224,41 @@ def test_multi_format_repository(tmp_path: Path) -> None:
 
     with pytest.raises(KeyError, match="does not exist"):
         missing_repo.load_dataset("ds_pq")
+
+
+def test_resolve_selected_value_columns_errors() -> None:
+    """Test validation errors in resolve_selected_value_columns."""
+    from app.datasets.utils import resolve_selected_value_columns
+
+    df = pd.DataFrame({"group": ["A", "B"], "value": [1.0, 2.0], "cat": ["X", "Y"]})
+
+    # Missing columns
+    with pytest.raises(ValueError, match="not found in dataset"):
+        resolve_selected_value_columns(df, "group", ["missing_col"])
+
+    # Group column in value columns
+    with pytest.raises(ValueError, match="Group column must not appear"):
+        resolve_selected_value_columns(df, "group", ["group"])
+
+    # Non-numeric column
+    with pytest.raises(ValueError, match="must be numeric"):
+        resolve_selected_value_columns(df, "group", ["cat"])
+
+
+def test_resolve_selected_discrete_columns_errors() -> None:
+    """Test validation errors in resolve_selected_discrete_columns."""
+    from app.datasets.utils import resolve_selected_discrete_columns
+
+    df = pd.DataFrame({"group": ["A", "B"], "value": [1.0, 2.0], "cat": ["X", "Y"]})
+
+    # Missing columns
+    with pytest.raises(ValueError, match="not found in dataset"):
+        resolve_selected_discrete_columns(df, "group", ["missing_col"])
+
+    # Group column in discrete columns
+    with pytest.raises(ValueError, match="Group column must not appear"):
+        resolve_selected_discrete_columns(df, "group", ["group"])
+
+    # Numeric column in discrete
+    with pytest.raises(ValueError, match="must be categorical"):
+        resolve_selected_discrete_columns(df, "group", ["value"])

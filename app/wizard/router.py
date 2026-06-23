@@ -19,7 +19,7 @@ from app.datasets.repository import (
     DatasetRepository,
     MultiFormatDatasetRepository,
 )
-from app.datasets.utils import resolve_selected_value_columns
+from app.datasets.utils import resolve_selected_discrete_columns, resolve_selected_value_columns
 from app.exporters.base import exporter_registry
 from app.filters.base import apply_filter_pipeline
 from app.plots.base import PlotResult, plot_registry
@@ -242,14 +242,42 @@ def select_dataset(
     except KeyError:
         raise HTTPException(status_code=400, detail="Dataset missing") from None
 
+    print(
+        f"DEBUG: req.group_column={req.group_column!r}, "
+        f"req.selected_value_columns={req.selected_value_columns}, "
+        f"req.selected_discrete_columns={req.selected_discrete_columns}"
+    )
+    is_empty_val = not req.selected_value_columns
+    is_empty_disc = not req.selected_discrete_columns
+
     try:
-        selected_columns = resolve_selected_value_columns(df, req.group_column, req.selected_value_columns)
+        if is_empty_val and is_empty_disc:
+            selected_columns = resolve_selected_value_columns(df, req.group_column, [])
+            selected_discrete = resolve_selected_discrete_columns(df, req.group_column, [])
+        else:
+            selected_columns = (
+                resolve_selected_value_columns(df, req.group_column, req.selected_value_columns)
+                if not is_empty_val
+                else []
+            )
+            selected_discrete = (
+                resolve_selected_discrete_columns(df, req.group_column, req.selected_discrete_columns)
+                if not is_empty_disc
+                else []
+            )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from None
+
+    if not selected_columns and not selected_discrete:
+        raise HTTPException(
+            status_code=400,
+            detail="Dataset must contain at least one dependent column to analyze (continuous or discrete).",
+        )
 
     session.dataset_id = req.dataset_id
     session.group_column = req.group_column
     session.selected_value_columns = selected_columns
+    session.selected_discrete_columns = selected_discrete
     session.selected_groups = req.selected_groups
     session.current_step = WizardStep.FILTERS.value
     store.save(session)
@@ -298,14 +326,41 @@ def list_applicable_methods(
     """Helper: Retrieve statistical methods applicable to the filtered dataset."""
     validate_step_transition(session, WizardStep.STAT_METHOD)
 
-    if session.group_column is None or not session.selected_value_columns:
+    if session.group_column is None or (not session.selected_value_columns and not session.selected_discrete_columns):
         raise HTTPException(status_code=400, detail="Incomplete setup")
 
     filtered_df = get_filtered_dataset(session, repo)
-    props_map = compute_data_properties_for_columns(filtered_df, session.group_column, session.selected_value_columns)
 
-    applicable = stat_registry.get_applicable_intersect(props_map)
-    return [{"name": name, "description": inst.description} for name, inst in applicable.items()]
+    results = []
+    if session.selected_value_columns:
+        props_map = compute_data_properties_for_columns(
+            filtered_df, session.group_column, session.selected_value_columns
+        )
+        applicable = stat_registry.get_applicable_intersect(props_map)
+        for name, inst in applicable.items():
+            results.append(
+                {
+                    "name": name,
+                    "description": inst.description,
+                    "variable_type": "continuous",
+                }
+            )
+
+    if session.selected_discrete_columns:
+        props_map_discrete = compute_data_properties_for_columns(
+            filtered_df, session.group_column, session.selected_discrete_columns
+        )
+        applicable_discrete = stat_registry.get_applicable_intersect(props_map_discrete)
+        for name, inst in applicable_discrete.items():
+            results.append(
+                {
+                    "name": name,
+                    "description": inst.description,
+                    "variable_type": "discrete",
+                }
+            )
+
+    return results
 
 
 @router.post("/sessions/{session_id}/method", response_model=WizardSession)
@@ -318,20 +373,45 @@ def select_method(
     """Step 3: Select a statistical method."""
     validate_step_transition(session, WizardStep.STAT_METHOD)
 
-    if session.group_column is None or not session.selected_value_columns:
+    if session.group_column is None or (not session.selected_value_columns and not session.selected_discrete_columns):
         raise HTTPException(status_code=400, detail="Incomplete setup")
 
     filtered_df = get_filtered_dataset(session, repo)
-    props_map = compute_data_properties_for_columns(filtered_df, session.group_column, session.selected_value_columns)
 
-    applicable = stat_registry.get_applicable_intersect(props_map)
-    if req.selected_method not in applicable:
-        raise HTTPException(
-            status_code=400,
-            detail=(f"Method {req.selected_method!r} is not applicable to the dataset properties"),
+    # Validate continuous method if continuous columns are selected
+    if session.selected_value_columns:
+        if not req.selected_method:
+            raise HTTPException(status_code=400, detail="Method for continuous columns must be selected")
+        props_map = compute_data_properties_for_columns(
+            filtered_df, session.group_column, session.selected_value_columns
         )
+        applicable = stat_registry.get_applicable_intersect(props_map)
+        if req.selected_method not in applicable:
+            raise HTTPException(
+                status_code=400,
+                detail=(f"Method {req.selected_method!r} is not applicable to the dataset properties"),
+            )
+        session.selected_method = req.selected_method
+    else:
+        session.selected_method = None
 
-    session.selected_method = req.selected_method
+    # Validate discrete method if discrete columns are selected
+    if session.selected_discrete_columns:
+        if not req.selected_discrete_method:
+            raise HTTPException(status_code=400, detail="Method for discrete columns must be selected")
+        props_map_discrete = compute_data_properties_for_columns(
+            filtered_df, session.group_column, session.selected_discrete_columns
+        )
+        applicable_discrete = stat_registry.get_applicable_intersect(props_map_discrete)
+        if req.selected_discrete_method not in applicable_discrete:
+            raise HTTPException(
+                status_code=400,
+                detail=(f"Method {req.selected_discrete_method!r} is not applicable to the dataset properties"),
+            )
+        session.selected_discrete_method = req.selected_discrete_method
+    else:
+        session.selected_discrete_method = None
+
     session.current_step = WizardStep.RESULTS.value
     store.save(session)
     return session
@@ -349,24 +429,45 @@ def run_statistical_evaluation(
     """
     validate_step_transition(session, WizardStep.RESULTS)
 
-    if session.group_column is None or not session.selected_value_columns or session.selected_method is None:
+    if session.group_column is None or (not session.selected_value_columns and not session.selected_discrete_columns):
         raise HTTPException(status_code=400, detail="Incomplete setup")
 
     filtered_df = get_filtered_dataset(session, repo)
-    method = stat_registry.get(session.selected_method)
-
     results: list[StatResult] = []
-    for value_col in session.selected_value_columns:
-        grouped = filtered_df.groupby(session.group_column)[value_col]
-        group_data = {str(name): list(group.dropna().values) for name, group in grouped}
 
-        try:
-            res = method.run(group_data)
-        except ValueError as e:
-            raise HTTPException(status_code=400, detail=str(e)) from None
+    # Process continuous columns
+    if session.selected_value_columns:
+        if session.selected_method is None:
+            raise HTTPException(status_code=400, detail="Continuous method not selected")
+        method = stat_registry.get(session.selected_method)
+        for value_col in session.selected_value_columns:
+            grouped = filtered_df.groupby(session.group_column)[value_col]
+            group_data = {str(name): list(group.dropna().values) for name, group in grouped}
 
-        res.column_name = value_col
-        results.append(res)
+            try:
+                res = method.run(group_data)
+            except ValueError as e:
+                raise HTTPException(status_code=400, detail=str(e)) from None
+
+            res.column_name = value_col
+            results.append(res)
+
+    # Process discrete columns
+    if session.selected_discrete_columns:
+        if session.selected_discrete_method is None:
+            raise HTTPException(status_code=400, detail="Discrete method not selected")
+        discrete_method = stat_registry.get(session.selected_discrete_method)
+        for value_col in session.selected_discrete_columns:
+            grouped = filtered_df.groupby(session.group_column)[value_col]
+            group_data = {str(name): list(group.dropna().values) for name, group in grouped}
+
+            try:
+                res = discrete_method.run(group_data)
+            except ValueError as e:
+                raise HTTPException(status_code=400, detail=str(e)) from None
+
+            res.column_name = value_col
+            results.append(res)
 
     results.sort(key=lambda r: r.p_value)
 
@@ -384,14 +485,17 @@ def list_applicable_plots(
     """Helper: Retrieve plots applicable to the filtered dataset."""
     validate_step_transition(session, WizardStep.PLOT_SELECTION)
 
-    if session.group_column is None or not session.selected_value_columns:
+    if session.group_column is None or (not session.selected_value_columns and not session.selected_discrete_columns):
         raise HTTPException(status_code=400, detail="Incomplete setup")
 
     filtered_df = get_filtered_dataset(session, repo)
-    props_map = compute_data_properties_for_columns(filtered_df, session.group_column, session.selected_value_columns)
-
-    applicable = plot_registry.get_applicable_intersect(props_map)
-    return [{"name": name, "description": inst.description} for name, inst in applicable.items()]
+    if session.selected_value_columns:
+        props_map = compute_data_properties_for_columns(
+            filtered_df, session.group_column, session.selected_value_columns
+        )
+        applicable = plot_registry.get_applicable_intersect(props_map)
+        return [{"name": name, "description": inst.description} for name, inst in applicable.items()]
+    return []
 
 
 @router.post("/sessions/{session_id}/plots", response_model=WizardSession)
@@ -407,7 +511,7 @@ def generate_plots(
     """
     validate_step_transition(session, WizardStep.PLOT_SELECTION)
 
-    if session.group_column is None or not session.selected_value_columns:
+    if session.group_column is None or (not session.selected_value_columns and not session.selected_discrete_columns):
         raise HTTPException(status_code=400, detail="Incomplete setup")
 
     filtered_df = get_filtered_dataset(session, repo)

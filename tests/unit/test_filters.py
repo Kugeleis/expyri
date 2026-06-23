@@ -41,6 +41,10 @@ def test_numeric_range_properties() -> None:
     assert filt.name == "numeric_range"
     assert "numeric column" in filt.description
 
+    cat_filt = CategoryFilter()
+    assert cat_filt.name == "category_filter"
+    assert "categorical column" in cat_filt.description
+
 
 @pytest.mark.parametrize(
     ("params", "expected_len", "query_func"),

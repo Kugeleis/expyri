@@ -433,3 +433,165 @@ def test_wizard_subgroup_selection_filtering(client: TestClient) -> None:
     assert results[0]["test_statistic"] < 0
     assert abs(results[0]["test_statistic"] - (-6.741998624632423)) < 1e-3
     assert results[0]["p_value"] < 0.001
+
+
+def test_wizard_discrete_columns_stay_dependent_variables(client: TestClient) -> None:
+    """Verify that other discrete columns are allowed and stay as dependent variables."""
+    # Upload dataset with two discrete columns: group1, group2 and one numeric column: value
+    csv_content = b"group1,group2,value\nA,X,10.0\nA,Y,10.5\nA,X,11.0\nB,Y,12.0\nB,X,12.5\nB,Y,13.0\n"
+    files = {"file": ("discrete_dep_test.csv", csv_content, "text/csv")}
+    resp = client.post("/wizard/upload", files=files)
+    assert resp.status_code == 200
+
+    # Create session
+    resp = client.post("/wizard/sessions")
+    session_id = resp.json()["session_id"]
+
+    # Step 1: Select dataset. Select group1 as group_column.
+    # By default, all other columns (group2, value) should be resolved as dependent variables.
+    resp = client.post(
+        f"/wizard/sessions/{session_id}/dataset",
+        json={
+            "dataset_id": "discrete_dep_test",
+            "group_column": "group1",
+            "selected_value_columns": [],
+            "selected_discrete_columns": [],
+        },
+    )
+    assert resp.status_code == 200
+    res_data = resp.json()
+    assert "group2" in res_data["selected_discrete_columns"]
+    assert "value" in res_data["selected_value_columns"]
+
+    # Now verify we can explicitly request a discrete column as the dependent variable.
+    resp = client.post(
+        f"/wizard/sessions/{session_id}/dataset",
+        json={
+            "dataset_id": "discrete_dep_test",
+            "group_column": "group1",
+            "selected_discrete_columns": ["group2"],
+        },
+    )
+    assert resp.status_code == 200
+    assert resp.json()["selected_discrete_columns"] == ["group2"]
+
+
+def test_wizard_mixed_columns_processing(client: TestClient) -> None:
+    """Verify that mixed continuous and discrete dependent columns are processed independently."""
+    # Upload mixed dataset: group column, continuous value, discrete category
+    csv_content = b"group,value,category\nA,10.0,Yes\nA,10.5,Yes\nA,11.0,No\nB,12.0,No\nB,12.5,No\nB,13.0,Yes\n"
+    files = {"file": ("mixed_test.csv", csv_content, "text/csv")}
+    resp = client.post("/wizard/upload", files=files)
+    assert resp.status_code == 200
+
+    # Create session
+    resp = client.post("/wizard/sessions")
+    session_id = resp.json()["session_id"]
+
+    # Step 1: Select dataset, auto-populate all columns (both lists empty)
+    resp = client.post(
+        f"/wizard/sessions/{session_id}/dataset",
+        json={
+            "dataset_id": "mixed_test",
+            "group_column": "group",
+            "selected_value_columns": [],
+            "selected_discrete_columns": [],
+        },
+    )
+    assert resp.status_code == 200
+    res_data = resp.json()
+    assert res_data["selected_value_columns"] == ["value"]
+    assert res_data["selected_discrete_columns"] == ["category"]
+
+    # Step 2: Configure empty filters
+    resp = client.post(
+        f"/wizard/sessions/{session_id}/filters",
+        json={"filters_config": []},
+    )
+    assert resp.status_code == 200
+
+    # Check applicable methods has both continuous and discrete methods flat-listed with type info
+    resp = client.get(f"/wizard/sessions/{session_id}/methods")
+    assert resp.status_code == 200
+    methods = resp.json()
+
+    continuous_names = {m["name"] for m in methods if m["variable_type"] == "continuous"}
+    discrete_names = {m["name"] for m in methods if m["variable_type"] == "discrete"}
+
+    assert "ttest_ind" in continuous_names
+    assert "chi_square" in discrete_names
+
+    # Step 3: Choose method for both continuous and discrete columns
+    resp = client.post(
+        f"/wizard/sessions/{session_id}/method",
+        json={
+            "selected_method": "ttest_ind",
+            "selected_discrete_method": "chi_square",
+        },
+    )
+    assert resp.status_code == 200
+    assert resp.json()["selected_method"] == "ttest_ind"
+    assert resp.json()["selected_discrete_method"] == "chi_square"
+
+    # Step 4: Run statistical results and verify mixed results are returned
+    resp = client.get(f"/wizard/sessions/{session_id}/results")
+    assert resp.status_code == 200
+    results = resp.json()
+    assert len(results) == 2
+
+    col_names = {r["column_name"] for r in results}
+    assert "value" in col_names
+    assert "category" in col_names
+
+    # Assert methods matches the column type
+    value_res = next(r for r in results if r["column_name"] == "value")
+    category_res = next(r for r in results if r["column_name"] == "category")
+
+    assert value_res["method_name"] == "ttest_ind"
+    assert category_res["method_name"] == "chi_square"
+
+
+def test_nycflights_origin_group(client: TestClient) -> None:
+    """Verify that selecting origin as the group column works correctly with the expected frontend payload."""
+    # Read the real nycflights.csv data
+    with open("test_data/nycflights.csv", "rb") as f:
+        csv_content = f.read()
+
+    files = {"file": ("nycflights.csv", csv_content, "text/csv")}
+    resp = client.post("/wizard/upload", files=files)
+    assert resp.status_code == 200
+    assert resp.json()["id"] == "nycflights"
+
+    # Create session
+    resp = client.post("/wizard/sessions")
+    assert resp.status_code == 200
+    session_id = resp.json()["session_id"]
+
+    # Post Step 1: Select dataset with group_column="origin"
+    # value columns and discrete columns are populated matching the frontend state
+    payload = {
+        "dataset_id": "nycflights",
+        "group_column": "origin",
+        "selected_value_columns": [
+            "year",
+            "month",
+            "day",
+            "dep_time",
+            "dep_delay",
+            "arr_time",
+            "arr_delay",
+            "flight",
+            "air_time",
+            "distance",
+            "hour",
+            "minute",
+        ],
+        "selected_discrete_columns": ["tailnum", "dest", "carrier"],
+        "selected_groups": ["EWR", "LGA", "JFK"],
+    }
+    resp = client.post(f"/wizard/sessions/{session_id}/dataset", json=payload)
+    assert resp.status_code == 200
+    res_data = resp.json()
+    assert res_data["group_column"] == "origin"
+    assert set(res_data["selected_value_columns"]) == set(payload["selected_value_columns"])
+    assert set(res_data["selected_discrete_columns"]) == set(payload["selected_discrete_columns"])

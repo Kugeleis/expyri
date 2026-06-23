@@ -15,8 +15,16 @@ class DatasetSelectionRequest(BaseModel):
     selected_value_columns: list[str] = Field(
         default_factory=list,
         description=(
-            "List of dependent variable columns to analyze. "
+            "List of continuous dependent variable columns to analyze. "
             "If omitted or empty, all numeric columns except the "
+            "group column are used by default."
+        ),
+    )
+    selected_discrete_columns: list[str] = Field(
+        default_factory=list,
+        description=(
+            "List of discrete/categorical dependent variable columns to analyze. "
+            "If omitted or empty, all non-numeric columns except the "
             "group column are used by default."
         ),
     )
@@ -40,9 +48,16 @@ class FiltersConfigRequest(BaseModel):
 
 
 class MethodSelectionRequest(BaseModel):
-    """Payload for selecting a statistical method."""
+    """Payload for selecting statistical methods."""
 
-    selected_method: str = Field(..., description="Name of the selected statistical method plugin.")
+    selected_method: str | None = Field(
+        None,
+        description="Name of the selected statistical method plugin for continuous columns.",
+    )
+    selected_discrete_method: str | None = Field(
+        None,
+        description="Name of the selected statistical method plugin for discrete columns.",
+    )
 
 
 class PlotSelectionRequest(BaseModel):
