@@ -308,7 +308,79 @@ export async function generatePlotsPreview() {
             title.style.margin = '0';
             title.style.fontSize = '0.95rem';
             title.style.fontWeight = '600';
+            title.style.display = 'flex';
+            title.style.justifyContent = 'space-between';
+            title.style.alignItems = 'center';
+            title.style.flexWrap = 'wrap';
+            title.style.gap = '0.5rem';
+            title.style.width = '100%';
             title.textContent = colName;
+
+            // Fetch statistical properties for this column to display as badges next to the title
+            const statResult = state.statResults ? state.statResults.find(res => res.column_name === colName) : null;
+            if (statResult) {
+                const statsContainer = document.createElement('div');
+                statsContainer.className = 'card-header-stats';
+                statsContainer.style.display = 'flex';
+                statsContainer.style.gap = '0.4rem';
+                statsContainer.style.fontSize = '0.75rem';
+                statsContainer.style.flexWrap = 'wrap';
+                statsContainer.style.fontWeight = 'normal'; // Reset font-weight from h4 defaults
+
+                // Method badge
+                const methodBadge = document.createElement('span');
+                methodBadge.style.backgroundColor = 'rgba(255, 255, 255, 0.04)';
+                methodBadge.style.padding = '0.1rem 0.4rem';
+                methodBadge.style.borderRadius = '4px';
+                methodBadge.style.border = '1px solid var(--pico-border-color)';
+                methodBadge.style.fontWeight = '500';
+                methodBadge.textContent = statResult.method_name;
+                statsContainer.appendChild(methodBadge);
+
+                // Statistic badge
+                if (statResult.test_statistic !== null && statResult.test_statistic !== undefined) {
+                    const statBadge = document.createElement('span');
+                    statBadge.style.backgroundColor = 'rgba(255, 255, 255, 0.04)';
+                    statBadge.style.padding = '0.1rem 0.4rem';
+                    statBadge.style.borderRadius = '4px';
+                    statBadge.style.border = '1px solid var(--pico-border-color)';
+                    statBadge.innerHTML = `Stat: <strong>${Number(statResult.test_statistic).toFixed(4)}</strong>`;
+                    statsContainer.appendChild(statBadge);
+                }
+
+                // p-value badge
+                if (statResult.p_value !== null && statResult.p_value !== undefined) {
+                    const pBadge = document.createElement('span');
+                    pBadge.style.backgroundColor = 'rgba(255, 255, 255, 0.04)';
+                    pBadge.style.padding = '0.1rem 0.4rem';
+                    pBadge.style.borderRadius = '4px';
+                    pBadge.style.border = '1px solid var(--pico-border-color)';
+                    pBadge.innerHTML = `p-val: <strong>${Number(statResult.p_value).toFixed(6)}</strong>`;
+
+                    const filterInput = document.getElementById('plots-sig-filter');
+                    const threshold = filterInput ? parseFloat(filterInput.value) : 0.05;
+                    if (statResult.p_value <= threshold) {
+                        pBadge.style.color = 'var(--pico-primary)';
+                        pBadge.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+                        pBadge.style.backgroundColor = 'rgba(16, 185, 129, 0.05)';
+                    }
+                    statsContainer.appendChild(pBadge);
+                }
+
+                // Effect Size badge
+                if (statResult.effect_size !== null && statResult.effect_size !== undefined) {
+                    const esBadge = document.createElement('span');
+                    esBadge.style.backgroundColor = 'rgba(255, 255, 255, 0.04)';
+                    esBadge.style.padding = '0.1rem 0.4rem';
+                    esBadge.style.borderRadius = '4px';
+                    esBadge.style.border = '1px solid var(--pico-border-color)';
+                    esBadge.innerHTML = `ES: <strong>${Number(statResult.effect_size).toFixed(4)}</strong>`;
+                    statsContainer.appendChild(esBadge);
+                }
+
+                title.appendChild(statsContainer);
+            }
+
             header.appendChild(title);
             card.appendChild(header);
 
