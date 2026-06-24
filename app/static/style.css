@@ -265,19 +265,18 @@ label {
     line-height: 1.4;
 }
 
-.panel-actions {
-    margin-top: auto;
-    padding-top: 0.75rem;
-    border-top: 1px solid var(--pico-border-color);
+/* Sidebar Actions */
+.sidebar-actions button {
+    font-size: 1.2rem !important;
+    padding: 0.4rem !important;
     display: flex;
-    justify-content: flex-end;
-    gap: 0.5rem;
     align-items: center;
+    justify-content: center;
 }
 
-.panel-actions button, .panel-actions a[role="button"] {
-    width: auto;
-    margin-bottom: 0;
+.sidebar-actions button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 /* Step 1: Column/Subgroup Checklists */

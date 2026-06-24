@@ -42,7 +42,7 @@ export async function fetchApplicableMethods() {
         const rawMethods = await response.json();
         state.applicableMethods = rawMethods;
         els.methodsList.innerHTML = '';
-        els.btnStep3Next.disabled = true;
+        if (els.btnSidebarNext) els.btnSidebarNext.disabled = true;
         state.selectedMethod = '';
         state.selectedDiscreteMethod = '';
 
@@ -63,7 +63,7 @@ export async function fetchApplicableMethods() {
         const checkStep3NextState = () => {
             const continuousValid = !hasContinuous || state.selectedMethod !== '';
             const discreteValid = !hasDiscrete || state.selectedDiscreteMethod !== '';
-            els.btnStep3Next.disabled = !(continuousValid && discreteValid);
+            if (els.btnSidebarNext) els.btnSidebarNext.disabled = !(continuousValid && discreteValid);
         };
 
         // Render Continuous Methods
@@ -182,7 +182,7 @@ export async function fetchApplicablePlots() {
 
         state.applicablePlots = await response.json();
         els.plotsSelector.innerHTML = '';
-        els.btnStep5Next.disabled = true;
+        if (els.btnSidebarNext) els.btnSidebarNext.disabled = true;
         state.selectedPlots = [];
         els.plotsDisplay.innerHTML = '<span class="no-plots-msg">Select plot types and click Generate Plots above.</span>';
 
@@ -397,7 +397,7 @@ export async function generatePlotsPreview() {
         `;
         startPacmanAnimation();
         els.btnGeneratePlots.disabled = true;
-        els.btnStep5Next.disabled = true;
+        if (els.btnSidebarNext) els.btnSidebarNext.disabled = true;
 
         const response = await fetch(`/wizard/sessions/${state.sessionId}/plots`, {
             method: 'POST',
@@ -550,7 +550,7 @@ export async function generatePlotsPreview() {
             els.plotsDisplay.appendChild(card);
         });
 
-        els.btnStep5Next.disabled = false;
+        if (els.btnSidebarNext) els.btnSidebarNext.disabled = false;
     } catch (err) {
         els.plotsDisplay.innerHTML = `<span class="no-plots-msg text-error">Failed to render plots: ${err.message}</span>`;
     } finally {
