@@ -83,6 +83,133 @@ export function sortResults(field) {
     renderResultsTable();
 }
 
+// Chart instance to be managed
+export let chartInstance = null;
+
+// Render the significance chart
+export function renderSignificanceChart() {
+    if (!els.significanceChart) return;
+
+    if (!state.statResults || state.statResults.length === 0) {
+        els.significanceChart.style.display = 'none';
+        return;
+    }
+
+    const filterInput = els.plotsSigFilter;
+    let limit = 0.05;
+    if (filterInput) {
+        limit = parseFloat(filterInput.value);
+        if (isNaN(limit) || limit < 0) {
+            limit = 0.05;
+        }
+    }
+    const strictLimit = limit * 0.2;
+
+    // Filter out null p-values and sort ascending
+    const validResults = state.statResults
+        .filter(res => res.p_value !== null && res.p_value !== undefined)
+        .sort((a, b) => a.p_value - b.p_value);
+
+    if (validResults.length === 0) {
+        els.significanceChart.style.display = 'none';
+        return;
+    }
+
+    els.significanceChart.style.display = 'block';
+
+    const labels = validResults.map(res => res.column_name || 'Unknown');
+    const data = validResults.map(res => res.p_value);
+
+    // Color logic
+    const backgroundColors = validResults.map(res => {
+        if (res.p_value <= strictLimit) {
+            return 'rgba(16, 185, 129, 0.8)'; // Green
+        } else if (res.p_value <= limit) {
+            return 'rgba(251, 146, 60, 0.8)'; // Light Orange
+        } else {
+            return 'rgba(255, 255, 255, 0.1)'; // Default gray-ish
+        }
+    });
+
+    if (chartInstance) {
+        chartInstance.destroy();
+    }
+
+    const ctx = els.significanceChart.getContext('2d');
+    chartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'p-value Limit',
+                    data: labels.map(() => limit),
+                    type: 'line',
+                    borderColor: 'rgba(255, 255, 255, 0.5)',
+                    borderWidth: 2,
+                    borderDash: [5, 5],
+                    pointRadius: 0,
+                    fill: false,
+                    order: 1
+                },
+                {
+                    label: 'p-value',
+                    data: data,
+                    backgroundColor: backgroundColors,
+                    borderWidth: 1,
+                    borderColor: 'rgba(255, 255, 255, 0.2)',
+                    order: 2
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Significance Chart',
+                    color: '#f1f3f9'
+                },
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'p-value',
+                        color: '#9aa0a6'
+                    },
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.05)'
+                    },
+                    ticks: {
+                        color: '#9aa0a6'
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Columns (Sorted by p-value)',
+                        color: '#9aa0a6'
+                    },
+                    grid: {
+                        display: false
+                    },
+                    ticks: {
+                        color: '#9aa0a6',
+                        maxRotation: 45,
+                        minRotation: 45
+                    }
+                }
+            }
+        }
+    });
+}
+
 // Render the results table
 export function renderResultsTable() {
     const container = document.getElementById('statResultsContainer');
@@ -93,6 +220,9 @@ export function renderResultsTable() {
         container.textContent = 'No statistical results generated.';
         return;
     }
+
+    // Also render chart
+    renderSignificanceChart();
 
     const wrapper = document.createElement('div');
     wrapper.className = 'overflow-auto';
@@ -134,9 +264,28 @@ export function renderResultsTable() {
     thead.appendChild(tr);
     table.appendChild(thead);
 
+    const filterInput = els.plotsSigFilter;
+    let limit = 0.05;
+    if (filterInput) {
+        limit = parseFloat(filterInput.value);
+        if (isNaN(limit) || limit < 0) {
+            limit = 0.05;
+        }
+    }
+    const strictLimit = limit * 0.2;
+
     const tbody = document.createElement('tbody');
     state.statResults.forEach(res => {
         const trRow = document.createElement('tr');
+
+        if (res.p_value !== null && res.p_value !== undefined) {
+            if (res.p_value <= strictLimit) {
+                trRow.style.backgroundColor = 'rgba(16, 185, 129, 0.2)'; // Green with lower opacity
+            } else if (res.p_value <= limit) {
+                trRow.style.backgroundColor = 'rgba(251, 146, 60, 0.2)'; // Light Orange with lower opacity
+            }
+        }
+
         trRow.innerHTML = `
             <td>${res.column_name || ''}</td>
             <td>${res.method_name}</td>
