@@ -305,7 +305,7 @@ function startPacmanAnimation() {
         const textLeft  = textRowRect.left - stageRect.left;
         const textRight = textRowRect.right - stageRect.left;
 
-        const pacW = 50;
+        const pacW = 30;
         const startX = textLeft - pacW - 10;
         const endX   = textRight + 10;
         const halfCycle = CYCLE / 2;

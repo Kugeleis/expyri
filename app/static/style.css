@@ -692,7 +692,7 @@ label {
     width: 100%;
     max-width: 800px;
     position: relative;
-    height: 120px;
+    height: 60px;
     margin: 0 auto;
 }
 
@@ -708,11 +708,11 @@ label {
 
 .letter {
     display: inline-block;
-    color: #1af;
-    font-size: 22px;
+    color: var(--pico-primary);
+    font-size: 20px;
     font-family: 'Courier New', monospace;
     font-weight: bold;
-    text-shadow: 0 0 6px #1af, 0 0 12px #1af88;
+    text-shadow: 0 0 6px var(--pico-primary), 0 0 12px rgba(16, 185, 129, 0.4);
     line-height: 1;
     white-space: pre;
     opacity: 1;
@@ -725,17 +725,17 @@ label {
     top: 50%;
     transform: translateY(-50%);
     left: 0;
-    width: 50px;
-    height: 50px;
+    width: 30px;
+    height: 30px;
 }
 
 .pac-body {
-    width: 50px;
-    height: 50px;
-    background: #FFD700;
+    width: 30px;
+    height: 30px;
+    background: var(--pico-primary);
     border-radius: 50%;
     position: absolute;
-    box-shadow: 0 0 10px #FFD70088;
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
 }
 
 .pac-body.chomping {
@@ -768,11 +768,11 @@ label {
 
 .pac-eye {
     position: absolute;
-    width: 6px;
-    height: 6px;
+    width: 4px;
+    height: 4px;
     background: #000;
     border-radius: 50%;
-    top: 10px;
-    right: 13px;
+    top: 6px;
+    right: 8px;
     z-index: 2;
 }
