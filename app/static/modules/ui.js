@@ -83,6 +83,148 @@ export function sortResults(field) {
     renderResultsTable();
 }
 
+// Chart instance to be managed
+export let chartInstance = null;
+
+// Render the significance chart
+export function renderSignificanceChart() {
+    if (!els.significanceChart) return;
+
+    if (!state.statResults || state.statResults.length === 0) {
+        els.significanceChart.style.display = 'none';
+        return;
+    }
+
+    const filterInput = els.plotsSigFilter;
+    let limit = 0.05;
+    if (filterInput) {
+        limit = parseFloat(filterInput.value);
+        if (isNaN(limit) || limit < 0) {
+            limit = 0.05;
+        }
+    }
+    const strictLimit = limit * 0.2;
+
+    // Filter out null p-values and sort ascending
+    const validResults = state.statResults
+        .filter(res => res.p_value !== null && res.p_value !== undefined)
+        .sort((a, b) => a.p_value - b.p_value);
+
+    if (validResults.length === 0) {
+        els.significanceChart.style.display = 'none';
+        return;
+    }
+
+    els.significanceChart.style.display = 'block';
+
+    const labels = validResults.map(res => res.column_name || 'Unknown');
+    const data = validResults.map(res => res.p_value);
+
+    // Color logic
+    const backgroundColors = validResults.map(res => {
+        if (res.p_value <= strictLimit) {
+            return 'rgba(16, 185, 129, 0.8)'; // Green
+        } else if (res.p_value <= limit) {
+            return 'rgba(250, 204, 21, 0.8)'; // Yellow
+        } else {
+            return 'rgba(255, 255, 255, 0.1)'; // Default gray-ish
+        }
+    });
+
+    if (chartInstance) {
+        chartInstance.destroy();
+    }
+
+    const ctx = els.significanceChart.getContext('2d');
+    chartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'p-value Limit',
+                    data: labels.map(() => limit),
+                    borderColor: 'rgba(250, 204, 21, 0.5)',
+                    borderWidth: 2,
+                    borderDash: [5, 5],
+                    pointRadius: 0,
+                    fill: 1,
+                    backgroundColor: 'rgba(250, 204, 21, 0.12)',
+                    order: 2
+                },
+                {
+                    label: 'p-value Strict Limit',
+                    data: labels.map(() => strictLimit),
+                    borderColor: 'rgba(16, 185, 129, 0.5)',
+                    borderWidth: 2,
+                    borderDash: [5, 5],
+                    pointRadius: 0,
+                    fill: 'start',
+                    backgroundColor: 'rgba(16, 185, 129, 0.12)',
+                    order: 3
+                },
+                {
+                    label: 'p-value',
+                    data: data,
+                    showLine: false,
+                    pointBackgroundColor: backgroundColors,
+                    pointBorderColor: 'rgba(255, 255, 255, 0.3)',
+                    pointBorderWidth: 1,
+                    pointRadius: 6,
+                    pointHoverRadius: 9,
+                    order: 1
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Significance Chart',
+                    color: '#f1f3f9'
+                },
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: limit * 3,
+                    title: {
+                        display: true,
+                        text: 'p-value',
+                        color: '#9aa0a6'
+                    },
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.05)'
+                    },
+                    ticks: {
+                        color: '#9aa0a6'
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Columns (Sorted by p-value)',
+                        color: '#9aa0a6'
+                    },
+                    grid: {
+                        display: false
+                    },
+                    ticks: {
+                        color: '#9aa0a6',
+                        maxRotation: 45,
+                        minRotation: 45
+                    }
+                }
+            }
+        }
+    });
+}
+
 // Render the results table
 export function renderResultsTable() {
     const container = document.getElementById('statResultsContainer');
@@ -93,6 +235,9 @@ export function renderResultsTable() {
         container.textContent = 'No statistical results generated.';
         return;
     }
+
+    // Also render chart
+    renderSignificanceChart();
 
     const wrapper = document.createElement('div');
     wrapper.className = 'overflow-auto';
@@ -134,9 +279,20 @@ export function renderResultsTable() {
     thead.appendChild(tr);
     table.appendChild(thead);
 
+    const filterInput = els.plotsSigFilter;
+    let limit = 0.05;
+    if (filterInput) {
+        limit = parseFloat(filterInput.value);
+        if (isNaN(limit) || limit < 0) {
+            limit = 0.05;
+        }
+    }
+    const strictLimit = limit * 0.2;
+
     const tbody = document.createElement('tbody');
     state.statResults.forEach(res => {
         const trRow = document.createElement('tr');
+
         trRow.innerHTML = `
             <td>${res.column_name || ''}</td>
             <td>${res.method_name}</td>
@@ -144,6 +300,22 @@ export function renderResultsTable() {
             <td>${res.p_value !== null && res.p_value !== undefined ? Number(res.p_value).toFixed(6) : ''}</td>
             <td>${res.effect_size !== null && res.effect_size !== undefined ? Number(res.effect_size).toFixed(4) : ''}</td>
         `;
+
+        if (res.p_value !== null && res.p_value !== undefined) {
+            let bgColor = '';
+            if (res.p_value <= strictLimit) {
+                bgColor = 'rgba(16, 185, 129, 0.12)'; // Green matching the chart's strict limit zone
+            } else if (res.p_value <= limit) {
+                bgColor = 'rgba(250, 204, 21, 0.12)'; // Yellow matching the chart's limit zone
+            }
+
+            if (bgColor) {
+                trRow.querySelectorAll('td').forEach(td => {
+                    td.style.backgroundColor = bgColor;
+                });
+            }
+        }
+
         tbody.appendChild(trRow);
     });
     table.appendChild(tbody);

@@ -493,6 +493,11 @@ label {
     margin: 0;
 }
 
+#significanceChart {
+    max-height: 400px;
+    width: 100%;
+}
+
 .results-table {
     margin-top: 10px;
 }

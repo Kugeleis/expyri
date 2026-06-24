@@ -14,7 +14,8 @@ import {
     updateValueColumnsList,
     updatePlotsFilter,
     validateStep1Next,
-    renderSubgroupsList
+    renderSubgroupsList,
+    renderResultsTable
 } from './ui.js';
 import { showError } from './helpers.js';
 
@@ -408,6 +409,7 @@ export function initEventListeners() {
     if (els.plotsSigFilter) {
         els.plotsSigFilter.addEventListener('input', () => {
             updatePlotsFilter();
+            renderResultsTable(); // Re-render table and chart with new limit
         });
     }
 

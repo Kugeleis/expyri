@@ -9,6 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@anyblades/pico/css/pico.min.css">
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <div class="glow-container">
@@ -224,6 +225,7 @@
                     <p class="step-desc">Below are the execution results of your statistical test.</p>
 
                     <article class="results-card" id="results-card">
+                        <canvas id="significanceChart" width="400" height="200" style="margin-bottom: 1rem; display: none; max-height: 400px;"></canvas>
                         <div id="statResultsContainer"></div>
                         <div id="plots-filter-form" style="margin-top: 1rem; border-top: 1px solid var(--pico-border-color); padding-top: 0.75rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
                             <div style="display: flex; align-items: center; gap: 0.75rem;">

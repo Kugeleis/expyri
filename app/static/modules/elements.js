@@ -33,6 +33,7 @@ export const els = {
     resultSummaryText: document.getElementById('result-summary-text'),
     plotsSigFilter: document.getElementById('plots-sig-filter'),
     filteredPlotsCounter: document.getElementById('filtered-plots-counter'),
+    significanceChart: document.getElementById('significanceChart'),
 
     plotsSelector: document.getElementById('plots-selector'),
     plotsDisplay: document.getElementById('plots-display'),
