@@ -125,7 +125,7 @@ export function renderSignificanceChart() {
         if (res.p_value <= strictLimit) {
             return 'rgba(16, 185, 129, 0.8)'; // Green
         } else if (res.p_value <= limit) {
-            return 'rgba(251, 146, 60, 0.8)'; // Light Orange
+            return 'rgba(250, 204, 21, 0.8)'; // Yellow
         } else {
             return 'rgba(255, 255, 255, 0.1)'; // Default gray-ish
         }
@@ -137,28 +137,42 @@ export function renderSignificanceChart() {
 
     const ctx = els.significanceChart.getContext('2d');
     chartInstance = new Chart(ctx, {
-        type: 'bar',
+        type: 'line',
         data: {
             labels: labels,
             datasets: [
                 {
                     label: 'p-value Limit',
                     data: labels.map(() => limit),
-                    type: 'line',
-                    borderColor: 'rgba(255, 255, 255, 0.5)',
+                    borderColor: 'rgba(250, 204, 21, 0.5)',
                     borderWidth: 2,
                     borderDash: [5, 5],
                     pointRadius: 0,
-                    fill: false,
-                    order: 1
+                    fill: 1,
+                    backgroundColor: 'rgba(250, 204, 21, 0.12)',
+                    order: 2
+                },
+                {
+                    label: 'p-value Strict Limit',
+                    data: labels.map(() => strictLimit),
+                    borderColor: 'rgba(16, 185, 129, 0.5)',
+                    borderWidth: 2,
+                    borderDash: [5, 5],
+                    pointRadius: 0,
+                    fill: 'start',
+                    backgroundColor: 'rgba(16, 185, 129, 0.12)',
+                    order: 3
                 },
                 {
                     label: 'p-value',
                     data: data,
-                    backgroundColor: backgroundColors,
-                    borderWidth: 1,
-                    borderColor: 'rgba(255, 255, 255, 0.2)',
-                    order: 2
+                    showLine: false,
+                    pointBackgroundColor: backgroundColors,
+                    pointBorderColor: 'rgba(255, 255, 255, 0.3)',
+                    pointBorderWidth: 1,
+                    pointRadius: 6,
+                    pointHoverRadius: 9,
+                    order: 1
                 }
             ]
         },
@@ -178,6 +192,7 @@ export function renderSignificanceChart() {
             scales: {
                 y: {
                     beginAtZero: true,
+                    max: limit * 3,
                     title: {
                         display: true,
                         text: 'p-value',
@@ -278,14 +293,6 @@ export function renderResultsTable() {
     state.statResults.forEach(res => {
         const trRow = document.createElement('tr');
 
-        if (res.p_value !== null && res.p_value !== undefined) {
-            if (res.p_value <= strictLimit) {
-                trRow.style.backgroundColor = 'rgba(16, 185, 129, 0.2)'; // Green with lower opacity
-            } else if (res.p_value <= limit) {
-                trRow.style.backgroundColor = 'rgba(251, 146, 60, 0.2)'; // Light Orange with lower opacity
-            }
-        }
-
         trRow.innerHTML = `
             <td>${res.column_name || ''}</td>
             <td>${res.method_name}</td>
@@ -293,6 +300,22 @@ export function renderResultsTable() {
             <td>${res.p_value !== null && res.p_value !== undefined ? Number(res.p_value).toFixed(6) : ''}</td>
             <td>${res.effect_size !== null && res.effect_size !== undefined ? Number(res.effect_size).toFixed(4) : ''}</td>
         `;
+
+        if (res.p_value !== null && res.p_value !== undefined) {
+            let bgColor = '';
+            if (res.p_value <= strictLimit) {
+                bgColor = 'rgba(16, 185, 129, 0.12)'; // Green matching the chart's strict limit zone
+            } else if (res.p_value <= limit) {
+                bgColor = 'rgba(250, 204, 21, 0.12)'; // Yellow matching the chart's limit zone
+            }
+
+            if (bgColor) {
+                trRow.querySelectorAll('td').forEach(td => {
+                    td.style.backgroundColor = bgColor;
+                });
+            }
+        }
+
         tbody.appendChild(trRow);
     });
     table.appendChild(tbody);
