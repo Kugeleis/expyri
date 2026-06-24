@@ -296,10 +296,14 @@ export function updateValueColumnsList() {
 export function validateStep1Next() {
     const selectedGroupCol = els.groupColSelect.value;
     const hasDependentCol = state.selectedValueColumns.size > 0 || state.selectedDiscreteColumns.size > 0;
-    if (!selectedGroupCol || !hasDependentCol || state.selectedGroups.size === 0) {
-        els.btnStep1Next.disabled = true;
-    } else {
-        els.btnStep1Next.disabled = false;
+
+    // In Step 1, update the sidebar next button instead
+    if (state.currentStep === 'dataset_selection') {
+        if (!selectedGroupCol || !hasDependentCol || state.selectedGroups.size === 0) {
+            if (els.btnSidebarNext) els.btnSidebarNext.disabled = true;
+        } else {
+            if (els.btnSidebarNext) els.btnSidebarNext.disabled = false;
+        }
     }
 }
 

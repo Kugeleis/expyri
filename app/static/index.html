@@ -53,6 +53,15 @@
                     <span class="step-name">Export</span>
                 </div>
             </nav>
+
+            <div class="sidebar-actions" style="margin-top: auto; display: flex; gap: 0.5rem; justify-content: space-between;">
+                <button class="secondary outline" id="btn-sidebar-back" style="flex: 1; display: none;" title="Go Back">
+                    &larr;
+                </button>
+                <button id="btn-sidebar-next" style="flex: 1;" disabled title="Continue">
+                    &rarr;
+                </button>
+            </div>
         </aside>
 
         <!-- Main Workspace -->
@@ -126,10 +135,6 @@
                             </div>
                         </div>
                     </div>
-
-                    <div class="panel-actions">
-                        <button id="btn-step-1-next" disabled>Confirm Dataset</button>
-                    </div>
                 </section>
 
                 <!-- Step 2 Panel -->
@@ -189,11 +194,6 @@
                             <button class="secondary outline" id="btn-add-filter-action">Add Filter</button>
                         </article>
                     </div>
-
-                    <div class="panel-actions">
-                        <button class="secondary outline" id="btn-step-2-back">← Back</button>
-                        <button id="btn-step-2-next">Apply Filters & Continue</button>
-                    </div>
                 </section>
 
                 <!-- Step 3 Panel -->
@@ -216,11 +216,6 @@
                     <div class="methods-list" id="methods-list">
                         <!-- Populated dynamically -->
                     </div>
-
-                    <div class="panel-actions">
-                        <button class="secondary outline" id="btn-step-3-back">← Back</button>
-                        <button id="btn-step-3-next" disabled>Select Method</button>
-                    </div>
                 </section>
 
                 <!-- Step 4 Panel -->
@@ -238,10 +233,6 @@
                             <span id="filtered-plots-counter" style="font-size: 0.8rem; color: var(--pico-muted-color); font-weight: 550;">Matches 0 variables</span>
                         </div>
                     </article>
-                    <div class="panel-actions">
-                        <button class="secondary outline" id="btn-step-4-back">← Back</button>
-                        <button id="btn-step-4-next">Continue to Plots</button>
-                    </div>
                 </section>
 
                 <!-- Step-5 Panel -->
@@ -262,11 +253,6 @@
 
                     <div id="plots-display" style="display: flex; flex-direction: column; gap: 1rem; width: 100%;">
                         <span class="no-plots-msg">Select plot types and click Generate Plots above.</span>
-                    </div>
-
-                    <div class="panel-actions">
-                        <button class="secondary outline" id="btn-step-5-back">← Back</button>
-                        <button id="btn-step-5-next" disabled>Confirm & Go to Export</button>
                     </div>
                 </section>
 
@@ -291,11 +277,6 @@
                             <h4>CSV Dataset</h4>
                             <p>Export the cleaned and preprocessed dataset as a CSV file.</p>
                         </article>
-                    </div>
-
-                    <div class="panel-actions">
-                        <button class="secondary outline" id="btn-step-6-back">← Back</button>
-                        <button id="btn-export-download">Download Report</button>
                     </div>
                 </section>
             </div>

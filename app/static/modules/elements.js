@@ -13,7 +13,6 @@ export const els = {
     subgroupsSection: document.getElementById('subgroups-section'),
     subgroupsSearch: document.getElementById('subgroups-search'),
     subgroupsList: document.getElementById('subgroups-list'),
-    btnStep1Next: document.getElementById('btn-step-1-next'),
 
     activeFilters: document.getElementById('active-filters'),
     filterType: document.getElementById('filter-type'),
@@ -25,10 +24,8 @@ export const els = {
     filterCatValues: document.getElementById('filter-cat-values'),
     filterCatExclude: document.getElementById('filter-cat-exclude'),
     btnAddFilterAction: document.getElementById('btn-add-filter-action'),
-    btnStep2Next: document.getElementById('btn-step-2-next'),
 
     methodsList: document.getElementById('methods-list'),
-    btnStep3Next: document.getElementById('btn-step-3-next'),
 
     resultMethodName: document.getElementById('result-method-name'),
     resultStatistic: document.getElementById('result-statistic'),
@@ -36,21 +33,17 @@ export const els = {
     resultSummaryText: document.getElementById('result-summary-text'),
     plotsSigFilter: document.getElementById('plots-sig-filter'),
     filteredPlotsCounter: document.getElementById('filtered-plots-counter'),
-    btnStep4Next: document.getElementById('btn-step-4-next'),
 
     plotsSelector: document.getElementById('plots-selector'),
     plotsDisplay: document.getElementById('plots-display'),
     btnGeneratePlots: document.getElementById('btn-generate-plots'),
     plotsGenerationCounter: document.getElementById('plots-generation-counter'),
-    btnStep5Next: document.getElementById('btn-step-5-next'),
 
     btnExportDownload: document.getElementById('btn-export-download'),
     btnRestart: document.getElementById('btn-restart'),
-    btnStep2Back: document.getElementById('btn-step-2-back'),
-    btnStep3Back: document.getElementById('btn-step-3-back'),
-    btnStep4Back: document.getElementById('btn-step-4-back'),
-    btnStep5Back: document.getElementById('btn-step-5-back'),
-    btnStep6Back: document.getElementById('btn-step-6-back'),
+
+    btnSidebarBack: document.getElementById('btn-sidebar-back'),
+    btnSidebarNext: document.getElementById('btn-sidebar-next'),
 
     errorToast: document.getElementById('error-toast'),
     toastMsg: document.getElementById('toast-msg'),

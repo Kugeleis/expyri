@@ -46,9 +46,7 @@ export function initEventListeners() {
                 // Clean active filters panel
                 renderActiveFilters();
                 els.plotsDisplay.innerHTML = '<span class="no-plots-msg">No plots generated yet.</span>';
-                els.btnStep1Next.disabled = true;
-                els.btnStep3Next.disabled = true;
-                els.btnStep5Next.disabled = true;
+                if (els.btnSidebarNext) els.btnSidebarNext.disabled = true;
                 els.fileUpload.value = '';
                 els.uploadStatus.textContent = '';
                 els.datasetDetails.classList.add('hidden');
@@ -267,7 +265,7 @@ export function initEventListeners() {
                 await updateSubgroupsList();
 
                 els.datasetDetails.classList.remove('hidden');
-                els.btnStep1Next.disabled = false;
+                if (els.btnSidebarNext) els.btnSidebarNext.disabled = false;
                 els.uploadStatus.textContent = 'Upload successful!';
                 els.uploadStatus.style.color = 'var(--success-green)';
             } catch (err) {
@@ -275,40 +273,9 @@ export function initEventListeners() {
                 els.uploadStatus.textContent = 'Upload failed.';
                 els.uploadStatus.style.color = 'var(--error-red)';
                 els.datasetDetails.classList.add('hidden');
-                els.btnStep1Next.disabled = true;
+                if (els.btnSidebarNext) els.btnSidebarNext.disabled = true;
             } finally {
                 els.fileUpload.disabled = false;
-            }
-        });
-    }
-
-    // Step 1: Submit dataset
-    if (els.btnStep1Next) {
-        els.btnStep1Next.addEventListener('click', async () => {
-            try {
-                const payload = {
-                    dataset_id: state.selectedDatasetId,
-                    group_column: els.groupColSelect.value,
-                    selected_value_columns: Array.from(state.selectedValueColumns),
-                    selected_discrete_columns: Array.from(state.selectedDiscreteColumns),
-                    selected_groups: Array.from(state.selectedGroups)
-                };
-
-                const response = await fetch(`/wizard/sessions/${state.sessionId}/dataset`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-
-                if (!response.ok) {
-                    const errData = await response.json();
-                    throw new Error(errData.detail || 'Failed to select dataset.');
-                }
-
-                const data = await response.json();
-                navigateToStep(data.current_step);
-            } catch (err) {
-                showError(err.message);
             }
         });
     }
@@ -374,101 +341,6 @@ export function initEventListeners() {
 
             state.activeFilters.push(filterObj);
             renderActiveFilters();
-        });
-    }
-
-    // Step 2: Submit filters
-    if (els.btnStep2Next) {
-        els.btnStep2Next.addEventListener('click', async () => {
-            try {
-                const response = await fetch(`/wizard/sessions/${state.sessionId}/filters`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ filters_config: state.activeFilters })
-                });
-
-                if (!response.ok) {
-                    const errData = await response.json();
-                    throw new Error(errData.detail || 'Filter configuration failed validation.');
-                }
-
-                const data = await response.json();
-
-                // Immediately fetch applicable methods for step 3
-                await fetchApplicableMethods();
-                navigateToStep(data.current_step);
-            } catch (err) {
-                showError(err.message);
-            }
-        });
-    }
-
-    // Step 3: Submit selected statistical method
-    if (els.btnStep3Next) {
-        els.btnStep3Next.addEventListener('click', async () => {
-            try {
-                const payload = {};
-                if (state.selectedValueColumns.size > 0) {
-                    payload.selected_method = state.selectedMethod;
-                }
-                if (state.selectedDiscreteColumns.size > 0) {
-                    payload.selected_discrete_method = state.selectedDiscreteMethod;
-                }
-
-                const response = await fetch(`/wizard/sessions/${state.sessionId}/method`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-
-                if (!response.ok) {
-                    const errData = await response.json();
-                    throw new Error(errData.detail || 'Method selection rejected.');
-                }
-
-                const data = await response.json();
-
-                // Execute results immediately to show in Step 4
-                await executeStatisticalMethod();
-                navigateToStep(data.current_step);
-            } catch (err) {
-                showError(err.message);
-            }
-        });
-    }
-
-    // Step 4: Confirm statistical results and go to Plots
-    if (els.btnStep4Next) {
-        els.btnStep4Next.addEventListener('click', async () => {
-            // Fetch applicable plots before navigation
-            await fetchApplicablePlots();
-            navigateToStep('plot_selection');
-        });
-    }
-
-    // Step 5: Submit generated plots
-    if (els.btnStep5Next) {
-        els.btnStep5Next.addEventListener('click', async () => {
-            try {
-                const response = await fetch(`/wizard/sessions/${state.sessionId}/plots`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        selected_plots: state.selectedPlots,
-                        top_n_columns: state.plotsTopN
-                    })
-                });
-
-                if (!response.ok) {
-                    const errData = await response.json();
-                    throw new Error(errData.detail || 'Failed to register selected plots.');
-                }
-
-                const data = await response.json();
-                navigateToStep(data.current_step);
-            } catch (err) {
-                showError(err.message);
-            }
         });
     }
 
@@ -539,10 +411,142 @@ export function initEventListeners() {
         });
     }
 
-    // Back buttons
-    if (els.btnStep2Back) els.btnStep2Back.addEventListener('click', () => goToStep('dataset_selection'));
-    if (els.btnStep3Back) els.btnStep3Back.addEventListener('click', () => goToStep('filters'));
-    if (els.btnStep4Back) els.btnStep4Back.addEventListener('click', () => goToStep('stat_method'));
-    if (els.btnStep5Back) els.btnStep5Back.addEventListener('click', () => goToStep('results'));
-    if (els.btnStep6Back) els.btnStep6Back.addEventListener('click', () => goToStep('plot_selection'));
+    // Handle centralized Sidebar Next Button logic
+    if (els.btnSidebarNext) {
+        els.btnSidebarNext.addEventListener('click', async () => {
+            try {
+                if (state.currentStep === 'dataset_selection') {
+                    const payload = {
+                        dataset_id: state.selectedDatasetId,
+                        group_column: els.groupColSelect.value,
+                        selected_value_columns: Array.from(state.selectedValueColumns),
+                        selected_discrete_columns: Array.from(state.selectedDiscreteColumns),
+                        selected_groups: Array.from(state.selectedGroups)
+                    };
+
+                    const response = await fetch(`/wizard/sessions/${state.sessionId}/dataset`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) {
+                        const errData = await response.json();
+                        throw new Error(errData.detail || 'Failed to select dataset.');
+                    }
+                    const data = await response.json();
+                    navigateToStep(data.current_step);
+                }
+                else if (state.currentStep === 'filters') {
+                    const response = await fetch(`/wizard/sessions/${state.sessionId}/filters`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ filters_config: state.activeFilters })
+                    });
+
+                    if (!response.ok) {
+                        const errData = await response.json();
+                        throw new Error(errData.detail || 'Filter configuration failed validation.');
+                    }
+                    const data = await response.json();
+                    await fetchApplicableMethods();
+                    navigateToStep(data.current_step);
+                }
+                else if (state.currentStep === 'stat_method') {
+                    const payload = {};
+                    if (state.selectedValueColumns.size > 0) {
+                        payload.selected_method = state.selectedMethod;
+                    }
+                    if (state.selectedDiscreteColumns.size > 0) {
+                        payload.selected_discrete_method = state.selectedDiscreteMethod;
+                    }
+
+                    const response = await fetch(`/wizard/sessions/${state.sessionId}/method`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) {
+                        const errData = await response.json();
+                        throw new Error(errData.detail || 'Method selection rejected.');
+                    }
+                    const data = await response.json();
+                    await executeStatisticalMethod();
+                    navigateToStep(data.current_step);
+                }
+                else if (state.currentStep === 'results') {
+                    await fetchApplicablePlots();
+                    navigateToStep('plot_selection');
+                }
+                else if (state.currentStep === 'plot_selection') {
+                    const response = await fetch(`/wizard/sessions/${state.sessionId}/plots`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            selected_plots: state.selectedPlots,
+                            top_n_columns: state.plotsTopN
+                        })
+                    });
+
+                    if (!response.ok) {
+                        const errData = await response.json();
+                        throw new Error(errData.detail || 'Failed to register selected plots.');
+                    }
+                    const data = await response.json();
+                    navigateToStep(data.current_step);
+                }
+                else if (state.currentStep === 'export') {
+                    const response = await fetch(`/wizard/sessions/${state.sessionId}/export`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ export_format: state.selectedExportFormat })
+                    });
+
+                    if (!response.ok) {
+                        const errData = await response.json();
+                        throw new Error(errData.detail || 'Export compilation failed.');
+                    }
+
+                    // Trigger browser download dialog
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+
+                    // Extract filename from headers if possible
+                    const disposition = response.headers.get('content-disposition');
+                    let filename = `experiment_report.${state.selectedExportFormat}`;
+                    if (disposition && disposition.indexOf('attachment') !== -1) {
+                        const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+                        const matches = filenameRegex.exec(disposition);
+                        if (matches != null && matches[1]) {
+                            filename = matches[1].replace(/['"]/g, '');
+                        }
+                    }
+
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    window.URL.revokeObjectURL(url);
+                }
+            } catch (err) {
+                showError(err.message);
+            }
+        });
+    }
+
+    // Handle centralized Sidebar Back Button logic
+    if (els.btnSidebarBack) {
+        els.btnSidebarBack.addEventListener('click', () => {
+            switch (state.currentStep) {
+                case 'filters': goToStep('dataset_selection'); break;
+                case 'stat_method': goToStep('filters'); break;
+                case 'results': goToStep('stat_method'); break;
+                case 'plot_selection': goToStep('results'); break;
+                case 'export': goToStep('plot_selection'); break;
+            }
+        });
+    }
 }

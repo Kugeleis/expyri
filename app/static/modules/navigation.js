@@ -39,6 +39,55 @@ export function navigateToStep(stepKey) {
             });
         }
     });
+
+    updateSidebarButtons();
+}
+
+// Update state and appearance of sidebar Back/Next buttons based on current step
+export function updateSidebarButtons() {
+    if (!els.btnSidebarBack || !els.btnSidebarNext) return;
+
+    const activeIndex = stepsConfig.findIndex(s => s.key === state.currentStep);
+
+    // Back button visibility
+    if (activeIndex === 0) {
+        els.btnSidebarBack.style.display = 'none';
+    } else {
+        els.btnSidebarBack.style.display = 'block';
+    }
+
+    // Reset next button state
+    els.btnSidebarNext.disabled = false;
+    els.btnSidebarNext.innerHTML = '&rarr;';
+    els.btnSidebarNext.title = 'Continue';
+
+    // Step-specific logic for Next button disabled state
+    switch (state.currentStep) {
+        case 'dataset_selection':
+            // Logic handled by validateStep1Next in ui.js
+            import('./ui.js').then(ui => ui.validateStep1Next());
+            break;
+        case 'filters':
+            els.btnSidebarNext.disabled = false; // Filters are optional
+            break;
+        case 'stat_method':
+            if (!state.selectedMethod && !state.selectedDiscreteMethod) {
+                els.btnSidebarNext.disabled = true;
+            }
+            break;
+        case 'results':
+            els.btnSidebarNext.disabled = false;
+            break;
+        case 'plot_selection':
+            if (state.selectedPlots.length === 0) {
+                els.btnSidebarNext.disabled = true;
+            }
+            break;
+        case 'export':
+            els.btnSidebarNext.innerHTML = '&darr;'; // Download icon
+            els.btnSidebarNext.title = 'Download Report';
+            break;
+    }
 }
 
 // Navigate back to a previously completed step via backend
@@ -74,9 +123,9 @@ export async function goToStep(stepKey) {
                 const card = document.querySelector(`.method-card[data-name="${state.selectedMethod}"]`);
                 if (card) {
                     card.classList.add('selected');
-                    els.btnStep3Next.disabled = false;
                 }
             }
+            updateSidebarButtons(); // Re-evaluate after method re-selection
         } else if (stepKey === 'plot_selection') {
             await fetchApplicablePlots();
         }
