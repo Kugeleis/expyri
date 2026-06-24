@@ -264,7 +264,12 @@ export async function generatePlotsPreview() {
     }
 
     try {
-        els.plotsDisplay.innerHTML = '<span class="no-plots-msg">Generating plots...</span>';
+        els.plotsDisplay.innerHTML = `
+            <span class="no-plots-msg" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.75rem; width: 100%; padding: 2rem;">
+                <span class="bouncing-pacman"></span>
+                Generating plots...
+            </span>
+        `;
         els.btnGeneratePlots.disabled = true;
         els.btnStep5Next.disabled = true;
 

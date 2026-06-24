@@ -675,3 +675,39 @@ label {
 #subgroups-section .value-columns-header label {
     color: var(--accent-blue);
 }
+
+/* Green Bouncing Pacman Loader */
+.pacman-loader-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    padding: 2rem;
+    width: 100%;
+}
+
+.bouncing-pacman {
+    display: inline-block;
+    box-sizing: content-box;
+    width: 0px;
+    height: 0px;
+    border-right: 15px solid transparent;
+    border-top: 15px solid var(--pico-primary);
+    border-left: 15px solid var(--pico-primary);
+    border-bottom: 15px solid var(--pico-primary);
+    border-radius: 50%;
+    animation: pacman-move 3s infinite ease-in-out, pacman-chomp 0.6s infinite ease-in-out;
+}
+
+@keyframes pacman-move {
+    0%, 100% { transform: translateX(-40px) scaleX(1); }
+    49.9% { transform: translateX(40px) scaleX(1); }
+    50% { transform: translateX(40px) scaleX(-1); }
+    99.9% { transform: translateX(-40px) scaleX(-1); }
+}
+
+@keyframes pacman-chomp {
+    0%, 100% { border-right-color: transparent; }
+    50% { border-right-color: var(--pico-primary); }
+}
