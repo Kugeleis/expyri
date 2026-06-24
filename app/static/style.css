@@ -116,6 +116,7 @@ label {
     letter-spacing: -0.5px;
     background: linear-gradient(135deg, #fff 0%, #a7f3d0 100%);
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
     margin: 0;
 }
@@ -674,4 +675,104 @@ label {
 
 #subgroups-section .value-columns-header label {
     color: var(--accent-blue);
+}
+
+/* Custom chomping/pooping Pac-Man animation for Step 5 loading */
+.pacman-loader-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    padding: 2rem;
+    width: 100%;
+}
+
+.stage {
+    width: 100%;
+    max-width: 800px;
+    position: relative;
+    height: 60px;
+    margin: 0 auto;
+}
+
+.text-row {
+    position: absolute;
+    top: 0; bottom: 0; left: 0; right: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.letter {
+    display: inline-block;
+    color: var(--pico-primary);
+    font-size: 20px;
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+    text-shadow: 0 0 6px var(--pico-primary), 0 0 12px rgba(16, 185, 129, 0.4);
+    line-height: 1;
+    white-space: pre;
+    opacity: 1;
+}
+
+.letter.eaten { opacity: 0; }
+
+.pacman-wrapper {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    left: 0;
+    width: 30px;
+    height: 30px;
+}
+
+.pac-body {
+    width: 30px;
+    height: 30px;
+    background: var(--pico-primary);
+    border-radius: 50%;
+    position: absolute;
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+}
+
+.pac-body.chomping {
+    animation: chomp 0.18s linear infinite alternate;
+}
+
+@keyframes chomp {
+    0%   { clip-path: polygon(50% 50%, 100% 15%, 100% 0%, 0% 0%, 0% 100%, 100% 100%, 100% 85%); }
+    100% { clip-path: polygon(50% 50%, 100% 48%, 100% 0%, 0% 0%, 0% 100%, 100% 100%, 100% 52%); }
+}
+
+.pac-body.pooping {
+    animation: clench 0.22s ease-in-out infinite alternate;
+}
+
+@keyframes clench {
+    0% {
+        clip-path: polygon(
+            0% 0%, 100% 0%, 100% 100%, 0% 100%,
+            0% 54%, 4% 50%, 0% 46%
+        );
+    }
+    100% {
+        clip-path: polygon(
+            0% 0%, 100% 0%, 100% 100%, 0% 100%,
+            0% 64%, 14% 50%, 0% 36%
+        );
+    }
+}
+
+.pac-eye {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: #000;
+    border-radius: 50%;
+    top: 6px;
+    right: 8px;
+    z-index: 2;
 }

@@ -256,6 +256,126 @@ export async function fetchApplicablePlots() {
     }
 }
 
+// Helper for chomping/pooping Pac-Man loading animation
+function startPacmanAnimation() {
+    const textRow = document.getElementById('textRow');
+    const pacman  = document.getElementById('pacman');
+    const pacBody = document.getElementById('pacBody');
+    const stage   = document.querySelector('.stage');
+    if (!textRow || !pacman || !pacBody || !stage) return;
+
+    const TEXT = 'Loading data ....';
+    const CYCLE = 4000;
+    const spans = [];
+
+    for (const ch of TEXT) {
+        const span = document.createElement('span');
+        span.className = 'letter';
+        span.textContent = ch;
+        textRow.appendChild(span);
+        spans.push(span);
+    }
+
+    function setX(x) {
+        if (pacman) pacman.style.left = x + 'px';
+    }
+
+    function setEatingMode() {
+        if (pacman && pacBody) {
+            pacman.style.transform = 'translateY(-50%) scaleX(1)';
+            pacBody.className = 'pac-body chomping';
+        }
+    }
+
+    function setPoopingMode() {
+        if (pacman && pacBody) {
+            pacman.style.transform = 'translateY(-50%) scaleX(-1)';
+            pacBody.className = 'pac-body pooping';
+        }
+    }
+
+    function runCycle() {
+        if (!pacman || !pacman.isConnected) return;
+        spans.forEach(s => s.classList.remove('eaten'));
+        setEatingMode();
+
+        const stageRect   = stage.getBoundingClientRect();
+        const textRowRect = textRow.getBoundingClientRect();
+
+        const textLeft  = textRowRect.left - stageRect.left;
+        const textRight = textRowRect.right - stageRect.left;
+
+        const pacW = 30;
+        const startX = textLeft - pacW - 10;
+        const endX   = textRight + 10;
+        const halfCycle = CYCLE / 2;
+
+        let startTime = null;
+        let phase = 'forward';
+        let pauseStart = null;
+
+        function tick(ts) {
+            if (!pacman || !pacman.isConnected) return;
+            if (!startTime) startTime = ts;
+            const elapsed = ts - startTime;
+
+            if (phase === 'forward') {
+                const t = Math.min(elapsed / halfCycle, 1);
+                const x = startX + (endX - startX) * t;
+                setX(x);
+
+                const mouthX = x + pacW;
+                spans.forEach(span => {
+                    const r = span.getBoundingClientRect();
+                    const mid = r.left - stageRect.left + r.width / 2;
+                    if (mid < mouthX) span.classList.add('eaten');
+                });
+
+                if (t >= 1) {
+                    phase = 'pause';
+                    pauseStart = ts;
+                    setPoopingMode();
+                }
+
+            } else if (phase === 'pause') {
+                if (ts - pauseStart > 350) {
+                    phase = 'backward';
+                    startTime = ts;
+                }
+
+            } else if (phase === 'backward') {
+                const t = Math.min(elapsed / halfCycle, 1);
+                const x = endX + (startX - endX) * t;
+                setX(x);
+
+                const buttX = x + pacW;
+                spans.forEach(span => {
+                    const r = span.getBoundingClientRect();
+                    const mid = r.left - stageRect.left + r.width / 2;
+                    if (mid > buttX) span.classList.remove('eaten');
+                });
+
+                if (t >= 1) {
+                    setEatingMode();
+                    setTimeout(() => {
+                        if (pacman && pacman.isConnected) {
+                            runCycle();
+                        }
+                    }, 400);
+                    return;
+                }
+            }
+
+            requestAnimationFrame(tick);
+        }
+
+        setX(startX);
+        requestAnimationFrame(tick);
+    }
+
+    setTimeout(runCycle, 100);
+}
+
 // Generate plots client side preview (updates live as they check boxes)
 export async function generatePlotsPreview() {
     if (state.selectedPlots.length === 0) {
@@ -264,7 +384,18 @@ export async function generatePlotsPreview() {
     }
 
     try {
-        els.plotsDisplay.innerHTML = '<span class="no-plots-msg">Generating plots...</span>';
+        els.plotsDisplay.innerHTML = `
+            <div class="pacman-loader-container">
+                <div class="stage">
+                    <div class="text-row" id="textRow"></div>
+                    <div class="pacman-wrapper" id="pacman">
+                        <div class="pac-body chomping" id="pacBody"></div>
+                        <div class="pac-eye" id="pacEye"></div>
+                    </div>
+                </div>
+            </div>
+        `;
+        startPacmanAnimation();
         els.btnGeneratePlots.disabled = true;
         els.btnStep5Next.disabled = true;
 
@@ -308,7 +439,79 @@ export async function generatePlotsPreview() {
             title.style.margin = '0';
             title.style.fontSize = '0.95rem';
             title.style.fontWeight = '600';
+            title.style.display = 'flex';
+            title.style.justifyContent = 'space-between';
+            title.style.alignItems = 'center';
+            title.style.flexWrap = 'wrap';
+            title.style.gap = '0.5rem';
+            title.style.width = '100%';
             title.textContent = colName;
+
+            // Fetch statistical properties for this column to display as badges next to the title
+            const statResult = state.statResults ? state.statResults.find(res => res.column_name === colName) : null;
+            if (statResult) {
+                const statsContainer = document.createElement('div');
+                statsContainer.className = 'card-header-stats';
+                statsContainer.style.display = 'flex';
+                statsContainer.style.gap = '0.4rem';
+                statsContainer.style.fontSize = '0.75rem';
+                statsContainer.style.flexWrap = 'wrap';
+                statsContainer.style.fontWeight = 'normal'; // Reset font-weight from h4 defaults
+
+                // Method badge
+                const methodBadge = document.createElement('span');
+                methodBadge.style.backgroundColor = 'rgba(255, 255, 255, 0.04)';
+                methodBadge.style.padding = '0.1rem 0.4rem';
+                methodBadge.style.borderRadius = '4px';
+                methodBadge.style.border = '1px solid var(--pico-border-color)';
+                methodBadge.style.fontWeight = '500';
+                methodBadge.textContent = statResult.method_name;
+                statsContainer.appendChild(methodBadge);
+
+                // Statistic badge
+                if (statResult.test_statistic !== null && statResult.test_statistic !== undefined) {
+                    const statBadge = document.createElement('span');
+                    statBadge.style.backgroundColor = 'rgba(255, 255, 255, 0.04)';
+                    statBadge.style.padding = '0.1rem 0.4rem';
+                    statBadge.style.borderRadius = '4px';
+                    statBadge.style.border = '1px solid var(--pico-border-color)';
+                    statBadge.innerHTML = `Stat: <strong>${Number(statResult.test_statistic).toFixed(4)}</strong>`;
+                    statsContainer.appendChild(statBadge);
+                }
+
+                // p-value badge
+                if (statResult.p_value !== null && statResult.p_value !== undefined) {
+                    const pBadge = document.createElement('span');
+                    pBadge.style.backgroundColor = 'rgba(255, 255, 255, 0.04)';
+                    pBadge.style.padding = '0.1rem 0.4rem';
+                    pBadge.style.borderRadius = '4px';
+                    pBadge.style.border = '1px solid var(--pico-border-color)';
+                    pBadge.innerHTML = `p-val: <strong>${Number(statResult.p_value).toFixed(6)}</strong>`;
+
+                    const filterInput = document.getElementById('plots-sig-filter');
+                    const threshold = filterInput ? parseFloat(filterInput.value) : 0.05;
+                    if (statResult.p_value <= threshold) {
+                        pBadge.style.color = 'var(--pico-primary)';
+                        pBadge.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+                        pBadge.style.backgroundColor = 'rgba(16, 185, 129, 0.05)';
+                    }
+                    statsContainer.appendChild(pBadge);
+                }
+
+                // Effect Size badge
+                if (statResult.effect_size !== null && statResult.effect_size !== undefined) {
+                    const esBadge = document.createElement('span');
+                    esBadge.style.backgroundColor = 'rgba(255, 255, 255, 0.04)';
+                    esBadge.style.padding = '0.1rem 0.4rem';
+                    esBadge.style.borderRadius = '4px';
+                    esBadge.style.border = '1px solid var(--pico-border-color)';
+                    esBadge.innerHTML = `ES: <strong>${Number(statResult.effect_size).toFixed(4)}</strong>`;
+                    statsContainer.appendChild(esBadge);
+                }
+
+                title.appendChild(statsContainer);
+            }
+
             header.appendChild(title);
             card.appendChild(header);
 
