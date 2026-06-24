@@ -116,6 +116,7 @@ label {
     letter-spacing: -0.5px;
     background: linear-gradient(135deg, #fff 0%, #a7f3d0 100%);
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
     margin: 0;
 }
@@ -676,7 +677,7 @@ label {
     color: var(--accent-blue);
 }
 
-/* Green Bouncing Pacman Loader */
+/* Custom chomping/pooping Pac-Man animation for Step 5 loading */
 .pacman-loader-container {
     display: flex;
     flex-direction: column;
@@ -687,27 +688,91 @@ label {
     width: 100%;
 }
 
-.bouncing-pacman {
+.stage {
+    width: 100%;
+    max-width: 800px;
+    position: relative;
+    height: 120px;
+    margin: 0 auto;
+}
+
+.text-row {
+    position: absolute;
+    top: 0; bottom: 0; left: 0; right: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.letter {
     display: inline-block;
-    box-sizing: content-box;
-    width: 0px;
-    height: 0px;
-    border-right: 15px solid transparent;
-    border-top: 15px solid var(--pico-primary);
-    border-left: 15px solid var(--pico-primary);
-    border-bottom: 15px solid var(--pico-primary);
+    color: #1af;
+    font-size: 22px;
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+    text-shadow: 0 0 6px #1af, 0 0 12px #1af88;
+    line-height: 1;
+    white-space: pre;
+    opacity: 1;
+}
+
+.letter.eaten { opacity: 0; }
+
+.pacman-wrapper {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    left: 0;
+    width: 50px;
+    height: 50px;
+}
+
+.pac-body {
+    width: 50px;
+    height: 50px;
+    background: #FFD700;
     border-radius: 50%;
-    animation: pacman-move 3s infinite ease-in-out, pacman-chomp 0.6s infinite ease-in-out;
+    position: absolute;
+    box-shadow: 0 0 10px #FFD70088;
 }
 
-@keyframes pacman-move {
-    0%, 100% { transform: translateX(-40px) scaleX(1); }
-    49.9% { transform: translateX(40px) scaleX(1); }
-    50% { transform: translateX(40px) scaleX(-1); }
-    99.9% { transform: translateX(-40px) scaleX(-1); }
+.pac-body.chomping {
+    animation: chomp 0.18s linear infinite alternate;
 }
 
-@keyframes pacman-chomp {
-    0%, 100% { border-right-color: transparent; }
-    50% { border-right-color: var(--pico-primary); }
+@keyframes chomp {
+    0%   { clip-path: polygon(50% 50%, 100% 15%, 100% 0%, 0% 0%, 0% 100%, 100% 100%, 100% 85%); }
+    100% { clip-path: polygon(50% 50%, 100% 48%, 100% 0%, 0% 0%, 0% 100%, 100% 100%, 100% 52%); }
+}
+
+.pac-body.pooping {
+    animation: clench 0.22s ease-in-out infinite alternate;
+}
+
+@keyframes clench {
+    0% {
+        clip-path: polygon(
+            0% 0%, 100% 0%, 100% 100%, 0% 100%,
+            0% 54%, 4% 50%, 0% 46%
+        );
+    }
+    100% {
+        clip-path: polygon(
+            0% 0%, 100% 0%, 100% 100%, 0% 100%,
+            0% 64%, 14% 50%, 0% 36%
+        );
+    }
+}
+
+.pac-eye {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    background: #000;
+    border-radius: 50%;
+    top: 10px;
+    right: 13px;
+    z-index: 2;
 }

@@ -256,6 +256,126 @@ export async function fetchApplicablePlots() {
     }
 }
 
+// Helper for chomping/pooping Pac-Man loading animation
+function startPacmanAnimation() {
+    const textRow = document.getElementById('textRow');
+    const pacman  = document.getElementById('pacman');
+    const pacBody = document.getElementById('pacBody');
+    const stage   = document.querySelector('.stage');
+    if (!textRow || !pacman || !pacBody || !stage) return;
+
+    const TEXT = 'Loading data ....';
+    const CYCLE = 4000;
+    const spans = [];
+
+    for (const ch of TEXT) {
+        const span = document.createElement('span');
+        span.className = 'letter';
+        span.textContent = ch;
+        textRow.appendChild(span);
+        spans.push(span);
+    }
+
+    function setX(x) {
+        if (pacman) pacman.style.left = x + 'px';
+    }
+
+    function setEatingMode() {
+        if (pacman && pacBody) {
+            pacman.style.transform = 'translateY(-50%) scaleX(1)';
+            pacBody.className = 'pac-body chomping';
+        }
+    }
+
+    function setPoopingMode() {
+        if (pacman && pacBody) {
+            pacman.style.transform = 'translateY(-50%) scaleX(-1)';
+            pacBody.className = 'pac-body pooping';
+        }
+    }
+
+    function runCycle() {
+        if (!pacman || !pacman.isConnected) return;
+        spans.forEach(s => s.classList.remove('eaten'));
+        setEatingMode();
+
+        const stageRect   = stage.getBoundingClientRect();
+        const textRowRect = textRow.getBoundingClientRect();
+
+        const textLeft  = textRowRect.left - stageRect.left;
+        const textRight = textRowRect.right - stageRect.left;
+
+        const pacW = 50;
+        const startX = textLeft - pacW - 10;
+        const endX   = textRight + 10;
+        const halfCycle = CYCLE / 2;
+
+        let startTime = null;
+        let phase = 'forward';
+        let pauseStart = null;
+
+        function tick(ts) {
+            if (!pacman || !pacman.isConnected) return;
+            if (!startTime) startTime = ts;
+            const elapsed = ts - startTime;
+
+            if (phase === 'forward') {
+                const t = Math.min(elapsed / halfCycle, 1);
+                const x = startX + (endX - startX) * t;
+                setX(x);
+
+                const mouthX = x + pacW;
+                spans.forEach(span => {
+                    const r = span.getBoundingClientRect();
+                    const mid = r.left - stageRect.left + r.width / 2;
+                    if (mid < mouthX) span.classList.add('eaten');
+                });
+
+                if (t >= 1) {
+                    phase = 'pause';
+                    pauseStart = ts;
+                    setPoopingMode();
+                }
+
+            } else if (phase === 'pause') {
+                if (ts - pauseStart > 350) {
+                    phase = 'backward';
+                    startTime = ts;
+                }
+
+            } else if (phase === 'backward') {
+                const t = Math.min(elapsed / halfCycle, 1);
+                const x = endX + (startX - endX) * t;
+                setX(x);
+
+                const buttX = x + pacW;
+                spans.forEach(span => {
+                    const r = span.getBoundingClientRect();
+                    const mid = r.left - stageRect.left + r.width / 2;
+                    if (mid > buttX) span.classList.remove('eaten');
+                });
+
+                if (t >= 1) {
+                    setEatingMode();
+                    setTimeout(() => {
+                        if (pacman && pacman.isConnected) {
+                            runCycle();
+                        }
+                    }, 400);
+                    return;
+                }
+            }
+
+            requestAnimationFrame(tick);
+        }
+
+        setX(startX);
+        requestAnimationFrame(tick);
+    }
+
+    setTimeout(runCycle, 100);
+}
+
 // Generate plots client side preview (updates live as they check boxes)
 export async function generatePlotsPreview() {
     if (state.selectedPlots.length === 0) {
@@ -265,11 +385,17 @@ export async function generatePlotsPreview() {
 
     try {
         els.plotsDisplay.innerHTML = `
-            <span class="no-plots-msg" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.75rem; width: 100%; padding: 2rem;">
-                <span class="bouncing-pacman"></span>
-                Generating plots...
-            </span>
+            <div class="pacman-loader-container">
+                <div class="stage">
+                    <div class="text-row" id="textRow"></div>
+                    <div class="pacman-wrapper" id="pacman">
+                        <div class="pac-body chomping" id="pacBody"></div>
+                        <div class="pac-eye" id="pacEye"></div>
+                    </div>
+                </div>
+            </div>
         `;
+        startPacmanAnimation();
         els.btnGeneratePlots.disabled = true;
         els.btnStep5Next.disabled = true;
 
