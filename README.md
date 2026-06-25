@@ -67,6 +67,74 @@ The documentation will be available at `http://127.0.0.1:8000/docs`.
 
 ---
 
+## UI Usage Guide
+
+ExpYT guides you through a step-by-step statistical evaluation wizard. Here is an extensive guide on how to use the UI, along with the statistical concepts and references underpinning each step:
+
+### Step 1: Select Dataset & Column Mapping
+1. **Upload / Select Dataset**: Upload your experiment data in `.csv`, `.xpt`, `.h5`, or `.parquet` format.
+2. **Set Group Column**: Select the discrete column representing the treatment group or experimental arm.
+3. **Map Metrics**: Check the continuous and discrete metric columns you wish to analyze.
+4. **Hierarchical Toggle (Optional)**: If your observations are nested (e.g., measurements grouped in batches, wafers, or clusters), enable **Hierarchical Data Support**.
+   - **Cluster Column (L1)**: Select the grouping variable for intermediate clusters (e.g., wafer, class, clinic).
+   - **Unit Column (L0 - Optional)**: Select the column for unique unit IDs (defaults to "None" which uses the row index).
+   - **Spatial Coordinates (Optional)**: Select the optional X and Y coordinate columns to enable spatial heatmap plotting.
+
+---
+
+### Step 2: Configure Preprocessing Filters
+Add one or more filtering criteria to slice and clean the dataset before running tests:
+- **Numeric Range**: Keep only observations within specified bounds.
+- **Category Filter**: Include or exclude specific discrete classes.
+- **Cluster Exclusion**: Exclude entire intermediate clusters (L1) from hierarchical analysis (useful for removing defective batches or outlier groups).
+
+---
+
+### Step 3: Statistical Method Selection
+The wizard queries the backend to determine which methods are applicable based on automated tests of your filtered dataset's properties:
+
+#### Continuous Variable Methods
+- **[Independent Two-Sample t-Test](https://en.wikipedia.org/wiki/Student%27s_t-test)**: Compares means of exactly 2 groups. Requires normality and homogeneous variance.
+- **[One-Way ANOVA](https://en.wikipedia.org/wiki/One-way_analysis_of_variance)**: Compares means across 3 or more groups. Requires normality and homogeneous variance.
+- **[Mann-Whitney U Test](https://en.wikipedia.org/wiki/Mann%E2%80%93Whitney_U_test)**: Non-parametric comparison of 2 groups. Used when normality is violated.
+- **[Kruskal-Wallis H Test](https://en.wikipedia.org/wiki/Kruskal%E2%80%93Wallis_one-way_analysis_of_variance)**: Non-parametric comparison of 3 or more groups. Used when ANOVA assumptions fail.
+
+#### Clustered / Hierarchical Methods
+- **[Linear Mixed Model (LMM)](https://en.wikipedia.org/wiki/Mixed_model)**: Evaluates fixed group effects while modeling random intercepts for clusters to account for intra-cluster correlation.
+- **Cluster Mean ANOVA / Kruskal-Wallis**: Aggregates unit observations to cluster-level means before running ANOVA or Kruskal-Wallis, mitigating false significance due to pseudoreplication.
+- **Proportion Kruskal-Wallis**: Evaluates binary proportion outcomes aggregated at the cluster level.
+
+#### Discrete Variable Methods
+- **[Chi-Square Test of Independence](https://en.wikipedia.org/wiki/Chi-squared_test)**: Evaluates association between categorical variables.
+
+---
+
+### Step 4: Run Evaluation & Review Results
+Executes the selected methods and shows an interactive results table containing:
+- **Test Statistic**: The calculated value (e.g., $t$, $F$, $H$, $\chi^2$, or $z$).
+- **p-value**: Statistical significance. Cells are highlighted green if $p \le 0.01$ (strict significance) or yellow if $p \le 0.05$.
+- **Effect Size**: Quantitative measure of the magnitude of the experimental effect.
+- **[Intraclass Correlation (ICC)](https://en.wikipedia.org/wiki/Intraclass_correlation)** (Hierarchical only): Indicates the proportion of total variance explained by the clustering level.
+- **Statistical Warnings**: Alerts you if assumptions are violated (e.g., severe non-[normality](https://en.wikipedia.org/wiki/Shapiro%E2%80%93Wilk_test), [heteroscedasticity](https://en.wikipedia.org/wiki/Levene%27s_test), or the presence of significant [outliers](https://en.wikipedia.org/wiki/Grubbs%27s_test_for_outliers)).
+
+---
+
+### Step 5: Plot Selection & Preview
+Select visualizations to generate for your report. The UI renders live previews using:
+- **Box Plot / Violin Plot**: Visualizes group distribution, medians, and quartiles.
+- **ECDF (Empirical Cumulative Distribution Function)**: Plots cumulative distributions to compare group spreads.
+- **Cluster Mean Bar Plot** (Hierarchical): Displays group means of cluster means with error bars.
+- **Cluster Spatial Heatmap** (Spatial): Facilitates spatial pattern analysis by mapping metric values onto X/Y grid coordinates.
+
+---
+
+### Step 6: Export Report
+Download your final results and plots in one of these structured formats:
+- **PDF Report**: A publication-ready document compiling the test description, evaluation table, decision flags, and embedded high-resolution figures.
+- **CSV / JSON Exports**: Standardized raw outputs of the statistical results for downstream pipelines.
+
+---
+
 ## Development Workflow & QA
 
 Quality gates are strictly enforced. All tasks can be run via the task runner:
