@@ -85,36 +85,11 @@ label {
 }
 
 /* Layout & Grid Utilities */
-.columns-grid {
+.auto-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 1.25rem;
-}
-
-.form-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 1rem;
-}
-
-.methods-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 1rem;
-    margin-bottom: 1.25rem;
-}
-
-.plots-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 1.25rem;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--grid-min, 250px)), 1fr));
+    gap: var(--grid-gap, 1rem);
     width: 100%;
-}
-
-.exporters-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 1.25rem;
 }
 
 /* App Container Layout */
@@ -422,11 +397,6 @@ label {
 }
 
 /* Step 2: Preprocessing Filters */
-.filters-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-    gap: 1.5rem;
-}
 
 .active-filters {
     display: flex;
@@ -506,7 +476,6 @@ label {
     overflow-y: auto;
     padding-right: 0.5rem;
 }
-
 
 .method-card {
     cursor: pointer;
@@ -606,7 +575,7 @@ label {
     margin: 0;
 }
 
-/* Note: plots dynamic wrapper layouts are styled via .plots-grid */
+/* Note: plots dynamic wrapper layouts are styled via .auto-grid */
 
 .no-plots-msg {
     color: var(--pico-muted-color);

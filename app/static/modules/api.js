@@ -74,7 +74,10 @@ export async function fetchApplicableMethods() {
             els.methodsList.appendChild(header);
 
             const grid = document.createElement('div');
-            grid.className = 'methods-grid';
+            grid.className = 'auto-grid';
+            grid.style.setProperty('--grid-min', '220px');
+            grid.style.setProperty('--grid-gap', '1rem');
+            grid.style.marginBottom = '1.25rem';
 
             continuousMethods.forEach(method => {
                 const card = document.createElement('article');
@@ -109,7 +112,10 @@ export async function fetchApplicableMethods() {
             els.methodsList.appendChild(header);
 
             const grid = document.createElement('div');
-            grid.className = 'methods-grid';
+            grid.className = 'auto-grid';
+            grid.style.setProperty('--grid-min', '220px');
+            grid.style.setProperty('--grid-gap', '1rem');
+            grid.style.marginBottom = '1.25rem';
 
             discreteMethods.forEach(method => {
                 const card = document.createElement('article');
@@ -513,7 +519,10 @@ export async function generatePlotsPreview() {
 
             // Grid row for plots
             const row = document.createElement('div');
-            row.className = 'plots-grid';
+            row.className = 'auto-grid';
+            row.style.setProperty('--grid-min', '220px');
+            row.style.setProperty('--grid-gap', '1.25rem');
+            row.style.width = '100%';
 
             plots.forEach(plot => {
                 const plotWrapper = document.createElement('div');
