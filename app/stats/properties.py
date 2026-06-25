@@ -493,9 +493,11 @@ def build_cluster_aggregates(
     config: HierarchyConfig,
     excluded_clusters: list[str],
     metric: str,
-    metric_kind: Literal["continuous", "binary_proportion"],
+    metric_kind: Literal["continuous", "binary_proportion", "unsupported"],
 ) -> pd.DataFrame:
     """Build cluster-level aggregates from unit-level data."""
+    if metric_kind == "unsupported":
+        return pd.DataFrame(columns=[config.group_col, config.cluster_col])
     # Filter out excluded clusters and missing values
     filtered = unit_df[~unit_df[config.cluster_col].astype(str).isin(excluded_clusters)]
     filtered = filtered.dropna(subset=[config.group_col, config.cluster_col, metric])
@@ -594,10 +596,13 @@ def compute_hierarchical_properties(  # noqa: C901
     """Compute properties for a hierarchical dataset."""
     # 1. Determine metric kind
     unique_vals = set(df[metric].dropna().unique())
-    if unique_vals.issubset({0, 1}):
-        metric_kind: Literal["continuous", "binary_proportion"] = "binary_proportion"
-    else:
+    is_numeric = pd.api.types.is_numeric_dtype(df[metric]) or pd.api.types.is_bool_dtype(df[metric])
+    if unique_vals.issubset({0, 1, 0.0, 1.0, True, False}) and len(unique_vals) > 0:
+        metric_kind: Literal["continuous", "binary_proportion", "unsupported"] = "binary_proportion"
+    elif is_numeric:
         metric_kind = "continuous"
+    else:
+        metric_kind = "unsupported"
 
     # 2. Build cluster aggregates
     agg_df = build_cluster_aggregates(df, config, excluded_clusters, metric, metric_kind)
@@ -700,7 +705,10 @@ def compute_hierarchical_properties(  # noqa: C901
         has_boundary_clusters = len(boundary_cluster_ids) > 0
 
     # 6. Clustering strength
-    icc = compute_quick_icc(clean_unit, config.cluster_col, metric)
+    if metric_kind == "unsupported":
+        icc = float("nan")
+    else:
+        icc = compute_quick_icc(clean_unit, config.cluster_col, metric)
 
     # 7. Power
     power_at_observed_n = 0.0

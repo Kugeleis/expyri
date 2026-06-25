@@ -289,6 +289,8 @@ def select_dataset(
     session.selected_value_columns = selected_columns
     session.selected_discrete_columns = selected_discrete
     session.selected_groups = req.selected_groups
+    session.hierarchy = None
+    session.excluded_clusters = []
     session.current_step = WizardStep.FILTERS.value
     store.save(session)
     return session
@@ -458,10 +460,16 @@ def run_statistical_evaluation(  # noqa: C901
                 from app.stats.properties import build_cluster_aggregates, compute_quick_icc
 
                 unique_vals = set(filtered_df[value_col].dropna().unique())
-                is_bin = unique_vals.issubset({0, 1})
-                metric_kind: Literal["continuous", "binary_proportion"] = (
-                    "binary_proportion" if is_bin else "continuous"
+                is_bin = unique_vals.issubset({0, 1, 0.0, 1.0, True, False}) and len(unique_vals) > 0
+                is_num = pd.api.types.is_numeric_dtype(filtered_df[value_col]) or pd.api.types.is_bool_dtype(filtered_df[value_col])
+                metric_kind: Literal["continuous", "binary_proportion", "unsupported"] = (
+                    "binary_proportion" if is_bin else ("continuous" if is_num else "unsupported")
                 )
+                if metric_kind == "unsupported":
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"Column {value_col!r} is not supported in hierarchical mode. Please deselect it.",
+                    )
                 excluded_ids = [ex.cluster_id for ex in session.excluded_clusters]
                 cluster_agg = build_cluster_aggregates(
                     filtered_df, session.hierarchy, excluded_ids, value_col, metric_kind
@@ -502,7 +510,16 @@ def run_statistical_evaluation(  # noqa: C901
                 from app.stats.properties import build_cluster_aggregates, compute_quick_icc
 
                 unique_vals = set(filtered_df[value_col].dropna().unique())
-                metric_kind = "binary_proportion" if unique_vals.issubset({0, 1}) else "continuous"
+                is_bin = unique_vals.issubset({0, 1, 0.0, 1.0, True, False}) and len(unique_vals) > 0
+                is_num = pd.api.types.is_numeric_dtype(filtered_df[value_col]) or pd.api.types.is_bool_dtype(filtered_df[value_col])
+                metric_kind: Literal["continuous", "binary_proportion", "unsupported"] = (
+                    "binary_proportion" if is_bin else ("continuous" if is_num else "unsupported")
+                )
+                if metric_kind == "unsupported":
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"Column {value_col!r} is not supported in hierarchical mode. Please deselect it.",
+                    )
                 excluded_ids = [ex.cluster_id for ex in session.excluded_clusters]
                 cluster_agg = build_cluster_aggregates(
                     filtered_df, session.hierarchy, excluded_ids, value_col, metric_kind
@@ -713,24 +730,46 @@ def set_hierarchy(  # noqa: C901
         x_col=req.x_col,
         y_col=req.y_col,
     )
-    store.save(session)
 
-    # Detect metric kinds for numeric columns
-    metric_kinds = {}
     ignored_cols = {req.group_col, req.cluster_col, req.unit_col}
     if req.x_col:
         ignored_cols.add(req.x_col)
     if req.y_col:
         ignored_cols.add(req.y_col)
 
+    # Clean up selected columns for hierarchical mode
+    new_value_cols = []
+    for col in session.selected_value_columns:
+        if col in ignored_cols:
+            continue
+        if col in df.columns and (pd.api.types.is_numeric_dtype(df[col]) or pd.api.types.is_bool_dtype(df[col])):
+            new_value_cols.append(col)
+    session.selected_value_columns = new_value_cols
+
+    new_discrete_cols = []
+    for col in session.selected_discrete_columns:
+        if col in ignored_cols:
+            continue
+        if col in df.columns and (pd.api.types.is_numeric_dtype(df[col]) or pd.api.types.is_bool_dtype(df[col])):
+            unique_vals = set(df[col].dropna().unique())
+            if unique_vals.issubset({0, 1, 0.0, 1.0, True, False}):
+                new_discrete_cols.append(col)
+    session.selected_discrete_columns = new_discrete_cols
+
+    store.save(session)
+
+    # Detect metric kinds for numeric columns
+    metric_kinds = {}
     for col in df.columns:
         if col in ignored_cols:
             continue
-        if pd.api.types.is_numeric_dtype(df[col]):
+        if pd.api.types.is_numeric_dtype(df[col]) or pd.api.types.is_bool_dtype(df[col]):
             unique_vals = set(df[col].dropna().unique())
-            if unique_vals.issubset({0, 1}):
+            if unique_vals.issubset({0, 1, 0.0, 1.0, True, False}) and len(unique_vals) > 0:
                 metric_kinds[col] = "binary_proportion"
             else:
                 metric_kinds[col] = "continuous"
+        else:
+            metric_kinds[col] = "unsupported"
 
     return HierarchyResponse(session=session, metric_kinds=metric_kinds)

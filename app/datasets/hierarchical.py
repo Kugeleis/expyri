@@ -17,5 +17,5 @@ class HierarchicalData:
     config: HierarchyConfig
     excluded_clusters: list[str]
     metric: str
-    metric_kind: Literal["continuous", "binary_proportion"]
+    metric_kind: Literal["continuous", "binary_proportion", "unsupported"]
     icc: float | None = None
