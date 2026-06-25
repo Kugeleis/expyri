@@ -90,9 +90,60 @@
                             <span class="label">Dataset:</span>
                             <span id="detail-desc" class="value"></span>
                         </div>
-                        <div style="margin-top: 1rem; margin-bottom: 1.5rem;">
+                        <div style="margin-top: 1.5rem; margin-bottom: 1.5rem;">
                             <label for="group-col-select">Group Column (Independent Variable)</label>
                             <select id="group-col-select"></select>
+                        </div>
+
+                        <div style="margin-top: 0.5rem; margin-bottom: 1.5rem;">
+                            <label for="enable-hierarchy" style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-weight: 550; user-select: none;">
+                                <input type="checkbox" id="enable-hierarchy" role="switch" style="margin-bottom: 0;">
+                                Enable Hierarchical Data Support
+                            </label>
+                        </div>
+
+                        <div id="hierarchy-config-section" class="hidden" style="border: 1px dashed var(--pico-border-color); padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; background: rgba(255, 255, 255, 0.01);">
+                            <h4 style="font-size: 0.9rem; margin-top: 0; margin-bottom: 0.75rem; color: var(--pico-primary); font-weight: 600;">Hierarchical Structure Mapping</h4>
+                            
+                            <div style="background: rgba(16, 185, 129, 0.03); border-left: 3px solid var(--pico-primary); padding: 0.75rem 1rem; border-radius: 6px; margin-bottom: 1.25rem; font-size: 0.775rem; color: var(--pico-muted-color); line-height: 1.4;">
+                                <strong style="color: var(--pico-primary); display: block; margin-bottom: 0.35rem;">💡 Flat vs. Hierarchical Experiments</strong>
+                                <div>
+                                    <strong>Flat Experiment (Default):</strong> Standard A/B test where each observation row is completely independent.
+                                </div>
+                                <div style="margin-top: 0.4rem;">
+                                    <strong>Hierarchical Experiment:</strong> Measurements (Level 0) are nested inside intermediate clusters (Level 1), which are assigned to treatment groups (Level 2).
+                                </div>
+                                <div style="margin-top: 0.5rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 0.5rem; border-top: 1px dashed rgba(255, 255, 255, 0.08); padding-top: 0.5rem; font-size: 0.725rem;">
+                                    <div><strong>🏫 Education:</strong><br>Group &rarr; Class (L1) &rarr; Student (L0)</div>
+                                    <div><strong>🔬 Semiconductors:</strong><br>Group &rarr; Wafer (L1) &rarr; Chip (L0)</div>
+                                    <div><strong>🏥 Clinical Trials:</strong><br>Group &rarr; Clinic (L1) &rarr; Patient (L0)</div>
+                                </div>
+                            </div>
+
+                            <div class="auto-grid" style="--grid-min: 200px; --grid-gap: 1rem;">
+                                <div>
+                                    <label for="cluster-col-select">Cluster Column (Level 1 - e.g. school, batch)</label>
+                                    <select id="cluster-col-select"></select>
+                                </div>
+                                <div>
+                                    <label for="unit-col-select">Unit Column (Level 0 - e.g. student, id)</label>
+                                    <select id="unit-col-select"></select>
+                                </div>
+                            </div>
+                            <div class="auto-grid" style="--grid-min: 200px; --grid-gap: 1rem; margin-top: 0.75rem;">
+                                <div>
+                                    <label for="x-col-select">X Spatial Coordinate (Optional)</label>
+                                    <select id="x-col-select">
+                                        <option value="">None</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="y-col-select">Y Spatial Coordinate (Optional)</label>
+                                    <select id="y-col-select">
+                                        <option value="">None</option>
+                                    </select>
+                                </div>
+                            </div>
                         </div>
 
                         <div class="auto-grid" style="--grid-min: 250px; --grid-gap: 1.25rem;">
@@ -156,6 +207,7 @@
                                     <select id="filter-type">
                                         <option value="numeric_range">Numeric Range</option>
                                         <option value="category_filter">Category Filter</option>
+                                        <option value="cluster_exclusion" id="opt-cluster-exclusion" class="hidden">Cluster Exclusion</option>
                                     </select>
                                 </div>
                                 <div>
@@ -192,6 +244,20 @@
                                 </fieldset>
                             </div>
 
+                            <!-- Inputs for Cluster Exclusion -->
+                            <div class="filter-type-fields hidden" id="fields-cluster_exclusion">
+                                <div class="auto-grid" style="--grid-min: 180px; --grid-gap: 1rem;">
+                                    <div>
+                                        <label for="filter-cluster-id">Cluster ID to Exclude</label>
+                                        <input type="text" id="filter-cluster-id" placeholder="e.g. Cluster_0">
+                                    </div>
+                                    <div>
+                                        <label for="filter-cluster-reason">Reason (Required)</label>
+                                        <input type="text" id="filter-cluster-reason" placeholder="e.g. outlier, equipment failure">
+                                    </div>
+                                </div>
+                            </div>
+
                             <button class="secondary outline" id="btn-add-filter-action">Add Filter</button>
                         </article>
                     </div>
@@ -207,10 +273,10 @@
                         <div style="margin-top: 0.5rem;">
                             <span style="color: var(--pico-muted-color);">Statistical methods only appear here if their applicability rules are satisfied by the current properties of your filtered data:</span>
                             <ul style="margin: 0.5rem 0 0 1rem; padding: 0; color: var(--pico-muted-color); font-size: 0.75rem;">
-                                <li><strong>Independent Two-Sample t-test:</strong> Requires exactly 2 groups of numeric data, with $n \ge 2$ per group, and normality satisfied for all groups.</li>
-                                <li><strong>One-way ANOVA:</strong> Requires $\ge 2$ groups of numeric data, with $n \ge 2$ per group, normality satisfied, and homogeneous variance.</li>
-                                <li><strong>Mann-Whitney U:</strong> Non-parametric alternative to t-test; requires exactly 2 groups of numeric data with $n \ge 2$ per group.</li>
-                                <li><strong>Kruskal-Wallis H:</strong> Non-parametric alternative to ANOVA; requires &ge; 2 groups of numeric data with $n \ge 2$ per group.</li>
+                                <li><strong>Independent Two-Sample t-test:</strong> Requires exactly 2 groups of numeric data, with n &ge; 2 per group, and normality satisfied for all groups.</li>
+                                <li><strong>One-way ANOVA:</strong> Requires &ge; 2 groups of numeric data, with n &ge; 2 per group, normality satisfied, and homogeneous variance.</li>
+                                <li><strong>Mann-Whitney U:</strong> Non-parametric alternative to t-test; requires exactly 2 groups of numeric data with n &ge; 2 per group.</li>
+                                <li><strong>Kruskal-Wallis H:</strong> Non-parametric alternative to ANOVA; requires &ge; 2 groups of numeric data with n &ge; 2 per group.</li>
                                 <li><strong>Chi-Square test:</strong> Requires discrete/categorical outcome data across &ge; 2 groups.</li>
                             </ul>
                         </div>

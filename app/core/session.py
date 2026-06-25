@@ -13,6 +13,23 @@ from typing import Any, Protocol
 from pydantic import BaseModel, Field
 
 
+class HierarchyConfig(BaseModel):
+    """Configuration for hierarchical data support."""
+
+    group_col: str
+    cluster_col: str
+    unit_col: str | None = None
+    x_col: str | None = None
+    y_col: str | None = None
+
+
+class ClusterExclusion(BaseModel):
+    """Representation of an excluded cluster."""
+
+    cluster_id: str
+    reason: str = Field(..., min_length=1)
+
+
 class WizardSession(BaseModel):
     """Holds the state of a single wizard run."""
 
@@ -31,6 +48,8 @@ class WizardSession(BaseModel):
     plot_results: list[dict[str, Any]] = Field(default_factory=list)
     top_n_columns: int = 1
     export_format: str | None = None
+    hierarchy: HierarchyConfig | None = None
+    excluded_clusters: list[ClusterExclusion] = Field(default_factory=list)
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 

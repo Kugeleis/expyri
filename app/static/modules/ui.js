@@ -1,6 +1,6 @@
 import { state } from './state.js';
 import { els, stepsConfig } from './elements.js';
-import { showError } from './helpers.js';
+import { showError, formatMethodName, animatePacman } from './helpers.js';
 import { updateSubgroupsList } from './api.js';
 
 // Render active filter badges in Step 2
@@ -16,21 +16,30 @@ export function renderActiveFilters() {
         badge.className = 'filter-badge';
 
         let descText = '';
+        let titleText = filter.params.column || 'Cluster Exclusion';
+        let filterTypeName = 'Category Filter';
+
         if (filter.name === 'numeric_range') {
             const hasMin = filter.params.min !== undefined;
             const hasMax = filter.params.max !== undefined;
             if (hasMin && hasMax) descText = `${filter.params.min} <= val <= ${filter.params.max}`;
             else if (hasMin) descText = `val >= ${filter.params.min}`;
             else descText = `val <= ${filter.params.max}`;
-        } else {
+            filterTypeName = 'Numeric Range';
+        } else if (filter.name === 'category_filter') {
             const categories = filter.params.categories.join(', ');
             descText = `${filter.params.exclude ? 'Exclude' : 'Include'}: [${categories}]`;
+            filterTypeName = 'Category Filter';
+        } else if (filter.name === 'cluster_exclusion') {
+            const exclusions = filter.params.exclusions.map(e => `${e.cluster_id} (${e.reason})`).join(', ');
+            descText = `Exclude: [${exclusions}]`;
+            filterTypeName = 'Cluster Exclusion';
         }
 
         badge.innerHTML = `
             <div class="filter-info">
-                <h5>${filter.params.column}</h5>
-                <p>${filter.name === 'numeric_range' ? 'Numeric Range' : 'Category Filter'}: ${descText}</p>
+                <h5>${titleText}</h5>
+                <p>${filterTypeName}: ${descText}</p>
             </div>
             <button class="btn-remove-filter" data-index="${idx}">&times;</button>
         `;
@@ -256,6 +265,12 @@ export function renderResultsTable() {
         { label: 'Effect Size', field: 'effect_size' }
     ];
 
+    const hasHierarchy = els.enableHierarchy && els.enableHierarchy.checked;
+    if (hasHierarchy) {
+        headers.push({ label: 'ICC', field: 'icc' });
+        headers.push({ label: 'Power', field: 'power' });
+    }
+
     headers.forEach(h => {
         const th = document.createElement('th');
         th.setAttribute('scope', 'col');
@@ -293,13 +308,22 @@ export function renderResultsTable() {
     state.statResults.forEach(res => {
         const trRow = document.createElement('tr');
 
-        trRow.innerHTML = `
+        let rowHtml = `
             <td>${res.column_name || ''}</td>
-            <td>${res.method_name}</td>
+            <td>${formatMethodName(res.method_name)}</td>
             <td>${res.test_statistic !== null && res.test_statistic !== undefined ? Number(res.test_statistic).toFixed(4) : ''}</td>
             <td>${res.p_value !== null && res.p_value !== undefined ? Number(res.p_value).toFixed(6) : ''}</td>
             <td>${res.effect_size !== null && res.effect_size !== undefined ? Number(res.effect_size).toFixed(4) : ''}</td>
         `;
+
+        if (hasHierarchy) {
+            rowHtml += `
+                <td>${res.icc !== null && res.icc !== undefined ? Number(res.icc).toFixed(4) : 'N/A'}</td>
+                <td>${res.power !== null && res.power !== undefined ? Number(res.power).toFixed(4) : 'N/A'}</td>
+            `;
+        }
+
+        trRow.innerHTML = rowHtml;
 
         if (res.p_value !== null && res.p_value !== undefined) {
             let bgColor = '';
@@ -321,6 +345,40 @@ export function renderResultsTable() {
     table.appendChild(tbody);
     wrapper.appendChild(table);
     container.appendChild(wrapper);
+
+    // Render decision flags/warnings if any
+    const allFlags = [];
+    state.statResults.forEach(res => {
+        if (res.flags && res.flags.length > 0) {
+            res.flags.forEach(flag => {
+                allFlags.push({ column: res.column_name, flag: flag, summary: res.summary });
+            });
+        }
+    });
+
+    if (allFlags.length > 0) {
+        const flagsCard = document.createElement('div');
+        flagsCard.className = 'info-callout';
+        flagsCard.style.marginTop = '1rem';
+        flagsCard.style.borderLeft = '4px solid var(--error-red)';
+        flagsCard.style.padding = '0.75rem 1rem';
+        flagsCard.style.borderRadius = '4px';
+        flagsCard.style.background = 'rgba(239, 68, 68, 0.08)';
+
+        let flagsHtml = `<h4 style="color: var(--error-red); font-size: 0.9rem; margin-top: 0; margin-bottom: 0.5rem; font-weight: bold;">⚠️ Hierarchical Diagnostics &amp; Decision Flags</h4>`;
+        flagsHtml += `<ul style="margin: 0; padding-left: 1.2rem; font-size: 0.85rem; color: var(--pico-color);">`;
+        allFlags.forEach(item => {
+            if (item.flag.startsWith('OUTLIER_CLUSTER:')) {
+                const clusterId = item.flag.split(':')[1];
+                flagsHtml += `<li style="margin-bottom: 0.25rem;"><strong>[Column: ${item.column}]</strong> Outlier cluster detected: <code>${clusterId}</code>. You may want to exclude this cluster in the preprocessing filters (Step 2).</li>`;
+            } else {
+                flagsHtml += `<li style="margin-bottom: 0.25rem;"><strong>[Column: ${item.column}]</strong> ${item.flag}</li>`;
+            }
+        });
+        flagsHtml += `</ul>`;
+        flagsCard.innerHTML = flagsHtml;
+        container.appendChild(flagsCard);
+    }
 }
 
 // Calculate the number of variables with p-value <= significance threshold
@@ -365,6 +423,32 @@ export function updatePlotsCounter() {
 export function updateValueColumnsList() {
     const selectedGroupCol = els.groupColSelect.value;
     
+    // Set of columns to ignore/exclude from dependent columns lists
+    const ignoredCols = new Set([selectedGroupCol]);
+    
+    if (els.enableHierarchy && els.enableHierarchy.checked) {
+        if (els.clusterColSelect.value) {
+            ignoredCols.add(els.clusterColSelect.value);
+            state.selectedValueColumns.delete(els.clusterColSelect.value);
+            state.selectedDiscreteColumns.delete(els.clusterColSelect.value);
+        }
+        if (els.unitColSelect.value) {
+            ignoredCols.add(els.unitColSelect.value);
+            state.selectedValueColumns.delete(els.unitColSelect.value);
+            state.selectedDiscreteColumns.delete(els.unitColSelect.value);
+        }
+        if (els.xColSelect.value) {
+            ignoredCols.add(els.xColSelect.value);
+            state.selectedValueColumns.delete(els.xColSelect.value);
+            state.selectedDiscreteColumns.delete(els.xColSelect.value);
+        }
+        if (els.yColSelect.value) {
+            ignoredCols.add(els.yColSelect.value);
+            state.selectedValueColumns.delete(els.yColSelect.value);
+            state.selectedDiscreteColumns.delete(els.yColSelect.value);
+        }
+    }
+    
     // --- Render Continuous Columns ---
     const filterText = (els.valueColSearch?.value || '').toLowerCase().trim();
     els.valueColumnsList.innerHTML = '';
@@ -372,7 +456,7 @@ export function updateValueColumnsList() {
     let hasVisibleColumns = false;
 
     state.selectedDatasetColumns.forEach(col => {
-        if (col.is_numeric && col.name !== selectedGroupCol) {
+        if (col.is_numeric && !ignoredCols.has(col.name)) {
             hasColumns = true;
 
             // Check if column name matches filter text
@@ -420,7 +504,7 @@ export function updateValueColumnsList() {
     let hasVisibleDiscreteColumns = false;
 
     state.selectedDatasetColumns.forEach(col => {
-        if (col.is_discrete && col.name !== selectedGroupCol) {
+        if (col.is_discrete && !ignoredCols.has(col.name)) {
             hasDiscreteColumns = true;
 
             // Check if column name matches filter text
@@ -525,4 +609,102 @@ export function renderSubgroupsList() {
 
     els.subgroupsSection.classList.remove('hidden');
     validateStep1Next();
+}
+
+// Populate the cluster/unit/spatial selects for hierarchical mode
+export function populateHierarchyDropdowns() {
+    if (!els.clusterColSelect || !els.unitColSelect || !els.xColSelect || !els.yColSelect) return;
+
+    const selectedGroupCol = els.groupColSelect.value;
+
+    // Clear dropdowns
+    els.clusterColSelect.innerHTML = '';
+    els.unitColSelect.innerHTML = '<option value="">None (Row Index)</option>';
+    els.xColSelect.innerHTML = '<option value="">None</option>';
+    els.yColSelect.innerHTML = '<option value="">None</option>';
+
+    // Loop through dataset columns
+    state.selectedDatasetColumns.forEach(col => {
+        if (col.name !== selectedGroupCol) {
+            // Cluster select (only discrete columns allowed)
+            if (col.is_discrete) {
+                const optCluster = document.createElement('option');
+                optCluster.value = col.name;
+                optCluster.textContent = `${col.name} (${col.dtype})`;
+                els.clusterColSelect.appendChild(optCluster);
+            }
+
+            // Unit select
+            const optUnit = document.createElement('option');
+            optUnit.value = col.name;
+            optUnit.textContent = `${col.name} (${col.dtype})`;
+            els.unitColSelect.appendChild(optUnit);
+
+            // Spatial coordinate selects
+            const optX = document.createElement('option');
+            optX.value = col.name;
+            optX.textContent = `${col.name} (${col.dtype})`;
+            els.xColSelect.appendChild(optX);
+
+            const optY = document.createElement('option');
+            optY.value = col.name;
+            optY.textContent = `${col.name} (${col.dtype})`;
+            els.yColSelect.appendChild(optY);
+        }
+    });
+
+    // Default heuristics:
+    // 1. Cluster column: default to the first non-group discrete column.
+    // E.g. in hsb.csv, if group is sx, then first non-group is school or minrty.
+    // 2. Unit column: default to "None" (empty string).
+    if (state.selectedDatasetColumns.length > 1) {
+        // Find cluster default (first non-group discrete column)
+        const clusterDefaultCol = state.selectedDatasetColumns.find(col => col.name !== selectedGroupCol && col.is_discrete);
+        if (clusterDefaultCol) {
+            els.clusterColSelect.value = clusterDefaultCol.name;
+        }
+
+        // Default L0 (unit column) to "None"
+        els.unitColSelect.value = '';
+    }
+}
+
+// Start Pac-Man heading chomping/pooping animation during computations/transitions
+export function startHeaderPacman() {
+    const headerTitle = document.querySelector('.main-header h2');
+    if (!headerTitle) return;
+
+    if (!headerTitle.dataset.originalText) {
+        headerTitle.dataset.originalText = headerTitle.textContent.trim() || "Experiment Evaluation Wizard";
+    }
+
+    headerTitle.innerHTML = `
+        <div class="stage" style="width: 380px; position: relative; height: 32px; margin: 0; display: inline-block; vertical-align: middle;">
+            <div class="text-row" id="headerTextRow" style="font-size: 16px; font-family: 'Courier New', monospace; font-weight: bold; height: 100%;"></div>
+            <div class="pacman-wrapper" id="headerPacman" style="width: 20px; height: 20px; position: absolute; top: 50%; transform: translateY(-50%); left: 0;">
+                <div class="pac-body chomping" id="headerPacBody" style="width: 20px; height: 20px; background: var(--pico-primary); border-radius: 50%; position: absolute; box-shadow: 0 0 6px rgba(16, 185, 129, 0.5);"></div>
+                <div class="pac-eye" id="headerPacEye" style="width: 3px; height: 3px; background: #000; border-radius: 50%; position: absolute; top: 4px; right: 5px; z-index: 2;"></div>
+            </div>
+        </div>
+    `;
+
+    animatePacman({
+        stage: headerTitle.querySelector('.stage'),
+        textRow: document.getElementById('headerTextRow'),
+        pacman: document.getElementById('headerPacman'),
+        pacBody: document.getElementById('headerPacBody'),
+        text: headerTitle.dataset.originalText,
+        cycleTime: 3000,
+        pacWidth: 20,
+        letterFontSize: '16px'
+    });
+}
+
+// Stop Pac-Man heading animation and restore original text
+export function stopHeaderPacman() {
+    const headerTitle = document.querySelector('.main-header h2');
+    if (!headerTitle) return;
+    if (headerTitle.dataset.originalText) {
+        headerTitle.textContent = headerTitle.dataset.originalText;
+    }
 }

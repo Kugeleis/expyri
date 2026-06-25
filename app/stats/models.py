@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from pydantic import BaseModel, Field, model_validator
+import pandas as pd
+from pydantic import BaseModel, Field, field_serializer, model_validator
 
 
 class NormalityResult(BaseModel):
@@ -71,23 +72,52 @@ class DataProperties(BaseModel):
     """Properties characterizing a dataset for statistical method applicability."""
 
     outcome_type_guess: str = Field(
-        ...,
+        "continuous",
         description=("Guessed outcome type (continuous, categorical_nominal, categorical_ordinal_unclear)."),
     )
     n_groups: int = Field(..., description="Number of distinct groups.")
     group_sizes: dict[str, int] = Field(..., description="Size of each group after removing NaNs.")
     normality: dict[str, NormalityResult] = Field(..., description="Normality test result for each group.")
-    all_groups_normal: bool = Field(..., description="Whether all groups are normal.")
+    all_groups_normal: bool = Field(True, description="Whether all groups are normal.")
     variance_homogeneity: VarianceHomogeneityResult | None = Field(
         None, description="Levene's test result, or None if outcome is categorical."
     )
     expected_cell_counts: list[list[float]] | None = Field(None, description="Expected cell counts contingency table.")
     min_expected_cell_count: float | None = Field(None, description="Minimum expected cell count.")
     sphericity: SphericityResult | None = Field(None, description="Mauchly's sphericity test result.")
-    missing: MissingDataSummary = Field(..., description="Missing data summary.")
+    missing: MissingDataSummary = Field(
+        default_factory=lambda: MissingDataSummary(
+            outcome_missing={"count": 0, "percentage": 0.0},
+            group_missing={"count": 0, "percentage": 0.0},
+            association={
+                "test_used": "Chi-Square",
+                "statistic": None,
+                "p_value": None,
+                "significant": None,
+                "note": "Default values",
+            },
+        ),
+        description="Missing data summary.",
+    )
     outliers: dict[str, OutlierSummary] = Field(default_factory=dict, description="Outliers per group.")
     sample_size_warning: str | None = Field(None, description="Warning if any group has sample size < 5.")
     sampled: bool = Field(False, description="Whether the data was sampled.")
+
+    # Hierarchical data properties
+    has_hierarchy: bool = Field(False, description="Whether the dataset is hierarchical.")
+    has_spatial_coords: bool = Field(False, description="Whether spatial coordinates are present.")
+    n_clusters_per_group: dict[str, int] | None = Field(None, description="Number of clusters per group.")
+    min_clusters_per_group: int | None = Field(None, description="Minimum clusters per group.")
+    n_units_per_cluster: dict[str, int] | None = Field(None, description="Number of units per cluster.")
+    metric_kind: str | None = Field(None, description="Kind of metric ('continuous' or 'binary_proportion').")
+    normality_cluster_means: bool | None = Field(None, description="SW normality of cluster means.")
+    homogeneity_cluster: bool | None = Field(None, description="Levene homogeneity of cluster means.")
+    outlier_clusters: list[str] | None = Field(None, description="Grubbs flagged cluster IDs.")
+    has_boundary_clusters: bool | None = Field(None, description="Any cluster with proportion 0 or 1.")
+    boundary_cluster_ids: list[str] | None = Field(None, description="Boundary cluster IDs.")
+    icc: float | None = Field(None, description="Intra-class correlation.")
+    power_at_observed_n: float | None = Field(None, description="Power at observed n clusters.")
+    power_warning: bool | None = Field(None, description="Whether power is < 0.8.")
 
     @model_validator(mode="before")
     @classmethod
@@ -187,3 +217,18 @@ class StatResult(BaseModel):
     p_value: float = Field(..., description="Calculated p-value.")
     effect_size: float | None = Field(None, description="Optional calculated effect size.")
     summary: str = Field(..., description="Human-readable text summary of results.")
+
+    # Hierarchical extensions
+    icc: float | None = Field(None, description="Intra-class correlation.")
+    power: float | None = Field(None, description="Estimated power.")
+    n_clusters_used: dict[str, int] | None = Field(None, description="Number of clusters used per group.")
+    posthoc: Any | None = Field(None, description="Post-hoc pairwise comparisons.")
+    flags: list[str] = Field(default_factory=list, description="DECISION items for UI.")
+
+    model_config = {"arbitrary_types_allowed": True}
+
+    @field_serializer("posthoc")
+    def serialize_posthoc(self, posthoc: Any) -> Any:
+        if isinstance(posthoc, pd.DataFrame):
+            return posthoc.to_dict(orient="records")
+        return posthoc
