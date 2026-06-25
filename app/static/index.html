@@ -95,7 +95,7 @@
                             <select id="group-col-select"></select>
                         </div>
 
-                        <div class="grid">
+                        <div class="auto-grid" style="--grid-min: 250px; --grid-gap: 1.25rem;">
                             <div id="subgroups-section" class="hidden">
                                 <div class="value-columns-header">
                                     <label>Subgroups to Include (Selected Group Column Values)</label>
@@ -143,14 +143,14 @@
                     <h3>Step 2: Preprocessing Filters</h3>
                     <p class="step-desc">Configure one or more filters to preprocess the data before executing the test.</p>
 
-                    <div class="filters-container">
+                    <div class="auto-grid" style="--grid-min: 320px; --grid-gap: 1.5rem;">
                         <div class="active-filters" id="active-filters">
                             <p class="no-filters-msg">No filters configured. Click below to add a filter, or proceed directly.</p>
                         </div>
 
                         <article class="add-filter-card">
                             <h4>Add New Filter</h4>
-                            <div class="grid">
+                            <div class="auto-grid" style="--grid-min: 180px; --grid-gap: 1rem;">
                                 <div>
                                     <label for="filter-type">Filter Type</label>
                                     <select id="filter-type">
@@ -166,7 +166,7 @@
 
                             <!-- Inputs for Numeric Range -->
                             <div class="filter-type-fields" id="fields-numeric_range">
-                                <div class="grid">
+                                <div class="auto-grid" style="--grid-min: 180px; --grid-gap: 1rem;">
                                     <div>
                                         <label for="filter-num-min">Min Value (Optional)</label>
                                         <input type="number" id="filter-num-min" placeholder="No minimum">
@@ -202,17 +202,19 @@
                     <h3>Step 3: Statistical Method Selection</h3>
                     <p class="step-desc">Select an applicable statistical method evaluated against the properties of your filtered data.</p>
 
-                    <div class="info-callout" style="background: var(--pico-primary-background); border-left: 4px solid var(--pico-primary); padding: 0.75rem 1rem; border-radius: 4px; margin-bottom: 1rem; font-size: 0.8rem;">
-                        <strong style="color: var(--pico-primary); display: block; margin-bottom: 0.25rem;">ℹ️ Why are some methods not listed?</strong>
-                        <span style="color: var(--pico-muted-color);">Statistical methods only appear here if their applicability rules are satisfied by the current properties of your filtered data:</span>
-                        <ul style="margin: 0.5rem 0 0 1rem; padding: 0; color: var(--pico-muted-color); font-size: 0.75rem;">
-                            <li><strong>Independent Two-Sample t-test:</strong> Requires exactly 2 groups of numeric data, with $n \ge 2$ per group, and normality satisfied for all groups.</li>
-                            <li><strong>One-way ANOVA:</strong> Requires $\ge 2$ groups of numeric data, with $n \ge 2$ per group, normality satisfied, and homogeneous variance.</li>
-                            <li><strong>Mann-Whitney U:</strong> Non-parametric alternative to t-test; requires exactly 2 groups of numeric data with $n \ge 2$ per group.</li>
-                            <li><strong>Kruskal-Wallis H:</strong> Non-parametric alternative to ANOVA; requires &ge; 2 groups of numeric data with $n \ge 2$ per group.</li>
-                            <li><strong>Chi-Square test:</strong> Requires discrete/categorical outcome data across &ge; 2 groups.</li>
-                        </ul>
-                    </div>
+                    <details class="info-callout" style="background: var(--pico-primary-background); border-left: 4px solid var(--pico-primary); padding: 0.75rem 1rem; border-radius: 4px; margin-bottom: 1rem; font-size: 0.8rem;">
+                        <summary style="color: var(--pico-primary); font-weight: bold; cursor: pointer; outline: none; margin-bottom: 0;">ℹ️ Why are some methods not listed?</summary>
+                        <div style="margin-top: 0.5rem;">
+                            <span style="color: var(--pico-muted-color);">Statistical methods only appear here if their applicability rules are satisfied by the current properties of your filtered data:</span>
+                            <ul style="margin: 0.5rem 0 0 1rem; padding: 0; color: var(--pico-muted-color); font-size: 0.75rem;">
+                                <li><strong>Independent Two-Sample t-test:</strong> Requires exactly 2 groups of numeric data, with $n \ge 2$ per group, and normality satisfied for all groups.</li>
+                                <li><strong>One-way ANOVA:</strong> Requires $\ge 2$ groups of numeric data, with $n \ge 2$ per group, normality satisfied, and homogeneous variance.</li>
+                                <li><strong>Mann-Whitney U:</strong> Non-parametric alternative to t-test; requires exactly 2 groups of numeric data with $n \ge 2$ per group.</li>
+                                <li><strong>Kruskal-Wallis H:</strong> Non-parametric alternative to ANOVA; requires &ge; 2 groups of numeric data with $n \ge 2$ per group.</li>
+                                <li><strong>Chi-Square test:</strong> Requires discrete/categorical outcome data across &ge; 2 groups.</li>
+                            </ul>
+                        </div>
+                    </details>
 
                     <div class="methods-list" id="methods-list">
                         <!-- Populated dynamically -->
@@ -263,7 +265,7 @@
                     <h3>Step 6: Export & Download</h3>
                     <p class="step-desc">Choose a format to export your final experiment evaluation report.</p>
 
-                    <div class="grid">
+                    <div class="auto-grid" style="--grid-min: 220px; --grid-gap: 1.25rem;">
                         <article class="exporter-card active" data-format="pdf">
                             <div class="exporter-icon">📕</div>
                             <h4>PDF Report</h4>

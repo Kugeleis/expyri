@@ -73,11 +73,11 @@ export async function fetchApplicableMethods() {
             header.style.marginTop = '1rem';
             els.methodsList.appendChild(header);
 
-            const container = document.createElement('div');
-            container.className = 'methods-sub-container';
-            container.style.display = 'flex';
-            container.style.flexDirection = 'column';
-            container.style.gap = '0.75rem';
+            const grid = document.createElement('div');
+            grid.className = 'auto-grid';
+            grid.style.setProperty('--grid-min', '220px');
+            grid.style.setProperty('--grid-gap', '1rem');
+            grid.style.marginBottom = '1.25rem';
 
             continuousMethods.forEach(method => {
                 const card = document.createElement('article');
@@ -90,7 +90,7 @@ export async function fetchApplicableMethods() {
                 `;
 
                 card.addEventListener('click', (e) => {
-                    container.querySelectorAll('.continuous-method-card').forEach(c => c.classList.remove('selected'));
+                    els.methodsList.querySelectorAll('.continuous-method-card').forEach(c => c.classList.remove('selected'));
                     const activeCard = e.currentTarget;
                     activeCard.classList.add('selected');
 
@@ -98,9 +98,10 @@ export async function fetchApplicableMethods() {
                     checkStep3NextState();
                 });
 
-                container.appendChild(card);
+                grid.appendChild(card);
             });
-            els.methodsList.appendChild(container);
+
+            els.methodsList.appendChild(grid);
         }
 
         // Render Discrete Methods
@@ -110,11 +111,11 @@ export async function fetchApplicableMethods() {
             header.style.marginTop = '1.5rem';
             els.methodsList.appendChild(header);
 
-            const container = document.createElement('div');
-            container.className = 'methods-sub-container';
-            container.style.display = 'flex';
-            container.style.flexDirection = 'column';
-            container.style.gap = '0.75rem';
+            const grid = document.createElement('div');
+            grid.className = 'auto-grid';
+            grid.style.setProperty('--grid-min', '220px');
+            grid.style.setProperty('--grid-gap', '1rem');
+            grid.style.marginBottom = '1.25rem';
 
             discreteMethods.forEach(method => {
                 const card = document.createElement('article');
@@ -127,7 +128,7 @@ export async function fetchApplicableMethods() {
                 `;
 
                 card.addEventListener('click', (e) => {
-                    container.querySelectorAll('.discrete-method-card').forEach(c => c.classList.remove('selected'));
+                    els.methodsList.querySelectorAll('.discrete-method-card').forEach(c => c.classList.remove('selected'));
                     const activeCard = e.currentTarget;
                     activeCard.classList.add('selected');
 
@@ -135,9 +136,10 @@ export async function fetchApplicableMethods() {
                     checkStep3NextState();
                 });
 
-                container.appendChild(card);
+                grid.appendChild(card);
             });
-            els.methodsList.appendChild(container);
+
+            els.methodsList.appendChild(grid);
         }
     } catch (err) {
         showError(err.message);
@@ -515,11 +517,11 @@ export async function generatePlotsPreview() {
             header.appendChild(title);
             card.appendChild(header);
 
-            // Grid row for plots - up to 3 columns
+            // Grid row for plots
             const row = document.createElement('div');
-            row.style.display = 'grid';
-            row.style.gridTemplateColumns = 'repeat(auto-fit, minmax(200px, 1fr))';
-            row.style.gap = '1rem';
+            row.className = 'auto-grid';
+            row.style.setProperty('--grid-min', '220px');
+            row.style.setProperty('--grid-gap', '1.25rem');
             row.style.width = '100%';
 
             plots.forEach(plot => {
