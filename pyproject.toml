@@ -15,7 +15,7 @@ dependencies = [
     "pyarrow>=24.0.0",
     "tables>=3.11.1",
     "python-multipart>=0.0.32",
-    "statsmodels",
+    "statsmodels>=0.14",
 ]
 
 [dependency-groups]

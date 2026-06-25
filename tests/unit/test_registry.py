@@ -11,8 +11,6 @@ from app.stats.base import DataProperties
 class _DummyPlugin:
     """A minimal plugin for testing registration."""
 
-    pass
-
 
 class _ApplicablePlugin:
     """A plugin that implements is_applicable."""
@@ -31,7 +29,7 @@ def test_register_and_get() -> None:
 
     @reg.register("alpha")
     class AlphaPlugin(_DummyPlugin):
-        pass
+        ...
 
     result = reg.get("alpha")
     assert isinstance(result, AlphaPlugin)
@@ -43,13 +41,13 @@ def test_register_duplicate_raises() -> None:
 
     @reg.register("dup")
     class FirstPlugin(_DummyPlugin):
-        pass
+        ...
 
     with pytest.raises(ValueError, match="already registered"):
 
         @reg.register("dup")
         class SecondPlugin(_DummyPlugin):
-            pass
+            ...
 
 
 def test_get_missing_raises() -> None:
@@ -65,11 +63,11 @@ def test_list_all() -> None:
 
     @reg.register("a")
     class PluginA(_DummyPlugin):
-        pass
+        ...
 
     @reg.register("b")
     class PluginB(_DummyPlugin):
-        pass
+        ...
 
     all_plugins = reg.list_all()
     assert set(all_plugins.keys()) == {"a", "b"}
@@ -83,7 +81,7 @@ def test_list_all_returns_copy() -> None:
 
     @reg.register("x")
     class PluginX(_DummyPlugin):
-        pass
+        ...
 
     copy = reg.list_all()
     copy["injected"] = _DummyPlugin()
@@ -132,7 +130,7 @@ def test_get_applicable_includes_non_applicable_protocol() -> None:
 
     @reg.register("always")
     class AlwaysPlugin(_DummyPlugin):
-        pass
+        ...
 
     applicable = reg.get_applicable(_make_dummy_properties())
     assert "always" in applicable
