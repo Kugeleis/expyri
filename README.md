@@ -25,13 +25,15 @@ graph TD
     end
 
     subgraph Flow [Wizard Steps]
-        S1["1. Dataset Selection"] --> S2["2. Preprocessing Filters"]
+        S1["1. Dataset Selection"] --> S1b["1b. Hierarchical Config"]
+        S1b --> S2["2. Preprocessing Filters"]
         S2 --> S3["3. Statistical Method Selection"]
         S3 --> S4["4. Run Evaluation"]
         S4 --> S5["5. Plot Selection"]
         S5 --> S6["6. Report Export"]
     end
 
+    S1b -.->|Computes Cluster Aggregates & ICC| S2
     S2 -.->|Queries & Executes| FR
     S3 -.->|Filters Applicable| SR
     S5 -.->|Filters Applicable| PR
@@ -188,3 +190,32 @@ In Step 3, the wizard dynamically queries the backend to determine which statist
    - **Kruskal-Wallis H**: Non-parametric; requires $\ge 2$ groups of numeric data with $n \ge 2$ per group.
 
 If any preconditions are not met, the method is filtered out from the list of selectable options in the GUI.
+
+---
+
+## Hierarchical Data Processing
+
+<details>
+<summary>Hierarchical Data Support Logic Details</summary>
+
+### Overview
+When "Enable Hierarchical Data Support" is toggled, ExpYT switches from flat independent evaluation to hierarchical/nested/clustered evaluation. The data levels are defined as:
+- **Level 2 (Group)**: Treatment group / experiment arm (discrete)
+- **Level 1 (Cluster)**: Intermediate cluster / experimental unit (discrete)
+- **Level 0 (Unit)**: Individual observations (lowest level)
+
+### Column Types and Validation
+Only continuous and binary proportion dependent columns are supported in hierarchical mode. Multi-class categorical columns (e.g. string columns like `dest` with multiple classes) are not supported.
+- **Continuous Columns**: Real-valued numeric measurements.
+- **Binary Proportion Columns**: Numeric or boolean columns containing values restricted to `{0, 1, True, False}`.
+- **Unsupported Columns**: Non-numeric, non-binary columns. These are classified as `"unsupported"` on the backend and automatically deselected during hierarchical setup, preventing downstream exceptions or crashes.
+
+### Execution Flow
+1. **Aggregates Computation**: Cluster-level aggregates (`mean`, `std`, `proportion_corrected`, etc.) are computed.
+2. **Properties Auto-Computation**:
+   - Normality check (Shapiro-Wilk) is run on the cluster means (not unit observations).
+   - Variance homogeneity (Levene's test) is run on the cluster means.
+   - Outliers are identified via Grubbs test on cluster means.
+   - Intra-class Correlation (ICC) is computed using a Linear Mixed Model (LMM).
+3. **Method Selection**: The wizard filters applicable hierarchical methods (e.g., LMM, Cluster Mean ANOVA, Cluster Mean Kruskal-Wallis, or Proportion Kruskal-Wallis).
+</details>
