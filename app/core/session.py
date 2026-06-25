@@ -18,7 +18,7 @@ class HierarchyConfig(BaseModel):
 
     group_col: str
     cluster_col: str
-    unit_col: str
+    unit_col: str | None = None
     x_col: str | None = None
     y_col: str | None = None
 

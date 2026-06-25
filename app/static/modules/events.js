@@ -548,7 +548,7 @@ export function initEventListeners() {
                         const hierarchyPayload = {
                             group_col: els.groupColSelect.value,
                             cluster_col: els.clusterColSelect.value,
-                            unit_col: els.unitColSelect.value,
+                            unit_col: els.unitColSelect.value || null,
                             x_col: els.xColSelect.value || null,
                             y_col: els.yColSelect.value || null
                         };

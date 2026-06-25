@@ -683,7 +683,7 @@ class HierarchyRequest(BaseModel):
 
     group_col: str
     cluster_col: str
-    unit_col: str
+    unit_col: str | None = None
     x_col: str | None = None
     y_col: str | None = None
 
@@ -712,7 +712,9 @@ def set_hierarchy(  # noqa: C901
         raise HTTPException(status_code=400, detail="Dataset missing") from None
 
     # Validate that columns exist in the dataset
-    required_cols = [req.group_col, req.cluster_col, req.unit_col]
+    required_cols = [req.group_col, req.cluster_col]
+    if req.unit_col:
+        required_cols.append(req.unit_col)
     for col in required_cols:
         if col not in df.columns:
             raise HTTPException(status_code=400, detail=f"Column {col!r} not found in dataset")
@@ -731,7 +733,9 @@ def set_hierarchy(  # noqa: C901
         y_col=req.y_col,
     )
 
-    ignored_cols = {req.group_col, req.cluster_col, req.unit_col}
+    ignored_cols = {req.group_col, req.cluster_col}
+    if req.unit_col:
+        ignored_cols.add(req.unit_col)
     if req.x_col:
         ignored_cols.add(req.x_col)
     if req.y_col:

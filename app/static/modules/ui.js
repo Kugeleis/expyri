@@ -619,7 +619,7 @@ export function populateHierarchyDropdowns() {
 
     // Clear dropdowns
     els.clusterColSelect.innerHTML = '';
-    els.unitColSelect.innerHTML = '';
+    els.unitColSelect.innerHTML = '<option value="">None (Row Index)</option>';
     els.xColSelect.innerHTML = '<option value="">None</option>';
     els.yColSelect.innerHTML = '<option value="">None</option>';
 
