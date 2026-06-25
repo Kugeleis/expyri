@@ -106,7 +106,10 @@ export async function goToStep(stepKey) {
 
         // Update local state from server response
         state.currentStep = data.current_step;
+        state.selectedValueColumns = new Set(data.selected_value_columns || []);
+        state.selectedDiscreteColumns = new Set(data.selected_discrete_columns || []);
         state.selectedMethod = data.selected_method || '';
+        state.selectedDiscreteMethod = data.selected_discrete_method || '';
         state.activeFilters = data.filters_config || [];
         state.selectedPlots = data.selected_plots || [];
 
