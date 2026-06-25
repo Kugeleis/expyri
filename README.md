@@ -218,4 +218,13 @@ Only continuous and binary proportion dependent columns are supported in hierarc
    - Outliers are identified via Grubbs test on cluster means.
    - Intra-class Correlation (ICC) is computed using a Linear Mixed Model (LMM).
 3. **Method Selection**: The wizard filters applicable hierarchical methods (e.g., LMM, Cluster Mean ANOVA, Cluster Mean Kruskal-Wallis, or Proportion Kruskal-Wallis).
+
+### Spatial Coordinates (Optional)
+If your dataset contains spatial coordinates for each observation (e.g., $X$ and $Y$ coordinates of chips on a wafer in semiconductor manufacturing), you can select the corresponding columns under:
+- **X Spatial Coordinate (Optional)**
+- **Y Spatial Coordinate (Optional)**
+
+#### What is done with this data?
+1. **Exclusion from Metrics**: Like group, cluster, and unit columns, the selected spatial coordinate columns are automatically excluded from the list of analyzed continuous/discrete metrics to avoid redundant evaluation.
+2. **Enables Spatial Visualization**: Specifying both $X$ and $Y$ coordinates flags the session as having spatial coordinates (`has_spatial_coords = True`). This enables the **Cluster Spatial Heatmap** (`cluster_spatial_heatmap`) generator in Step 5 (Plot Selection). This plot renders a grid heatmap of unit values plotted against their $X$/$Y$ spatial coordinates, side-by-side (faceted) for each treatment group, letting you easily identify spatial patterns or defects.
 </details>
