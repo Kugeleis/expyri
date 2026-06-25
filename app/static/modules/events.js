@@ -16,7 +16,9 @@ import {
     validateStep1Next,
     renderSubgroupsList,
     renderResultsTable,
-    populateHierarchyDropdowns
+    populateHierarchyDropdowns,
+    startHeaderPacman,
+    stopHeaderPacman
 } from './ui.js';
 import { showError } from './helpers.js';
 
@@ -521,6 +523,7 @@ export function initEventListeners() {
     if (els.btnSidebarNext) {
         els.btnSidebarNext.addEventListener('click', async () => {
             try {
+                startHeaderPacman();
                 if (state.currentStep === 'dataset_selection') {
                     const payload = {
                         dataset_id: state.selectedDatasetId,
@@ -666,6 +669,8 @@ export function initEventListeners() {
                 }
             } catch (err) {
                 showError(err.message);
+            } finally {
+                stopHeaderPacman();
             }
         });
     }

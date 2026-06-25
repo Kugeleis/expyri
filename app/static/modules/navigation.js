@@ -1,7 +1,7 @@
 import { state } from './state.js';
 import { els, stepsConfig } from './elements.js';
 import { showError } from './helpers.js';
-import { renderActiveFilters } from './ui.js';
+import { renderActiveFilters, startHeaderPacman, stopHeaderPacman } from './ui.js';
 import { fetchApplicableMethods, fetchApplicablePlots } from './api.js';
 
 // Navigate to a specific step panel
@@ -93,6 +93,7 @@ export function updateSidebarButtons() {
 // Navigate back to a previously completed step via backend
 export async function goToStep(stepKey) {
     try {
+        startHeaderPacman();
         const response = await fetch(`/wizard/sessions/${state.sessionId}/go-to/${stepKey}`, {
             method: 'POST'
         });
@@ -134,5 +135,7 @@ export async function goToStep(stepKey) {
         }
     } catch (err) {
         showError(err.message);
+    } finally {
+        stopHeaderPacman();
     }
 }

@@ -1,6 +1,6 @@
 import { state } from './state.js';
 import { els, stepsConfig } from './elements.js';
-import { showError, formatMethodName } from './helpers.js';
+import { showError, formatMethodName, animatePacman } from './helpers.js';
 import { updateSubgroupsList } from './api.js';
 
 // Render active filter badges in Step 2
@@ -666,5 +666,45 @@ export function populateHierarchyDropdowns() {
 
         // Default L0 (unit column) to "None"
         els.unitColSelect.value = '';
+    }
+}
+
+// Start Pac-Man heading chomping/pooping animation during computations/transitions
+export function startHeaderPacman() {
+    const headerTitle = document.querySelector('.main-header h2');
+    if (!headerTitle) return;
+
+    if (!headerTitle.dataset.originalText) {
+        headerTitle.dataset.originalText = headerTitle.textContent.trim() || "Experiment Evaluation Wizard";
+    }
+
+    headerTitle.innerHTML = `
+        <div class="stage" style="width: 380px; position: relative; height: 32px; margin: 0; display: inline-block; vertical-align: middle;">
+            <div class="text-row" id="headerTextRow" style="font-size: 16px; font-family: 'Courier New', monospace; font-weight: bold; height: 100%;"></div>
+            <div class="pacman-wrapper" id="headerPacman" style="width: 20px; height: 20px; position: absolute; top: 50%; transform: translateY(-50%); left: 0;">
+                <div class="pac-body chomping" id="headerPacBody" style="width: 20px; height: 20px; background: var(--pico-primary); border-radius: 50%; position: absolute; box-shadow: 0 0 6px rgba(16, 185, 129, 0.5);"></div>
+                <div class="pac-eye" id="headerPacEye" style="width: 3px; height: 3px; background: #000; border-radius: 50%; position: absolute; top: 4px; right: 5px; z-index: 2;"></div>
+            </div>
+        </div>
+    `;
+
+    animatePacman({
+        stage: headerTitle.querySelector('.stage'),
+        textRow: document.getElementById('headerTextRow'),
+        pacman: document.getElementById('headerPacman'),
+        pacBody: document.getElementById('headerPacBody'),
+        text: headerTitle.dataset.originalText,
+        cycleTime: 3000,
+        pacWidth: 20,
+        letterFontSize: '16px'
+    });
+}
+
+// Stop Pac-Man heading animation and restore original text
+export function stopHeaderPacman() {
+    const headerTitle = document.querySelector('.main-header h2');
+    if (!headerTitle) return;
+    if (headerTitle.dataset.originalText) {
+        headerTitle.textContent = headerTitle.dataset.originalText;
     }
 }
