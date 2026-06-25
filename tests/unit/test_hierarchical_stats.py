@@ -271,3 +271,22 @@ def test_hierarchical_plots(hierarchical_df: Any) -> None:
     res_prop = prop_plot.generate(df_bin, "group", "metric", hierarchy=config)
     assert res_prop.plot_type == "proportion_bar_plot"
     assert res_prop.image_base64 != ""
+
+
+def test_unsupported_hierarchical_columns(hierarchical_df: Any) -> None:
+    """Test compute_hierarchical_properties and build_cluster_aggregates with unsupported columns."""
+    config = HierarchyConfig(group_col="group", cluster_col="cluster", unit_col="unit")
+    df = hierarchical_df(n_groups=2, n_clusters=4, n_units=10)
+    df["unsupported_metric"] = "string_value"
+
+    # 1. build_cluster_aggregates with unsupported metric_kind
+    agg = build_cluster_aggregates(df, config, [], "unsupported_metric", "unsupported")
+    assert agg.empty
+    assert list(agg.columns) == ["group", "cluster"]
+
+    # 2. compute_hierarchical_properties with unsupported column
+    props = compute_hierarchical_properties(df, config, [], "unsupported_metric")
+    assert props.has_hierarchy
+    assert props.metric_kind == "unsupported"
+    import numpy as np
+    assert np.isnan(props.icc)

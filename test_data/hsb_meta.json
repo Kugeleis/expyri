@@ -1,0 +1,35 @@
+{
+  "key": "hsb",
+  "source": "https://raw.githubusercontent.com/vincentarelbundock/Rdatasets/master/csv/mlmRev/Hsb82.csv",
+  "description": "High School and Beyond: 7185 students in 160 schools. Continuous math score outcome. Well-balanced, good for baseline testing.",
+  "notes": "sector has 2 levels (public=0, Catholic=1).",
+  "hierarchy": {
+    "group_col": "sector",
+    "cluster_col": "school",
+    "unit_col": "id",
+    "metric_cols": [
+      "mathach"
+    ],
+    "metric_kinds": {
+      "mathach": "continuous"
+    },
+    "x_col": null,
+    "y_col": null
+  },
+  "shape": {
+    "rows": 7185,
+    "cols": 10
+  },
+  "columns": [
+    "rownames",
+    "school",
+    "minrty",
+    "sx",
+    "ses",
+    "mAch",
+    "meanses",
+    "sector",
+    "cses",
+    "id"
+  ]
+}
