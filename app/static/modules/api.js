@@ -1,6 +1,6 @@
 import { state } from './state.js';
 import { els } from './elements.js';
-import { showError, setSessionStatus } from './helpers.js';
+import { showError, setSessionStatus, formatMethodName } from './helpers.js';
 import { navigateToStep } from './navigation.js';
 import {
     renderResultsTable,
@@ -85,7 +85,7 @@ export async function fetchApplicableMethods() {
                 card.dataset.name = method.name;
 
                 card.innerHTML = `
-                    <div class="method-title">${method.name}</div>
+                    <div class="method-title">${formatMethodName(method.name)}</div>
                     <div class="method-desc">${method.description}</div>
                 `;
 
@@ -123,7 +123,7 @@ export async function fetchApplicableMethods() {
                 card.dataset.name = method.name;
 
                 card.innerHTML = `
-                    <div class="method-title">${method.name}</div>
+                    <div class="method-title">${formatMethodName(method.name)}</div>
                     <div class="method-desc">${method.description}</div>
                 `;
 
@@ -467,7 +467,7 @@ export async function generatePlotsPreview() {
                 methodBadge.style.borderRadius = '4px';
                 methodBadge.style.border = '1px solid var(--pico-border-color)';
                 methodBadge.style.fontWeight = '500';
-                methodBadge.textContent = statResult.method_name;
+                methodBadge.textContent = formatMethodName(statResult.method_name);
                 statsContainer.appendChild(methodBadge);
 
                 // Statistic badge

@@ -1,6 +1,6 @@
 import { state } from './state.js';
 import { els, stepsConfig } from './elements.js';
-import { showError } from './helpers.js';
+import { showError, formatMethodName } from './helpers.js';
 import { updateSubgroupsList } from './api.js';
 
 // Render active filter badges in Step 2
@@ -310,7 +310,7 @@ export function renderResultsTable() {
 
         let rowHtml = `
             <td>${res.column_name || ''}</td>
-            <td>${res.method_name}</td>
+            <td>${formatMethodName(res.method_name)}</td>
             <td>${res.test_statistic !== null && res.test_statistic !== undefined ? Number(res.test_statistic).toFixed(4) : ''}</td>
             <td>${res.p_value !== null && res.p_value !== undefined ? Number(res.p_value).toFixed(6) : ''}</td>
             <td>${res.effect_size !== null && res.effect_size !== undefined ? Number(res.effect_size).toFixed(4) : ''}</td>
