@@ -656,8 +656,7 @@ export function populateHierarchyDropdowns() {
     // Default heuristics:
     // 1. Cluster column: default to the first non-group discrete column.
     // E.g. in hsb.csv, if group is sx, then first non-group is school or minrty.
-    // 2. Unit column: default to a column whose name contains "id" (case-insensitive),
-    // otherwise the last column.
+    // 2. Unit column: default to "None" (empty string).
     if (state.selectedDatasetColumns.length > 1) {
         // Find cluster default (first non-group discrete column)
         const clusterDefaultCol = state.selectedDatasetColumns.find(col => col.name !== selectedGroupCol && col.is_discrete);
@@ -665,19 +664,7 @@ export function populateHierarchyDropdowns() {
             els.clusterColSelect.value = clusterDefaultCol.name;
         }
 
-        // Find unit default (contains "id" case-insensitive)
-        const unitDefaultCol = state.selectedDatasetColumns.find(col => 
-            col.name !== selectedGroupCol && 
-            col.name.toLowerCase().includes('id')
-        );
-        if (unitDefaultCol) {
-            els.unitColSelect.value = unitDefaultCol.name;
-        } else {
-            // fallback to last column
-            const nonGroupCols = state.selectedDatasetColumns.filter(col => col.name !== selectedGroupCol);
-            if (nonGroupCols.length > 0) {
-                els.unitColSelect.value = nonGroupCols[nonGroupCols.length - 1].name;
-            }
-        }
+        // Default L0 (unit column) to "None"
+        els.unitColSelect.value = '';
     }
 }
