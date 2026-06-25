@@ -8,8 +8,9 @@ from __future__ import annotations
 
 import importlib
 import importlib.metadata
+from collections.abc import Awaitable, Callable
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -41,6 +42,20 @@ def create_app() -> FastAPI:
 
     # Mount static files at root
     application.mount("/", StaticFiles(directory="app/static", html=True), name="static")
+
+    # Add middleware to disable caching for static assets during development
+    @application.middleware("http")
+    async def add_no_cache_headers(
+        request: Request,
+        call_next: Callable[[Request], Awaitable[Response]],
+    ) -> Response:
+        response = await call_next(request)
+        path = request.url.path
+        if path.endswith((".css", ".js", ".html")) or path == "/":
+            response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+            response.headers["Pragma"] = "no-cache"
+            response.headers["Expires"] = "0"
+        return response
 
     # Register centralized exception handler for step transitions
     @application.exception_handler(StepGuardError)
