@@ -1,5 +1,5 @@
-site_name: ExpYT — Experiment Evaluation Wizard
-site_description: Documentation for ExpYT FastAPI Application
+site_name: ExPyRi — Experiment Evaluation Wizard
+site_description: Documentation for ExPyRi FastAPI Application
 theme:
   name: material
   palette:

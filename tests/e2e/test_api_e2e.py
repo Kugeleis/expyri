@@ -53,8 +53,8 @@ def e2e_server(tmp_path_factory: pytest.TempPathFactory) -> Generator[str, None,
     df.to_csv(tmp_dir / "e2e_normal_data.csv", index=False)
 
     # Configure app to use this temp data directory via env var
-    original_env = os.environ.get("EXPYT_DATA_DIR")
-    os.environ["EXPYT_DATA_DIR"] = str(tmp_dir)
+    original_env = os.environ.get("EXPYRI_DATA_DIR")
+    os.environ["EXPYRI_DATA_DIR"] = str(tmp_dir)
 
     # Find an open port
     port = get_free_port()
@@ -87,9 +87,9 @@ def e2e_server(tmp_path_factory: pytest.TempPathFactory) -> Generator[str, None,
 
     # Restore environment variable
     if original_env is not None:
-        os.environ["EXPYT_DATA_DIR"] = original_env
+        os.environ["EXPYRI_DATA_DIR"] = original_env
     else:
-        os.environ.pop("EXPYT_DATA_DIR", None)
+        os.environ.pop("EXPYRI_DATA_DIR", None)
 
 
 def test_e2e_wizard_flow(e2e_server: str) -> None:

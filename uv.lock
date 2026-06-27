@@ -458,7 +458,7 @@ wheels = [
 ]
 
 [[package]]
-name = "expyt"
+name = "expyri"
 version = "0.4.1"
 source = { editable = "." }
 dependencies = [

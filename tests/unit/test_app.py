@@ -8,14 +8,14 @@ async def test_app_starts(client: AsyncClient) -> None:
     response = await client.get("/openapi.json")
     assert response.status_code == 200
     data = response.json()
-    assert data["info"]["title"] == "ExpYT — Experiment Evaluation Wizard"
+    assert data["info"]["title"] == "ExPyRi — Experiment Evaluation Wizard"
 
 
 async def test_root_serves_homepage(client: AsyncClient) -> None:
     """The root URL should serve the wizard homepage HTML."""
     response = await client.get("/")
     assert response.status_code == 200
-    assert "ExpYT" in response.text
+    assert "ExPyRi" in response.text
     assert "Experiment Evaluation Wizard" in response.text
 
 

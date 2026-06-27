@@ -1,5 +1,5 @@
 [project]
-name = "expyt"
+name = "expyri"
 version = "0.4.1"
 description = "FastAPI Experiment Evaluation Wizard"
 readme = "README.md"

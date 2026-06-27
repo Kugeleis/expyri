@@ -1,1 +1,1 @@
-"""Test suite for ExpYT."""
+"""Test suite for ExPyRi."""

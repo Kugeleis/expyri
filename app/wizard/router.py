@@ -61,7 +61,7 @@ def get_session_store() -> SessionStore:
 
 def get_dataset_repository() -> DatasetRepository:
     """Dependency provider for the DatasetRepository."""
-    data_dir = Path(os.getenv("EXPYT_DATA_DIR", "data"))
+    data_dir = Path(os.getenv("EXPYRI_DATA_DIR", "data"))
     return MultiFormatDatasetRepository(data_dir)
 
 
@@ -177,7 +177,7 @@ def upload_dataset(
 
     # Access the configured data directory correctly through the repository
     # The repository must support this attribute
-    data_dir = getattr(repo, "_data_dir", Path(os.getenv("EXPYT_DATA_DIR", "data")))
+    data_dir = getattr(repo, "_data_dir", Path(os.getenv("EXPYRI_DATA_DIR", "data")))
     data_dir.mkdir(parents=True, exist_ok=True)
 
     file_path = data_dir / safe_filename

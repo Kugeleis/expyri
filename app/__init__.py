@@ -1,1 +1,1 @@
-"""ExpYT — FastAPI Experiment Evaluation Wizard."""
+"""ExPyRi — FastAPI Experiment Evaluation Wizard."""
