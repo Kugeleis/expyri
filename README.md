@@ -51,6 +51,7 @@ graph TD
 ## Getting Started
 
 ### Prerequisites
+
 - Python >= 3.12
 - [uv](https://github.com/astral-sh/uv) (Python package manager)
 
@@ -74,6 +75,7 @@ The documentation will be available at `http://127.0.0.1:8000/docs`.
 ExPyRi guides you through a step-by-step statistical evaluation wizard. Here is an extensive guide on how to use the UI, along with the statistical concepts and references underpinning each step:
 
 ### Step 1: Select Dataset & Column Mapping
+
 1. **Upload / Select Dataset**: Upload your experiment data in `.csv`, `.xpt`, `.h5`, or `.parquet` format.
 2. **Set Group Column**: Select the discrete column representing the treatment group or experimental arm.
 3. **Map Metrics**: Check the continuous and discrete metric columns you wish to analyze.
@@ -86,6 +88,7 @@ ExPyRi guides you through a step-by-step statistical evaluation wizard. Here is 
 
 ### Step 2: Configure Preprocessing Filters
 Add one or more filtering criteria to slice and clean the dataset before running tests:
+
 - **Numeric Range**: Keep only observations within specified bounds.
 - **Category Filter**: Include or exclude specific discrete classes.
 - **Cluster Exclusion**: Exclude entire intermediate clusters (L1) from hierarchical analysis (useful for removing defective batches or outlier groups).
@@ -96,23 +99,27 @@ Add one or more filtering criteria to slice and clean the dataset before running
 The wizard queries the backend to determine which methods are applicable based on automated tests of your filtered dataset's properties:
 
 #### Continuous Variable Methods
+
 - **[Independent Two-Sample t-Test](https://en.wikipedia.org/wiki/Student%27s_t-test)**: Compares means of exactly 2 groups. Requires normality and homogeneous variance.
 - **[One-Way ANOVA](https://en.wikipedia.org/wiki/One-way_analysis_of_variance)**: Compares means across 3 or more groups. Requires normality and homogeneous variance.
 - **[Mann-Whitney U Test](https://en.wikipedia.org/wiki/Mann%E2%80%93Whitney_U_test)**: Non-parametric comparison of 2 groups. Used when normality is violated.
 - **[Kruskal-Wallis H Test](https://en.wikipedia.org/wiki/Kruskal%E2%80%93Wallis_one-way_analysis_of_variance)**: Non-parametric comparison of 3 or more groups. Used when ANOVA assumptions fail.
 
 #### Clustered / Hierarchical Methods
+
 - **[Linear Mixed Model (LMM)](https://en.wikipedia.org/wiki/Mixed_model)**: Evaluates fixed group effects while modeling random intercepts for clusters to account for intra-cluster correlation.
 - **Cluster Mean ANOVA / Kruskal-Wallis**: Aggregates unit observations to cluster-level means before running ANOVA or Kruskal-Wallis, mitigating false significance due to pseudoreplication.
 - **Proportion Kruskal-Wallis**: Evaluates binary proportion outcomes aggregated at the cluster level.
 
 #### Discrete Variable Methods
+
 - **[Chi-Square Test of Independence](https://en.wikipedia.org/wiki/Chi-squared_test)**: Evaluates association between categorical variables.
 
 ---
 
 ### Step 4: Run Evaluation & Review Results
 Executes the selected methods and shows an interactive results table containing:
+
 - **Test Statistic**: The calculated value (e.g., $t$, $F$, $H$, $\chi^2$, or $z$).
 - **p-value**: Statistical significance. Cells are highlighted green if $p \le 0.01$ (strict significance) or yellow if $p \le 0.05$.
 - **Effect Size**: Quantitative measure of the magnitude of the experimental effect.
@@ -123,6 +130,7 @@ Executes the selected methods and shows an interactive results table containing:
 
 ### Step 5: Plot Selection & Preview
 Select visualizations to generate for your report. The UI renders live previews using:
+
 - **Box Plot / Violin Plot**: Visualizes group distribution, medians, and quartiles.
 - **ECDF (Empirical Cumulative Distribution Function)**: Plots cumulative distributions to compare group spreads.
 - **Cluster Mean Bar Plot** (Hierarchical): Displays group means of cluster means with error bars.
@@ -132,6 +140,7 @@ Select visualizations to generate for your report. The UI renders live previews 
 
 ### Step 6: Export Report
 Download your final results and plots in one of these structured formats:
+
 - **PDF Report**: A publication-ready document compiling the test description, evaluation table, decision flags, and embedded high-resolution figures.
 - **CSV / JSON Exports**: Standardized raw outputs of the statistical results for downstream pipelines.
 
@@ -153,7 +162,7 @@ Quality gates are strictly enforced. All tasks can be run via the task runner:
 
 ### Project Directory Layout
 
-<details>
+<details markdown="1">
 <summary>Click to expand directory layout</summary>
 
 ```text
@@ -229,11 +238,13 @@ class ZScoreOutliersMethod(StatMethod):
 ```
 
 The system will automatically:
+
 1. Discover the plugin at startup (under `app/stats/builtin` or when imported).
 2. Include it in the `GET /wizard/sessions/{id}/methods` response if `is_applicable` returns `True`.
 3. Accept it in `POST /wizard/sessions/{id}/method` and run it during `GET /wizard/sessions/{id}/results`.
 
 The same recipe applies to:
+
 - **Filters**: Inherit `Filter`, register to `filter_registry`.
 - **Plots**: Inherit `PlotGenerator`, register to `plot_registry`.
 - **Exporters**: Inherit `Exporter`, register to `exporter_registry`.
@@ -246,6 +257,7 @@ In Step 3, the wizard dynamically queries the backend to determine which statist
 
 1. **Auto-Computation (`compute_data_properties`)**:
    When moving to Step 3, the backend evaluates the dataset properties including:
+
    - **Normality**: Shapiro-Wilk or D'Agostino-Pearson tests per group.
    - **Variance Homogeneity**: Levene's test to ensure groups have equal variances.
    - **Sphericity**: Mauchly's test for repeated measures (with 3+ conditions).
@@ -254,6 +266,7 @@ In Step 3, the wizard dynamically queries the backend to determine which statist
 
 2. **Applicability Checking (`is_applicable`)**:
    Each registered statistical method implements `is_applicable(properties)` to declare its preconditions:
+
    - **Independent Two-Sample t-test**: Requires exactly 2 groups of numeric data, with $n \ge 2$ per group, and normality satisfied for all groups.
    - **One-way ANOVA**: Requires $\ge 2$ groups of numeric data, with $n \ge 2$ per group, normality satisfied, and homogeneous variance.
    - **Mann-Whitney U**: Non-parametric; requires exactly 2 groups of numeric data with $n \ge 2$ per group.
@@ -265,22 +278,25 @@ If any preconditions are not met, the method is filtered out from the list of se
 
 ## Hierarchical Data Processing
 
-<details>
+<details markdown="1">
 <summary>Hierarchical Data Support Logic Details</summary>
 
 ### Overview
 When "Enable Hierarchical Data Support" is toggled, ExPyRi switches from flat independent evaluation to hierarchical/nested/clustered evaluation. The data levels are defined as:
+
 - **Level 2 (Group)**: Treatment group / experiment arm (discrete)
 - **Level 1 (Cluster)**: Intermediate cluster / experimental unit (discrete)
 - **Level 0 (Unit)**: Individual observations (lowest level)
 
 ### Column Types and Validation
 Only continuous and binary proportion dependent columns are supported in hierarchical mode. Multi-class categorical columns (e.g. string columns like `dest` with multiple classes) are not supported.
+
 - **Continuous Columns**: Real-valued numeric measurements.
 - **Binary Proportion Columns**: Numeric or boolean columns containing values restricted to `{0, 1, True, False}`.
 - **Unsupported Columns**: Non-numeric, non-binary columns. These are classified as `"unsupported"` on the backend and automatically deselected during hierarchical setup, preventing downstream exceptions or crashes.
 
 ### Execution Flow
+
 1. **Aggregates Computation**: Cluster-level aggregates (`mean`, `std`, `proportion_corrected`, etc.) are computed.
 2. **Properties Auto-Computation**:
    - Normality check (Shapiro-Wilk) is run on the cluster means (not unit observations).
@@ -291,10 +307,12 @@ Only continuous and binary proportion dependent columns are supported in hierarc
 
 ### Spatial Coordinates (Optional)
 If your dataset contains spatial coordinates for each observation (e.g., $X$ and $Y$ coordinates of chips on a wafer in semiconductor manufacturing), you can select the corresponding columns under:
+
 - **X Spatial Coordinate (Optional)**
 - **Y Spatial Coordinate (Optional)**
 
 #### What is done with this data?
+
 1. **Exclusion from Metrics**: Like group, cluster, and unit columns, the selected spatial coordinate columns are automatically excluded from the list of analyzed continuous/discrete metrics to avoid redundant evaluation.
 2. **Enables Spatial Visualization**: Specifying both $X$ and $Y$ coordinates flags the session as having spatial coordinates (`has_spatial_coords = True`). This enables the **Cluster Spatial Heatmap** (`cluster_spatial_heatmap`) generator in Step 5 (Plot Selection). This plot renders a grid heatmap of unit values plotted against their $X$/$Y$ spatial coordinates, side-by-side (faceted) for each treatment group, letting you easily identify spatial patterns or defects.
 </details>
