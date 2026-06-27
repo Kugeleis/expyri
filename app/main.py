@@ -24,7 +24,7 @@ importlib.import_module("app.plots.builtin")
 importlib.import_module("app.stats.builtin")
 
 try:
-    __version__ = importlib.metadata.version("expyt")
+    __version__ = importlib.metadata.version("expyri")
 except importlib.metadata.PackageNotFoundError:
     __version__ = "0.1.0"
 
@@ -32,7 +32,7 @@ except importlib.metadata.PackageNotFoundError:
 def create_app() -> FastAPI:
     """Create and configure the FastAPI application."""
     application = FastAPI(
-        title="ExpYT — Experiment Evaluation Wizard",
+        title="ExPyRi — Experiment Evaluation Wizard",
         description="Multi-step wizard for statistical experiment evaluation",
         version=__version__,
     )

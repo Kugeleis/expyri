@@ -1,11 +1,13 @@
-# ExpYT — Experiment Evaluation Wizard
+# ExPyRi — Experiment Evaluation Wizard
 
-[![CI](https://github.com/Kugeleis/expyt/actions/workflows/ci.yml/badge.svg)](https://github.com/Kugeleis/expyt/actions/workflows/ci.yml)
-[![Docs](https://img.shields.io/badge/docs-GitHub%20Pages-blue.svg)](https://kugeleis.github.io/expyt/)
-[![CodeQL](https://github.com/Kugeleis/expyt/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/Kugeleis/expyt/actions/workflows/github-code-scanning/codeql)
+*Note: This project was formerly known as ExpYT.*
+
+[![CI](https://github.com/Kugeleis/expyri/actions/workflows/ci.yml/badge.svg)](https://github.com/Kugeleis/expyri/actions/workflows/ci.yml)
+[![Docs](https://img.shields.io/badge/docs-GitHub%20Pages-blue.svg)](https://kugeleis.github.io/expyri/)
+[![CodeQL](https://github.com/Kugeleis/expyri/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/Kugeleis/expyri/actions/workflows/github-code-scanning/codeql)
 [![Python Version](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
 
-ExpYT is a modular, extensible FastAPI backend that guides users through a multi-step statistical evaluation wizard: **Dataset Selection → Preprocessing Filters → Statistical Method → Run Evaluation → Plot Selection → Report Export**.
+ExPyRi is a modular, extensible FastAPI backend that guides users through a multi-step statistical evaluation wizard: **Dataset Selection → Preprocessing Filters → Statistical Method → Run Evaluation → Plot Selection → Report Export**.
 
 The project is built on SOLID open/closed principles, allowing developers to add new filters, statistical methods, plots, and exporters as plugins without modifying the core API router or orchestration logic.
 
@@ -69,7 +71,7 @@ The documentation will be available at `http://127.0.0.1:8000/docs`.
 
 ## UI Usage Guide
 
-ExpYT guides you through a step-by-step statistical evaluation wizard. Here is an extensive guide on how to use the UI, along with the statistical concepts and references underpinning each step:
+ExPyRi guides you through a step-by-step statistical evaluation wizard. Here is an extensive guide on how to use the UI, along with the statistical concepts and references underpinning each step:
 
 ### Step 1: Select Dataset & Column Mapping
 1. **Upload / Select Dataset**: Upload your experiment data in `.csv`, `.xpt`, `.h5`, or `.parquet` format.
@@ -267,7 +269,7 @@ If any preconditions are not met, the method is filtered out from the list of se
 <summary>Hierarchical Data Support Logic Details</summary>
 
 ### Overview
-When "Enable Hierarchical Data Support" is toggled, ExpYT switches from flat independent evaluation to hierarchical/nested/clustered evaluation. The data levels are defined as:
+When "Enable Hierarchical Data Support" is toggled, ExPyRi switches from flat independent evaluation to hierarchical/nested/clustered evaluation. The data levels are defined as:
 - **Level 2 (Group)**: Treatment group / experiment arm (discrete)
 - **Level 1 (Cluster)**: Intermediate cluster / experimental unit (discrete)
 - **Level 0 (Unit)**: Individual observations (lowest level)
