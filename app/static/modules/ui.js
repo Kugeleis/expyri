@@ -426,7 +426,7 @@ export function updateValueColumnsList() {
     // Set of columns to ignore/exclude from dependent columns lists
     const ignoredCols = new Set([selectedGroupCol]);
     
-    if (els.enableHierarchy && els.enableHierarchy.checked) {
+    if (state.isHierarchical) {
         if (els.clusterColSelect.value) {
             ignoredCols.add(els.clusterColSelect.value);
             state.selectedValueColumns.delete(els.clusterColSelect.value);
@@ -553,13 +553,18 @@ export function validateStep1Next() {
     const selectedGroupCol = els.groupColSelect.value;
     const hasDependentCol = state.selectedValueColumns.size > 0 || state.selectedDiscreteColumns.size > 0;
 
-    // In Step 1, update the sidebar next button instead
     if (state.currentStep === 'dataset_selection') {
-        if (!selectedGroupCol || !hasDependentCol || state.selectedGroups.size === 0) {
-            if (els.btnSidebarNext) els.btnSidebarNext.disabled = true;
-        } else {
-            if (els.btnSidebarNext) els.btnSidebarNext.disabled = false;
+        let isValid = selectedGroupCol && hasDependentCol && state.selectedGroups.size > 0;
+
+        if (state.isHierarchical) {
+            isValid = isValid && els.clusterColSelect.value && state.selectedClusters.size > 0;
         }
+
+        if (els.btnSidebarNext) {
+            els.btnSidebarNext.disabled = !isValid;
+        }
+    }
+}
     }
 }
 
@@ -608,6 +613,62 @@ export function renderSubgroupsList() {
     }
 
     els.subgroupsSection.classList.remove('hidden');
+    validateStep1Next();
+}
+
+// Populate the cluster/unit/spatial selects for hierarchical mode
+
+// Render the clusters checkbox list in Step 1
+export function renderClustersList() {
+    if (!els.clustersList) return;
+    els.clustersList.innerHTML = '';
+    const filterText = (els.clustersSearch?.value || '').toLowerCase().trim();
+
+    let hasVisibleClusters = false;
+
+    state.availableClusters.forEach(clusterVal => {
+        if (filterText && !clusterVal.toLowerCase().includes(filterText)) {
+            return;
+        }
+
+        hasVisibleClusters = true;
+
+        const item = document.createElement('label');
+        item.className = 'value-column-item';
+
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.value = clusterVal;
+        cb.checked = state.selectedClusters.has(clusterVal);
+        cb.addEventListener('change', (e) => {
+            if (e.target.checked) {
+                state.selectedClusters.add(clusterVal);
+            } else {
+                state.selectedClusters.delete(clusterVal);
+            }
+            validateStep1Next();
+        });
+
+        const span = document.createElement('span');
+        span.textContent = clusterVal;
+
+        item.appendChild(cb);
+        item.appendChild(span);
+        els.clustersList.appendChild(item);
+    });
+
+    if (state.availableClusters.length === 0) {
+        els.clustersList.innerHTML = '<span class="no-columns-msg" style="color: var(--text-secondary); font-size: 0.95rem;">No values available in this column.</span>';
+    } else if (!hasVisibleClusters) {
+        els.clustersList.innerHTML = '<span class="no-columns-msg" style="color: var(--text-secondary); font-size: 0.95rem;">No clusters match search.</span>';
+    }
+
+    if (state.isHierarchical && els.clusterColSelect.value) {
+        els.clustersSection.classList.remove('hidden');
+    } else {
+        els.clustersSection.classList.add('hidden');
+    }
+
     validateStep1Next();
 }
 

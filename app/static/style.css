@@ -663,6 +663,8 @@ label {
 
 /* Custom styling to link the Group Column select and the Subgroups checklist using a lighter green accent */
 #group-col-select,
+#cluster-col-select,
+#clusters-section,
 #subgroups-section {
     --pico-primary: var(--accent-blue);
     --pico-primary-hover: #059669;
@@ -672,12 +674,14 @@ label {
     --pico-form-element-focus-color: rgba(52, 211, 153, 0.12);
 }
 
-#subgroups-section .value-columns-list {
+#subgroups-section .value-columns-list,
+#clusters-section .value-columns-list {
     border-color: rgba(52, 211, 153, 0.25);
     background-color: rgba(52, 211, 153, 0.02);
 }
 
-#subgroups-section .value-columns-header label {
+#subgroups-section .value-columns-header label,
+#clusters-section .value-columns-header label {
     color: var(--accent-blue);
 }
 

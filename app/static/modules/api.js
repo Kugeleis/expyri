@@ -7,7 +7,8 @@ import {
     updatePlotsFilter,
     updatePlotsCounter,
     validateStep1Next,
-    renderSubgroupsList
+    renderSubgroupsList,
+    renderClustersList
 } from './ui.js';
 
 // Start a new wizard session
@@ -484,5 +485,38 @@ export async function updateSubgroupsList() {
     } catch (err) {
         showError(err.message);
         els.subgroupsSection.classList.add('hidden');
+    }
+}
+
+
+// Fetch unique values for a cluster column (subgroups) from the dataset
+export async function updateClustersList() {
+    const datasetId = state.selectedDatasetId;
+    const clusterCol = els.clusterColSelect.value;
+
+    if (!clusterCol || !state.isHierarchical) {
+        if (els.clustersSection) els.clustersSection.classList.add('hidden');
+        state.selectedClusters = new Set();
+        state.availableClusters = [];
+        validateStep1Next();
+        return;
+    }
+
+    try {
+        const response = await fetch(`/wizard/datasets/${datasetId}/columns/${clusterCol}/unique`);
+        if (!response.ok) throw new Error('Failed to fetch unique values for cluster column.');
+
+        const clusters = await response.json();
+
+        state.availableClusters = clusters;
+        state.selectedClusters = new Set(clusters);
+
+        renderClustersList();
+    } catch (err) {
+        showError(err.message);
+        if (els.clustersSection) els.clustersSection.classList.add('hidden');
+        state.selectedClusters = new Set();
+        state.availableClusters = [];
+        validateStep1Next();
     }
 }

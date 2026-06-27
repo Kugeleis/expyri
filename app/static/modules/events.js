@@ -7,7 +7,8 @@ import {
     fetchApplicableMethods,
     fetchApplicablePlots,
     generatePlotsPreview,
-    updateSubgroupsList
+    updateSubgroupsList,
+    updateClustersList
 } from './api.js';
 import {
     renderActiveFilters,
@@ -15,6 +16,7 @@ import {
     updatePlotsFilter,
     validateStep1Next,
     renderSubgroupsList,
+    renderClustersList,
     renderResultsTable,
     populateHierarchyDropdowns,
     startHeaderPacman,
@@ -36,6 +38,8 @@ export function initEventListeners() {
                 state.selectedValueColumns = new Set();
                 state.selectedDiscreteColumns = new Set();
                 state.selectedGroups = new Set();
+                state.selectedClusters = new Set();
+                state.availableClusters = [];
                 state.availableGroups = [];
                 if (els.valueColSearch) {
                     els.valueColSearch.value = '';
@@ -57,13 +61,15 @@ export function initEventListeners() {
                 els.subgroupsSection.classList.add('hidden');
                 els.subgroupsList.innerHTML = '';
 
-                if (els.enableHierarchy) {
-                    els.enableHierarchy.checked = false;
-                    els.hierarchyConfigSection.classList.add('hidden');
-                    if (els.optClusterExclusion) {
-                        els.optClusterExclusion.classList.add('hidden');
-                    }
-                }
+
+                state.isHierarchical = false;
+                els.hierarchyConfigSection.classList.add('hidden');
+                if (els.clustersSection) els.clustersSection.classList.add('hidden');
+                if (els.clustersList) els.clustersList.innerHTML = '';
+                if (els.optClusterExclusion) els.optClusterExclusion.classList.add('hidden');
+                if (els.tabFlat) els.tabFlat.classList.add('active');
+                if (els.tabHierarchical) els.tabHierarchical.classList.remove('active');
+
 
                 await startNewSession();
             }
@@ -96,10 +102,13 @@ export function initEventListeners() {
                 state.selectedDiscreteColumns.delete(selectedGroupCol);
             }
             els.groupColSelect.dataset.prevValue = selectedGroupCol;
+
             updateValueColumnsList();
             await updateSubgroupsList();
-            if (els.enableHierarchy && els.enableHierarchy.checked) {
+
+            if (state.isHierarchical) {
                 populateHierarchyDropdowns();
+                await updateClustersList();
             }
         });
     }
@@ -117,8 +126,9 @@ export function initEventListeners() {
     }
 
     if (els.clusterColSelect) {
-        els.clusterColSelect.addEventListener('change', () => {
+        els.clusterColSelect.addEventListener('change', async () => {
             updateValueColumnsList();
+            await updateClustersList();
         });
     }
 
@@ -191,6 +201,38 @@ export function initEventListeners() {
             checkboxes.forEach(cb => {
                 cb.checked = false;
                 state.selectedDiscreteColumns.delete(cb.value);
+            });
+            validateStep1Next();
+        });
+    }
+
+
+    if (els.clustersSearch) {
+        els.clustersSearch.addEventListener('input', () => {
+            renderClustersList();
+        });
+    }
+
+    const selectAllClustersBtn = document.getElementById('btn-select-all-clusters');
+    const deselectAllClustersBtn = document.getElementById('btn-deselect-all-clusters');
+
+    if (selectAllClustersBtn) {
+        selectAllClustersBtn.addEventListener('click', () => {
+            const checkboxes = els.clustersList.querySelectorAll('input[type="checkbox"]');
+            checkboxes.forEach(cb => {
+                cb.checked = true;
+                state.selectedClusters.add(cb.value);
+            });
+            validateStep1Next();
+        });
+    }
+
+    if (deselectAllClustersBtn) {
+        deselectAllClustersBtn.addEventListener('click', () => {
+            const checkboxes = els.clustersList.querySelectorAll('input[type="checkbox"]');
+            checkboxes.forEach(cb => {
+                cb.checked = false;
+                state.selectedClusters.delete(cb.value);
             });
             validateStep1Next();
         });
@@ -303,12 +345,22 @@ export function initEventListeners() {
                 updateValueColumnsList();
                 await updateSubgroupsList();
 
-                if (els.enableHierarchy) {
-                    els.enableHierarchy.checked = false;
-                    els.hierarchyConfigSection.classList.add('hidden');
-                    if (els.optClusterExclusion) {
-                        els.optClusterExclusion.classList.add('hidden');
-                    }
+
+                state.isHierarchical = false;
+                els.hierarchyConfigSection.classList.add('hidden');
+                if (els.clustersSection) els.clustersSection.classList.add('hidden');
+                if (els.optClusterExclusion) els.optClusterExclusion.classList.add('hidden');
+                if (els.tabFlat) {
+                    els.tabFlat.classList.add('active');
+                    els.tabFlat.style.borderBottomColor = 'var(--pico-primary)';
+                    els.tabFlat.style.color = 'var(--pico-color)';
+                }
+                if (els.tabHierarchical) {
+                    els.tabHierarchical.classList.remove('active');
+                    els.tabHierarchical.style.borderBottomColor = 'transparent';
+                    els.tabHierarchical.style.color = 'var(--pico-muted-color)';
+                }
+
                 }
 
                 els.datasetDetails.classList.remove('hidden');
@@ -327,56 +379,50 @@ export function initEventListeners() {
         });
     }
 
-    // Hierarchy toggle event handler
-    if (els.enableHierarchy) {
-        els.enableHierarchy.addEventListener('change', () => {
-            const checked = els.enableHierarchy.checked;
-            if (checked) {
-                els.hierarchyConfigSection.classList.remove('hidden');
-                if (els.optClusterExclusion) {
-                    els.optClusterExclusion.classList.remove('hidden');
-                }
-                populateHierarchyDropdowns();
-            } else {
-                els.hierarchyConfigSection.classList.add('hidden');
-                if (els.optClusterExclusion) {
-                    els.optClusterExclusion.classList.add('hidden');
-                }
-                if (els.filterType.value === 'cluster_exclusion') {
-                    els.filterType.value = 'numeric_range';
-                    els.filterType.dispatchEvent(new Event('change'));
-                }
+
+    // Tab event handlers
+    if (els.tabFlat && els.tabHierarchical) {
+        els.tabFlat.addEventListener('click', () => {
+            state.isHierarchical = false;
+            els.tabFlat.classList.add('active');
+            els.tabFlat.style.borderBottomColor = 'var(--pico-primary)';
+            els.tabFlat.style.color = 'var(--pico-color)';
+
+            els.tabHierarchical.classList.remove('active');
+            els.tabHierarchical.style.borderBottomColor = 'transparent';
+            els.tabHierarchical.style.color = 'var(--pico-muted-color)';
+
+            els.hierarchyConfigSection.classList.add('hidden');
+            if (els.clustersSection) els.clustersSection.classList.add('hidden');
+            if (els.optClusterExclusion) els.optClusterExclusion.classList.add('hidden');
+            if (els.filterType.value === 'cluster_exclusion') {
+                els.filterType.value = 'numeric_range';
+                els.filterType.dispatchEvent(new Event('change'));
             }
             updateValueColumnsList();
+            validateStep1Next();
+        });
+
+        els.tabHierarchical.addEventListener('click', async () => {
+            state.isHierarchical = true;
+            els.tabHierarchical.classList.add('active');
+            els.tabHierarchical.style.borderBottomColor = 'var(--pico-primary)';
+            els.tabHierarchical.style.color = 'var(--pico-color)';
+
+            els.tabFlat.classList.remove('active');
+            els.tabFlat.style.borderBottomColor = 'transparent';
+            els.tabFlat.style.color = 'var(--pico-muted-color)';
+
+            els.hierarchyConfigSection.classList.remove('hidden');
+            if (els.optClusterExclusion) els.optClusterExclusion.classList.remove('hidden');
+
+            populateHierarchyDropdowns();
+            await updateClustersList();
+            updateValueColumnsList();
+            validateStep1Next();
         });
     }
 
-    // Step 2: Toggle Filter Fields based on type selected
-    if (els.filterType) {
-        els.filterType.addEventListener('change', (e) => {
-            const type = e.target.value;
-            els.fieldsNumericRange.classList.add('hidden');
-            els.fieldsCategoryFilter.classList.add('hidden');
-            if (els.fieldsClusterExclusion) {
-                els.fieldsClusterExclusion.classList.add('hidden');
-            }
-
-            const filterColContainer = els.filterCol.closest('div');
-
-            if (type === 'numeric_range') {
-                els.fieldsNumericRange.classList.remove('hidden');
-                if (filterColContainer) filterColContainer.classList.remove('hidden');
-            } else if (type === 'category_filter') {
-                els.fieldsCategoryFilter.classList.remove('hidden');
-                if (filterColContainer) filterColContainer.classList.remove('hidden');
-            } else if (type === 'cluster_exclusion') {
-                if (els.fieldsClusterExclusion) {
-                    els.fieldsClusterExclusion.classList.remove('hidden');
-                }
-                if (filterColContainer) filterColContainer.classList.add('hidden');
-            }
-        });
-    }
 
     // Step 2: Add filter action
     if (els.btnAddFilterAction) {
@@ -547,10 +593,11 @@ export function initEventListeners() {
                     state.selectedValueColumns = new Set(data.selected_value_columns || []);
                     state.selectedDiscreteColumns = new Set(data.selected_discrete_columns || []);
 
-                    if (els.enableHierarchy && els.enableHierarchy.checked) {
+                    if (state.isHierarchical) {
                         const hierarchyPayload = {
                             group_col: els.groupColSelect.value,
                             cluster_col: els.clusterColSelect.value,
+                            selected_clusters: Array.from(state.selectedClusters),
                             unit_col: els.unitColSelect.value || null,
                             x_col: els.xColSelect.value || null,
                             y_col: els.yColSelect.value || null
@@ -568,6 +615,7 @@ export function initEventListeners() {
                         }
                         const hierData = await hierResponse.json();
                         state.selectedValueColumns = new Set(hierData.session.selected_value_columns || []);
+                        state.selectedClusters = new Set(hierData.session.hierarchy.selected_clusters || []);
                         state.selectedDiscreteColumns = new Set(hierData.session.selected_discrete_columns || []);
                     }
 

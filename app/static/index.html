@@ -90,17 +90,18 @@
                             <span class="label">Dataset:</span>
                             <span id="detail-desc" class="value"></span>
                         </div>
+
                         <div style="margin-top: 1.5rem; margin-bottom: 1.5rem;">
                             <label for="group-col-select">Group Column (Independent Variable)</label>
                             <select id="group-col-select"></select>
                         </div>
 
-                        <div style="margin-top: 0.5rem; margin-bottom: 1.5rem;">
-                            <label for="enable-hierarchy" style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-weight: 550; user-select: none;">
-                                <input type="checkbox" id="enable-hierarchy" role="switch" style="margin-bottom: 0;">
-                                Enable Hierarchical Data Support
-                            </label>
-                        </div>
+                        <nav class="experiment-tabs" style="margin-bottom: 1.5rem; border-bottom: 1px solid var(--pico-border-color); display: flex; gap: 1rem;">
+                            <button id="tab-flat" class="tab-btn active" style="background: none; border: none; border-bottom: 2px solid var(--pico-primary); color: var(--pico-color); font-weight: 600; padding: 0.5rem 1rem; border-radius: 0; margin-bottom: -1px; cursor: pointer;">Flat Experiment</button>
+                            <button id="tab-hierarchical" class="tab-btn" style="background: none; border: none; border-bottom: 2px solid transparent; color: var(--pico-muted-color); font-weight: 600; padding: 0.5rem 1rem; border-radius: 0; margin-bottom: -1px; cursor: pointer;">Hierarchical Experiment</button>
+                        </nav>
+
+                        <input type="checkbox" id="enable-hierarchy" style="display: none;">
 
                         <div id="hierarchy-config-section" class="hidden" style="border: 1px dashed var(--pico-border-color); padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; background: rgba(255, 255, 255, 0.01);">
                             <h4 style="font-size: 0.9rem; margin-top: 0; margin-bottom: 0.75rem; color: var(--pico-primary); font-weight: 600;">Hierarchical Structure Mapping</h4>
@@ -147,6 +148,20 @@
                         </div>
 
                         <div class="auto-grid" style="--grid-min: 250px; --grid-gap: 1.25rem;">
+
+                            <div id="clusters-section" class="hidden">
+                                <div class="value-columns-header">
+                                    <label>Clusters to Include (Selected Cluster Column Values)</label>
+                                    <div class="value-columns-actions">
+                                        <button type="button" class="btn-link" id="btn-select-all-clusters">Select All</button>
+                                        <span class="divider">/</span>
+                                        <button type="button" class="btn-link" id="btn-deselect-all-clusters">Deselect All</button>
+                                    </div>
+                                </div>
+                                <input type="search" id="clusters-search" placeholder="Filter clusters..." style="margin-bottom: 0.75rem;">
+                                <div id="clusters-list" class="value-columns-list"></div>
+                            </div>
+
                             <div id="subgroups-section" class="hidden">
                                 <div class="value-columns-header">
                                     <label>Subgroups to Include (Selected Group Column Values)</label>
