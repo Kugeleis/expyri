@@ -783,8 +783,12 @@ def update_sig_limit(
     store: SessionStore = Depends(get_session_store),
 ) -> Response:
     """Update plots significance p-value limit dynamically."""
-    res = render_step(request, session, store, plots_sig_filter=plots_sig_filter)
-    res.set_cookie("plots_sig_filter", str(plots_sig_filter))
+    if not 0.0 <= plots_sig_filter <= 1.0:
+        raise HTTPException(status_code=400, detail="plots_sig_filter must be between 0.0 and 1.0")
+
+    safe_plots_sig_filter = float(plots_sig_filter)
+    res = render_step(request, session, store, plots_sig_filter=safe_plots_sig_filter)
+    res.set_cookie("plots_sig_filter", str(safe_plots_sig_filter))
     return res
 
 
