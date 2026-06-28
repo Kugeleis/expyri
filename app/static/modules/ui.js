@@ -1,7 +1,6 @@
 import { state } from './state.js';
-import { els, stepsConfig } from './elements.js';
-import { showError, formatMethodName, animatePacman } from './helpers.js';
-import { updateSubgroupsList } from './api.js';
+import { els } from './elements.js';
+import { formatMethodName, animatePacman } from './helpers.js';
 
 // Render active filter badges in Step 2
 export function renderActiveFilters() {
