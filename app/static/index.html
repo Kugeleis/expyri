@@ -99,6 +99,73 @@
                                 <span id="detail-desc" class="value"></span>
                             </div>
 
+                            <!-- Explanation of what a hierarchical experiment is (Collapsable disclosure) -->
+                            <details
+                                id="experiment-explanation"
+                                open
+                                style="
+                                    background: rgba(16, 185, 129, 0.03);
+                                    border: 1px solid var(--pico-border-color);
+                                    border-left: 3px solid var(--pico-primary);
+                                    padding: 0.75rem 1rem;
+                                    border-radius: 6px;
+                                    margin-top: 1.5rem;
+                                    margin-bottom: 1.5rem;
+                                    font-size: 0.775rem;
+                                    color: var(--pico-muted-color);
+                                    line-height: 1.4;
+                                "
+                            >
+                                <summary
+                                    style="
+                                        color: var(--pico-primary);
+                                        font-weight: 600;
+                                        cursor: pointer;
+                                        display: flex;
+                                        align-items: center;
+                                        justify-content: space-between;
+                                        user-select: none;
+                                    "
+                                >
+                                    <span>💡 Flat vs. Hierarchical Experiments (Click to toggle explanation)</span>
+                                </summary>
+                                <div style="margin-top: 0.5rem">
+                                    <div>
+                                        <strong>Flat Experiment (Default):</strong> Standard A/B test where each
+                                        observation row is completely independent.
+                                    </div>
+                                    <div style="margin-top: 0.4rem">
+                                        <strong>Hierarchical Experiment:</strong> Measurements (Level 0) are nested
+                                        inside intermediate clusters (Level 1), which are assigned to treatment groups
+                                        (Level 2).
+                                    </div>
+                                    <div
+                                        style="
+                                            margin-top: 0.5rem;
+                                            display: grid;
+                                            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+                                            gap: 0.5rem;
+                                            border-top: 1px dashed rgba(255, 255, 255, 0.08);
+                                            padding-top: 0.5rem;
+                                            font-size: 0.725rem;
+                                        "
+                                    >
+                                        <div>
+                                            <strong>🏫 Education:</strong><br />Group &rarr; Class (L1) &rarr; Student
+                                            (L0)
+                                        </div>
+                                        <div>
+                                            <strong>🔬 Semiconductors:</strong><br />Group &rarr; Wafer (L1) &rarr; Chip
+                                            (L0)
+                                        </div>
+                                        <div>
+                                            <strong>🏥 Clinical Trials:</strong><br />Group &rarr; Clinic (L1) &rarr;
+                                            Patient (L0)
+                                        </div>
+                                    </div>
+                                </div>
+                            </details>
+
                             <!-- Tabs selection right after file upload details -->
                             <nav
                                 class="experiment-tabs"
@@ -151,56 +218,6 @@
                             </nav>
 
                             <input type="checkbox" id="enable-hierarchy" style="display: none" />
-
-                            <!-- Explanation of what a hierarchical experiment is -->
-                            <div
-                                id="experiment-explanation"
-                                style="
-                                    background: rgba(16, 185, 129, 0.03);
-                                    border-left: 3px solid var(--pico-primary);
-                                    padding: 0.75rem 1rem;
-                                    border-radius: 6px;
-                                    margin-bottom: 1.5rem;
-                                    font-size: 0.775rem;
-                                    color: var(--pico-muted-color);
-                                    line-height: 1.4;
-                                "
-                            >
-                                <strong style="color: var(--pico-primary); display: block; margin-bottom: 0.35rem"
-                                    >💡 Flat vs. Hierarchical Experiments</strong
-                                >
-                                <div>
-                                    <strong>Flat Experiment (Default):</strong> Standard A/B test where each observation
-                                    row is completely independent.
-                                </div>
-                                <div style="margin-top: 0.4rem">
-                                    <strong>Hierarchical Experiment:</strong> Measurements (Level 0) are nested inside
-                                    intermediate clusters (Level 1), which are assigned to treatment groups (Level 2).
-                                </div>
-                                <div
-                                    style="
-                                        margin-top: 0.5rem;
-                                        display: grid;
-                                        grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-                                        gap: 0.5rem;
-                                        border-top: 1px dashed rgba(255, 255, 255, 0.08);
-                                        padding-top: 0.5rem;
-                                        font-size: 0.725rem;
-                                    "
-                                >
-                                    <div>
-                                        <strong>🏫 Education:</strong><br />Group &rarr; Class (L1) &rarr; Student (L0)
-                                    </div>
-                                    <div>
-                                        <strong>🔬 Semiconductors:</strong><br />Group &rarr; Wafer (L1) &rarr; Chip
-                                        (L0)
-                                    </div>
-                                    <div>
-                                        <strong>🏥 Clinical Trials:</strong><br />Group &rarr; Clinic (L1) &rarr;
-                                        Patient (L0)
-                                    </div>
-                                </div>
-                            </div>
 
                             <!-- Flat tab content container -->
                             <div id="flat-tab-content">
