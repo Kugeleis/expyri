@@ -61,7 +61,6 @@ export function initEventListeners() {
                 els.subgroupsSection.classList.add('hidden');
                 els.subgroupsList.innerHTML = '';
 
-
                 state.isHierarchical = false;
                 els.hierarchyConfigSection.classList.add('hidden');
                 if (els.clustersSection) els.clustersSection.classList.add('hidden');
@@ -69,7 +68,6 @@ export function initEventListeners() {
                 if (els.optClusterExclusion) els.optClusterExclusion.classList.add('hidden');
                 if (els.tabFlat) els.tabFlat.classList.add('active');
                 if (els.tabHierarchical) els.tabHierarchical.classList.remove('active');
-
 
                 await startNewSession();
             }
@@ -88,7 +86,7 @@ export function initEventListeners() {
             const prevGroupCol = els.groupColSelect.dataset.prevValue;
             const selectedGroupCol = els.groupColSelect.value;
             if (prevGroupCol && prevGroupCol !== selectedGroupCol) {
-                const colMeta = state.selectedDatasetColumns.find(c => c.name === prevGroupCol);
+                const colMeta = state.selectedDatasetColumns.find((c) => c.name === prevGroupCol);
                 if (colMeta) {
                     if (colMeta.is_numeric) {
                         state.selectedValueColumns.add(prevGroupCol);
@@ -162,7 +160,7 @@ export function initEventListeners() {
     if (selectAllBtn) {
         selectAllBtn.addEventListener('click', () => {
             const checkboxes = els.valueColumnsList.querySelectorAll('input[type="checkbox"]');
-            checkboxes.forEach(cb => {
+            checkboxes.forEach((cb) => {
                 cb.checked = true;
                 state.selectedValueColumns.add(cb.value);
             });
@@ -173,7 +171,7 @@ export function initEventListeners() {
     if (deselectAllBtn) {
         deselectAllBtn.addEventListener('click', () => {
             const checkboxes = els.valueColumnsList.querySelectorAll('input[type="checkbox"]');
-            checkboxes.forEach(cb => {
+            checkboxes.forEach((cb) => {
                 cb.checked = false;
                 state.selectedValueColumns.delete(cb.value);
             });
@@ -187,7 +185,7 @@ export function initEventListeners() {
     if (selectAllDiscreteBtn) {
         selectAllDiscreteBtn.addEventListener('click', () => {
             const checkboxes = els.discreteColumnsList.querySelectorAll('input[type="checkbox"]');
-            checkboxes.forEach(cb => {
+            checkboxes.forEach((cb) => {
                 cb.checked = true;
                 state.selectedDiscreteColumns.add(cb.value);
             });
@@ -198,14 +196,13 @@ export function initEventListeners() {
     if (deselectAllDiscreteBtn) {
         deselectAllDiscreteBtn.addEventListener('click', () => {
             const checkboxes = els.discreteColumnsList.querySelectorAll('input[type="checkbox"]');
-            checkboxes.forEach(cb => {
+            checkboxes.forEach((cb) => {
                 cb.checked = false;
                 state.selectedDiscreteColumns.delete(cb.value);
             });
             validateStep1Next();
         });
     }
-
 
     if (els.clustersSearch) {
         els.clustersSearch.addEventListener('input', () => {
@@ -219,7 +216,7 @@ export function initEventListeners() {
     if (selectAllClustersBtn) {
         selectAllClustersBtn.addEventListener('click', () => {
             const checkboxes = els.clustersList.querySelectorAll('input[type="checkbox"]');
-            checkboxes.forEach(cb => {
+            checkboxes.forEach((cb) => {
                 cb.checked = true;
                 state.selectedClusters.add(cb.value);
             });
@@ -230,7 +227,7 @@ export function initEventListeners() {
     if (deselectAllClustersBtn) {
         deselectAllClustersBtn.addEventListener('click', () => {
             const checkboxes = els.clustersList.querySelectorAll('input[type="checkbox"]');
-            checkboxes.forEach(cb => {
+            checkboxes.forEach((cb) => {
                 cb.checked = false;
                 state.selectedClusters.delete(cb.value);
             });
@@ -244,7 +241,7 @@ export function initEventListeners() {
     if (selectAllGroupsBtn) {
         selectAllGroupsBtn.addEventListener('click', () => {
             const checkboxes = els.subgroupsList.querySelectorAll('input[type="checkbox"]');
-            checkboxes.forEach(cb => {
+            checkboxes.forEach((cb) => {
                 cb.checked = true;
                 state.selectedGroups.add(cb.value);
             });
@@ -255,7 +252,7 @@ export function initEventListeners() {
     if (deselectAllGroupsBtn) {
         deselectAllGroupsBtn.addEventListener('click', () => {
             const checkboxes = els.subgroupsList.querySelectorAll('input[type="checkbox"]');
-            checkboxes.forEach(cb => {
+            checkboxes.forEach((cb) => {
                 cb.checked = false;
                 state.selectedGroups.delete(cb.value);
             });
@@ -290,7 +287,7 @@ export function initEventListeners() {
                 const dataset = await response.json();
 
                 state.selectedDatasetId = dataset.id;
-                state.selectedDatasetColumns = dataset.columns.map(col => ({
+                state.selectedDatasetColumns = dataset.columns.map((col) => ({
                     ...col,
                     is_numeric: col.is_numeric === true || col.is_numeric === 'true',
                     is_discrete: col.is_discrete === true || col.is_discrete === 'true'
@@ -302,7 +299,7 @@ export function initEventListeners() {
                 els.valueColumnsList.innerHTML = '';
                 els.filterCol.innerHTML = '';
 
-                state.selectedDatasetColumns.forEach(col => {
+                state.selectedDatasetColumns.forEach((col) => {
                     if (col.is_discrete) {
                         const opt1 = document.createElement('option');
                         opt1.value = col.name;
@@ -319,13 +316,13 @@ export function initEventListeners() {
                 // Initialize state.selectedValueColumns and state.selectedDiscreteColumns
                 state.selectedValueColumns = new Set();
                 state.selectedDiscreteColumns = new Set();
-                const firstDiscreteCol = state.selectedDatasetColumns.find(col => col.is_discrete);
+                const firstDiscreteCol = state.selectedDatasetColumns.find((col) => col.is_discrete);
                 const selectedGroupCol = firstDiscreteCol ? firstDiscreteCol.name : '';
                 if (firstDiscreteCol) {
                     els.groupColSelect.value = firstDiscreteCol.name;
                 }
                 els.groupColSelect.dataset.prevValue = selectedGroupCol;
-                state.selectedDatasetColumns.forEach(col => {
+                state.selectedDatasetColumns.forEach((col) => {
                     if (col.name !== selectedGroupCol) {
                         if (col.is_numeric) {
                             state.selectedValueColumns.add(col.name);
@@ -345,7 +342,6 @@ export function initEventListeners() {
                 updateValueColumnsList();
                 await updateSubgroupsList();
 
-
                 state.isHierarchical = false;
                 els.hierarchyConfigSection.classList.add('hidden');
                 if (els.clustersSection) els.clustersSection.classList.add('hidden');
@@ -359,8 +355,6 @@ export function initEventListeners() {
                     els.tabHierarchical.classList.remove('active');
                     els.tabHierarchical.style.borderBottomColor = 'transparent';
                     els.tabHierarchical.style.color = 'var(--pico-muted-color)';
-                }
-
                 }
 
                 els.datasetDetails.classList.remove('hidden');
@@ -378,7 +372,6 @@ export function initEventListeners() {
             }
         });
     }
-
 
     // Tab event handlers
     if (els.tabFlat && els.tabHierarchical) {
@@ -423,7 +416,6 @@ export function initEventListeners() {
         });
     }
 
-
     // Step 2: Add filter action
     if (els.btnAddFilterAction) {
         els.btnAddFilterAction.addEventListener('click', () => {
@@ -463,7 +455,10 @@ export function initEventListeners() {
                     return;
                 }
 
-                const values = valsStr.split(',').map(v => v.trim()).filter(v => v.length > 0);
+                const values = valsStr
+                    .split(',')
+                    .map((v) => v.trim())
+                    .filter((v) => v.length > 0);
                 filterObj.params.categories = values;
                 filterObj.params.exclude = els.filterCatExclude.checked;
 
@@ -505,9 +500,9 @@ export function initEventListeners() {
     }
 
     // Step 6: Exporter select card
-    document.querySelectorAll('.exporter-card').forEach(card => {
+    document.querySelectorAll('.exporter-card').forEach((card) => {
         card.addEventListener('click', (e) => {
-            document.querySelectorAll('.exporter-card').forEach(c => c.classList.remove('active'));
+            document.querySelectorAll('.exporter-card').forEach((c) => c.classList.remove('active'));
             const activeCard = e.currentTarget;
             activeCard.classList.add('active');
             state.selectedExportFormat = activeCard.dataset.format;
@@ -620,8 +615,7 @@ export function initEventListeners() {
                     }
 
                     navigateToStep(data.current_step);
-                }
-                else if (state.currentStep === 'filters') {
+                } else if (state.currentStep === 'filters') {
                     const response = await fetch(`/wizard/sessions/${state.sessionId}/filters`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -635,8 +629,7 @@ export function initEventListeners() {
                     const data = await response.json();
                     await fetchApplicableMethods();
                     navigateToStep(data.current_step);
-                }
-                else if (state.currentStep === 'stat_method') {
+                } else if (state.currentStep === 'stat_method') {
                     const payload = {};
                     if (state.selectedValueColumns.size > 0) {
                         payload.selected_method = state.selectedMethod;
@@ -658,12 +651,10 @@ export function initEventListeners() {
                     const data = await response.json();
                     await executeStatisticalMethod();
                     navigateToStep(data.current_step);
-                }
-                else if (state.currentStep === 'results') {
+                } else if (state.currentStep === 'results') {
                     await fetchApplicablePlots();
                     navigateToStep('plot_selection');
-                }
-                else if (state.currentStep === 'plot_selection') {
+                } else if (state.currentStep === 'plot_selection') {
                     const response = await fetch(`/wizard/sessions/${state.sessionId}/plots`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -679,8 +670,7 @@ export function initEventListeners() {
                     }
                     const data = await response.json();
                     navigateToStep(data.current_step);
-                }
-                else if (state.currentStep === 'export') {
+                } else if (state.currentStep === 'export') {
                     const response = await fetch(`/wizard/sessions/${state.sessionId}/export`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -727,11 +717,21 @@ export function initEventListeners() {
     if (els.btnSidebarBack) {
         els.btnSidebarBack.addEventListener('click', () => {
             switch (state.currentStep) {
-                case 'filters': goToStep('dataset_selection'); break;
-                case 'stat_method': goToStep('filters'); break;
-                case 'results': goToStep('stat_method'); break;
-                case 'plot_selection': goToStep('results'); break;
-                case 'export': goToStep('plot_selection'); break;
+                case 'filters':
+                    goToStep('dataset_selection');
+                    break;
+                case 'stat_method':
+                    goToStep('filters');
+                    break;
+                case 'results':
+                    goToStep('stat_method');
+                    break;
+                case 'plot_selection':
+                    goToStep('results');
+                    break;
+                case 'export':
+                    goToStep('plot_selection');
+                    break;
             }
         });
     }

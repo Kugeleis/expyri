@@ -6,7 +6,8 @@ import { updateSubgroupsList } from './api.js';
 // Render active filter badges in Step 2
 export function renderActiveFilters() {
     if (state.activeFilters.length === 0) {
-        els.activeFilters.innerHTML = '<p class="no-filters-msg">No filters configured. Click below to add a filter, or proceed directly.</p>';
+        els.activeFilters.innerHTML =
+            '<p class="no-filters-msg">No filters configured. Click below to add a filter, or proceed directly.</p>';
         return;
     }
 
@@ -31,7 +32,7 @@ export function renderActiveFilters() {
             descText = `${filter.params.exclude ? 'Exclude' : 'Include'}: [${categories}]`;
             filterTypeName = 'Category Filter';
         } else if (filter.name === 'cluster_exclusion') {
-            const exclusions = filter.params.exclusions.map(e => `${e.cluster_id} (${e.reason})`).join(', ');
+            const exclusions = filter.params.exclusions.map((e) => `${e.cluster_id} (${e.reason})`).join(', ');
             descText = `Exclude: [${exclusions}]`;
             filterTypeName = 'Cluster Exclusion';
         }
@@ -116,7 +117,7 @@ export function renderSignificanceChart() {
 
     // Filter out null p-values and sort ascending
     const validResults = state.statResults
-        .filter(res => res.p_value !== null && res.p_value !== undefined)
+        .filter((res) => res.p_value !== null && res.p_value !== undefined)
         .sort((a, b) => a.p_value - b.p_value);
 
     if (validResults.length === 0) {
@@ -126,11 +127,11 @@ export function renderSignificanceChart() {
 
     els.significanceChart.style.display = 'block';
 
-    const labels = validResults.map(res => res.column_name || 'Unknown');
-    const data = validResults.map(res => res.p_value);
+    const labels = validResults.map((res) => res.column_name || 'Unknown');
+    const data = validResults.map((res) => res.p_value);
 
     // Color logic
-    const backgroundColors = validResults.map(res => {
+    const backgroundColors = validResults.map((res) => {
         if (res.p_value <= strictLimit) {
             return 'rgba(16, 185, 129, 0.8)'; // Green
         } else if (res.p_value <= limit) {
@@ -271,7 +272,7 @@ export function renderResultsTable() {
         headers.push({ label: 'Power', field: 'power' });
     }
 
-    headers.forEach(h => {
+    headers.forEach((h) => {
         const th = document.createElement('th');
         th.setAttribute('scope', 'col');
         th.style.cursor = 'pointer';
@@ -305,15 +306,21 @@ export function renderResultsTable() {
     const strictLimit = limit * 0.2;
 
     const tbody = document.createElement('tbody');
-    state.statResults.forEach(res => {
+    state.statResults.forEach((res) => {
         const trRow = document.createElement('tr');
 
         let rowHtml = `
             <td>${res.column_name || ''}</td>
             <td>${formatMethodName(res.method_name)}</td>
-            <td>${res.test_statistic !== null && res.test_statistic !== undefined ? Number(res.test_statistic).toFixed(4) : ''}</td>
+            <td>${
+                res.test_statistic !== null && res.test_statistic !== undefined
+                    ? Number(res.test_statistic).toFixed(4)
+                    : ''
+            }</td>
             <td>${res.p_value !== null && res.p_value !== undefined ? Number(res.p_value).toFixed(6) : ''}</td>
-            <td>${res.effect_size !== null && res.effect_size !== undefined ? Number(res.effect_size).toFixed(4) : ''}</td>
+            <td>${
+                res.effect_size !== null && res.effect_size !== undefined ? Number(res.effect_size).toFixed(4) : ''
+            }</td>
         `;
 
         if (hasHierarchy) {
@@ -334,7 +341,7 @@ export function renderResultsTable() {
             }
 
             if (bgColor) {
-                trRow.querySelectorAll('td').forEach(td => {
+                trRow.querySelectorAll('td').forEach((td) => {
                     td.style.backgroundColor = bgColor;
                 });
             }
@@ -348,9 +355,9 @@ export function renderResultsTable() {
 
     // Render decision flags/warnings if any
     const allFlags = [];
-    state.statResults.forEach(res => {
+    state.statResults.forEach((res) => {
         if (res.flags && res.flags.length > 0) {
-            res.flags.forEach(flag => {
+            res.flags.forEach((flag) => {
                 allFlags.push({ column: res.column_name, flag: flag, summary: res.summary });
             });
         }
@@ -367,7 +374,7 @@ export function renderResultsTable() {
 
         let flagsHtml = `<h4 style="color: var(--error-red); font-size: 0.9rem; margin-top: 0; margin-bottom: 0.5rem; font-weight: bold;">⚠️ Hierarchical Diagnostics &amp; Decision Flags</h4>`;
         flagsHtml += `<ul style="margin: 0; padding-left: 1.2rem; font-size: 0.85rem; color: var(--pico-color);">`;
-        allFlags.forEach(item => {
+        allFlags.forEach((item) => {
             if (item.flag.startsWith('OUTLIER_CLUSTER:')) {
                 const clusterId = item.flag.split(':')[1];
                 flagsHtml += `<li style="margin-bottom: 0.25rem;"><strong>[Column: ${item.column}]</strong> Outlier cluster detected: <code>${clusterId}</code>. You may want to exclude this cluster in the preprocessing filters (Step 2).</li>`;
@@ -391,7 +398,9 @@ export function updatePlotsFilter() {
         threshold = 0.05;
     }
 
-    const matchingResults = state.statResults.filter(res => res.p_value !== null && res.p_value !== undefined && res.p_value <= threshold);
+    const matchingResults = state.statResults.filter(
+        (res) => res.p_value !== null && res.p_value !== undefined && res.p_value <= threshold
+    );
     const count = matchingResults.length;
 
     state.plotsTopN = count;
@@ -411,7 +420,11 @@ export function updatePlotsCounter() {
     const totalPlots = numVariables * numPlots;
 
     if (els.plotsGenerationCounter) {
-        els.plotsGenerationCounter.textContent = `Will generate ${totalPlots} plot${totalPlots !== 1 ? 's' : ''} (${numVariables} variable${numVariables !== 1 ? 's' : ''} × ${numPlots} plot type${numPlots !== 1 ? 's' : ''})`;
+        els.plotsGenerationCounter.textContent = `Will generate ${totalPlots} plot${
+            totalPlots !== 1 ? 's' : ''
+        } (${numVariables} variable${numVariables !== 1 ? 's' : ''} × ${numPlots} plot type${
+            numPlots !== 1 ? 's' : ''
+        })`;
     }
 
     if (els.btnGeneratePlots) {
@@ -422,10 +435,10 @@ export function updatePlotsCounter() {
 // Render the checkbox list of value columns in Step 1
 export function updateValueColumnsList() {
     const selectedGroupCol = els.groupColSelect.value;
-    
+
     // Set of columns to ignore/exclude from dependent columns lists
     const ignoredCols = new Set([selectedGroupCol]);
-    
+
     if (state.isHierarchical) {
         if (els.clusterColSelect.value) {
             ignoredCols.add(els.clusterColSelect.value);
@@ -448,14 +461,14 @@ export function updateValueColumnsList() {
             state.selectedDiscreteColumns.delete(els.yColSelect.value);
         }
     }
-    
+
     // --- Render Continuous Columns ---
     const filterText = (els.valueColSearch?.value || '').toLowerCase().trim();
     els.valueColumnsList.innerHTML = '';
     let hasColumns = false;
     let hasVisibleColumns = false;
 
-    state.selectedDatasetColumns.forEach(col => {
+    state.selectedDatasetColumns.forEach((col) => {
         if (col.is_numeric && !ignoredCols.has(col.name)) {
             hasColumns = true;
 
@@ -492,9 +505,11 @@ export function updateValueColumnsList() {
     });
 
     if (!hasColumns) {
-        els.valueColumnsList.innerHTML = '<span class="no-columns-msg" style="color: var(--text-secondary); font-size: 0.95rem;">No continuous columns available.</span>';
+        els.valueColumnsList.innerHTML =
+            '<span class="no-columns-msg" style="color: var(--text-secondary); font-size: 0.95rem;">No continuous columns available.</span>';
     } else if (!hasVisibleColumns) {
-        els.valueColumnsList.innerHTML = '<span class="no-columns-msg" style="color: var(--text-secondary); font-size: 0.95rem;">No columns match search.</span>';
+        els.valueColumnsList.innerHTML =
+            '<span class="no-columns-msg" style="color: var(--text-secondary); font-size: 0.95rem;">No columns match search.</span>';
     }
 
     // --- Render Discrete Columns ---
@@ -503,7 +518,7 @@ export function updateValueColumnsList() {
     let hasDiscreteColumns = false;
     let hasVisibleDiscreteColumns = false;
 
-    state.selectedDatasetColumns.forEach(col => {
+    state.selectedDatasetColumns.forEach((col) => {
         if (col.is_discrete && !ignoredCols.has(col.name)) {
             hasDiscreteColumns = true;
 
@@ -540,9 +555,11 @@ export function updateValueColumnsList() {
     });
 
     if (!hasDiscreteColumns) {
-        els.discreteColumnsList.innerHTML = '<span class="no-columns-msg" style="color: var(--text-secondary); font-size: 0.95rem;">No discrete columns available.</span>';
+        els.discreteColumnsList.innerHTML =
+            '<span class="no-columns-msg" style="color: var(--text-secondary); font-size: 0.95rem;">No discrete columns available.</span>';
     } else if (!hasVisibleDiscreteColumns) {
-        els.discreteColumnsList.innerHTML = '<span class="no-columns-msg" style="color: var(--text-secondary); font-size: 0.95rem;">No columns match search.</span>';
+        els.discreteColumnsList.innerHTML =
+            '<span class="no-columns-msg" style="color: var(--text-secondary); font-size: 0.95rem;">No columns match search.</span>';
     }
 
     validateStep1Next();
@@ -565,8 +582,6 @@ export function validateStep1Next() {
         }
     }
 }
-    }
-}
 
 // Render the subgroups checkbox list in Step 1
 export function renderSubgroupsList() {
@@ -575,7 +590,7 @@ export function renderSubgroupsList() {
 
     let hasVisibleGroups = false;
 
-    state.availableGroups.forEach(groupVal => {
+    state.availableGroups.forEach((groupVal) => {
         if (filterText && !groupVal.toLowerCase().includes(filterText)) {
             return;
         }
@@ -607,9 +622,11 @@ export function renderSubgroupsList() {
     });
 
     if (state.availableGroups.length === 0) {
-        els.subgroupsList.innerHTML = '<span class="no-columns-msg" style="color: var(--text-secondary); font-size: 0.95rem;">No values available in this column.</span>';
+        els.subgroupsList.innerHTML =
+            '<span class="no-columns-msg" style="color: var(--text-secondary); font-size: 0.95rem;">No values available in this column.</span>';
     } else if (!hasVisibleGroups) {
-        els.subgroupsList.innerHTML = '<span class="no-columns-msg" style="color: var(--text-secondary); font-size: 0.95rem;">No subgroups match search.</span>';
+        els.subgroupsList.innerHTML =
+            '<span class="no-columns-msg" style="color: var(--text-secondary); font-size: 0.95rem;">No subgroups match search.</span>';
     }
 
     els.subgroupsSection.classList.remove('hidden');
@@ -626,7 +643,7 @@ export function renderClustersList() {
 
     let hasVisibleClusters = false;
 
-    state.availableClusters.forEach(clusterVal => {
+    state.availableClusters.forEach((clusterVal) => {
         if (filterText && !clusterVal.toLowerCase().includes(filterText)) {
             return;
         }
@@ -658,9 +675,11 @@ export function renderClustersList() {
     });
 
     if (state.availableClusters.length === 0) {
-        els.clustersList.innerHTML = '<span class="no-columns-msg" style="color: var(--text-secondary); font-size: 0.95rem;">No values available in this column.</span>';
+        els.clustersList.innerHTML =
+            '<span class="no-columns-msg" style="color: var(--text-secondary); font-size: 0.95rem;">No values available in this column.</span>';
     } else if (!hasVisibleClusters) {
-        els.clustersList.innerHTML = '<span class="no-columns-msg" style="color: var(--text-secondary); font-size: 0.95rem;">No clusters match search.</span>';
+        els.clustersList.innerHTML =
+            '<span class="no-columns-msg" style="color: var(--text-secondary); font-size: 0.95rem;">No clusters match search.</span>';
     }
 
     if (state.isHierarchical && els.clusterColSelect.value) {
@@ -685,7 +704,7 @@ export function populateHierarchyDropdowns() {
     els.yColSelect.innerHTML = '<option value="">None</option>';
 
     // Loop through dataset columns
-    state.selectedDatasetColumns.forEach(col => {
+    state.selectedDatasetColumns.forEach((col) => {
         if (col.name !== selectedGroupCol) {
             // Cluster select (only discrete columns allowed)
             if (col.is_discrete) {
@@ -720,7 +739,9 @@ export function populateHierarchyDropdowns() {
     // 2. Unit column: default to "None" (empty string).
     if (state.selectedDatasetColumns.length > 1) {
         // Find cluster default (first non-group discrete column)
-        const clusterDefaultCol = state.selectedDatasetColumns.find(col => col.name !== selectedGroupCol && col.is_discrete);
+        const clusterDefaultCol = state.selectedDatasetColumns.find(
+            (col) => col.name !== selectedGroupCol && col.is_discrete
+        );
         if (clusterDefaultCol) {
             els.clusterColSelect.value = clusterDefaultCol.name;
         }
@@ -736,7 +757,7 @@ export function startHeaderPacman() {
     if (!headerTitle) return;
 
     if (!headerTitle.dataset.originalText) {
-        headerTitle.dataset.originalText = headerTitle.textContent.trim() || "Experiment Evaluation Wizard";
+        headerTitle.dataset.originalText = headerTitle.textContent.trim() || 'Experiment Evaluation Wizard';
     }
 
     headerTitle.innerHTML = `

@@ -21,8 +21,7 @@ export function setSessionStatus(text, type) {
 
     if (dotEl) {
         dotEl.style.backgroundColor =
-            type === 'active' ? 'var(--success-green)' :
-            type === 'waiting' ? 'orange' : 'red';
+            type === 'active' ? 'var(--success-green)' : type === 'waiting' ? 'orange' : 'red';
     }
 }
 
@@ -42,17 +41,17 @@ export function isDiscreteDtype(col) {
 export function formatMethodName(name) {
     if (!name) return '';
     const prettyNames = {
-        'anova': 'One-way ANOVA',
-        'chi_square': 'Chi-Square Test',
-        'cluster_mean_anova': 'Cluster Mean ANOVA',
-        'cluster_mean_kruskal_wallis': 'Cluster Mean Kruskal-Wallis',
-        'linear_mixed_model': 'Linear Mixed Model (LMM)',
-        'proportion_kruskal_wallis': 'Proportion Kruskal-Wallis',
-        'grubbs_cluster_outlier': 'Grubbs Cluster Outlier',
-        'levene_cluster_uniformity': "Levene's Cluster Uniformity",
-        'kruskal_wallis': 'Kruskal-Wallis H Test',
-        'mann_whitney': 'Mann-Whitney U Test',
-        'ttest_ind': 'Independent Two-Sample t-Test'
+        anova: 'One-way ANOVA',
+        chi_square: 'Chi-Square Test',
+        cluster_mean_anova: 'Cluster Mean ANOVA',
+        cluster_mean_kruskal_wallis: 'Cluster Mean Kruskal-Wallis',
+        linear_mixed_model: 'Linear Mixed Model (LMM)',
+        proportion_kruskal_wallis: 'Proportion Kruskal-Wallis',
+        grubbs_cluster_outlier: 'Grubbs Cluster Outlier',
+        levene_cluster_uniformity: "Levene's Cluster Uniformity",
+        kruskal_wallis: 'Kruskal-Wallis H Test',
+        mann_whitney: 'Mann-Whitney U Test',
+        ttest_ind: 'Independent Two-Sample t-Test'
     };
     if (name in prettyNames) {
         return prettyNames[name];
@@ -60,7 +59,7 @@ export function formatMethodName(name) {
     // Fallback: title case replacement for any future custom method name
     return name
         .split('_')
-        .map(word => {
+        .map((word) => {
             if (word.toLowerCase() === 'anova') return 'ANOVA';
             if (word.toLowerCase() === 'lmm') return 'LMM';
             if (word.toLowerCase() === 'ttest') return 't-Test';
@@ -70,7 +69,16 @@ export function formatMethodName(name) {
 }
 
 // DRY Shared Pac-Man loader animator
-export function animatePacman({ stage, textRow, pacman, pacBody, text, cycleTime = 3000, pacWidth = 20, letterFontSize = '16px' }) {
+export function animatePacman({
+    stage,
+    textRow,
+    pacman,
+    pacBody,
+    text,
+    cycleTime = 3000,
+    pacWidth = 20,
+    letterFontSize = '16px'
+}) {
     if (!textRow || !pacman || !pacBody || !stage) return;
 
     const spans = [];
@@ -104,7 +112,7 @@ export function animatePacman({ stage, textRow, pacman, pacBody, text, cycleTime
 
     function runCycle() {
         if (!pacman || !pacman.isConnected) return;
-        spans.forEach(s => s.classList.remove('eaten'));
+        spans.forEach((s) => s.classList.remove('eaten'));
         setEatingMode();
 
         const stageRect = stage.getBoundingClientRect();
@@ -132,7 +140,7 @@ export function animatePacman({ stage, textRow, pacman, pacBody, text, cycleTime
                 setX(x);
 
                 const mouthX = x + pacWidth;
-                spans.forEach(span => {
+                spans.forEach((span) => {
                     const r = span.getBoundingClientRect();
                     const mid = r.left - stageRect.left + r.width / 2;
                     if (mid < mouthX) span.classList.add('eaten');
@@ -143,20 +151,18 @@ export function animatePacman({ stage, textRow, pacman, pacBody, text, cycleTime
                     pauseStart = ts;
                     setPoopingMode();
                 }
-
             } else if (phase === 'pause') {
                 if (ts - pauseStart > 350) {
                     phase = 'backward';
                     startTime = ts;
                 }
-
             } else if (phase === 'backward') {
                 const t = Math.min(elapsed / halfCycle, 1);
                 const x = endX + (startX - endX) * t;
                 setX(x);
 
                 const buttX = x + pacWidth;
-                spans.forEach(span => {
+                spans.forEach((span) => {
                     const r = span.getBoundingClientRect();
                     const mid = r.left - stageRect.left + r.width / 2;
                     if (mid > buttX) span.classList.remove('eaten');

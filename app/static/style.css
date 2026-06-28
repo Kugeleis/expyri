@@ -1,6 +1,6 @@
 :root {
     /* Pico CSS Theme Overrides */
-    --pico-font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --pico-font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     --pico-background-color: #0b0c10;
     --pico-card-background-color: rgba(17, 20, 28, 0.85);
     --pico-border-color: rgba(255, 255, 255, 0.06);
@@ -40,12 +40,17 @@ body {
 }
 
 /* Global button and input density overrides */
-button, input[type="submit"], input[type="button"], a[role="button"] {
+button,
+input[type='submit'],
+input[type='button'],
+a[role='button'] {
     padding: 0.4rem 0.8rem !important;
     font-size: 0.85rem !important;
 }
 
-input, select, textarea {
+input,
+select,
+textarea {
     padding: 0.4rem 0.75rem !important;
     font-size: 0.85rem !important;
 }
@@ -58,8 +63,10 @@ label {
 /* Background Glow Effects */
 .glow-container {
     position: fixed;
-    top: 0; left: 0;
-    width: 100vw; height: 100vh;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
     z-index: -1;
     overflow: hidden;
     pointer-events: none;
@@ -73,15 +80,19 @@ label {
 }
 
 .glow-1 {
-    width: 400px; height: 400px;
+    width: 400px;
+    height: 400px;
     background: radial-gradient(circle, var(--pico-primary) 0%, transparent 70%);
-    top: -100px; right: 5%;
+    top: -100px;
+    right: 5%;
 }
 
 .glow-2 {
-    width: 500px; height: 500px;
+    width: 500px;
+    height: 500px;
     background: radial-gradient(circle, var(--accent-blue) 0%, transparent 70%);
-    bottom: -150px; left: 5%;
+    bottom: -150px;
+    left: 5%;
 }
 
 /* Layout & Grid Utilities */
@@ -122,7 +133,9 @@ label {
     gap: 0.5rem;
 }
 
-.logo .icon { font-size: 1.4rem; }
+.logo .icon {
+    font-size: 1.4rem;
+}
 
 .logo h1 {
     font-size: 1.3rem;
@@ -147,7 +160,8 @@ label {
 }
 
 .session-info .dot {
-    width: 6px; height: 6px;
+    width: 6px;
+    height: 6px;
     border-radius: 50%;
     background-color: var(--success-green);
     box-shadow: 0 0 6px var(--success-green);
@@ -183,7 +197,8 @@ label {
 }
 
 .step-nav-item .step-num {
-    width: 20px; height: 20px;
+    width: 20px;
+    height: 20px;
     border-radius: 50%;
     background-color: rgba(255, 255, 255, 0.03);
     border: 1px solid var(--pico-border-color);
@@ -271,7 +286,9 @@ label {
     min-height: 0;
 }
 
-.step-panel.active { display: flex; }
+.step-panel.active {
+    display: flex;
+}
 
 #panel-step-3 {
     overflow: hidden;
@@ -314,7 +331,9 @@ label {
     gap: 0.75rem;
 }
 
-.details-meta { font-size: 0.9rem; }
+.details-meta {
+    font-size: 0.9rem;
+}
 .details-meta .label {
     color: var(--pico-muted-color);
     margin-right: 0.5rem;
@@ -341,11 +360,14 @@ label {
     transition: color 0.2s ease;
 }
 
-.value-column-item:hover { color: var(--pico-color); }
-.value-column-item input[type="checkbox"] {
+.value-column-item:hover {
+    color: var(--pico-color);
+}
+.value-column-item input[type='checkbox'] {
     cursor: pointer;
     margin-bottom: 0;
-    width: 16px; height: 16px;
+    width: 16px;
+    height: 16px;
 }
 
 .value-column-item span {
@@ -354,7 +376,7 @@ label {
     user-select: none;
 }
 
-.value-column-item input[type="checkbox"]:checked + span {
+.value-column-item input[type='checkbox']:checked + span {
     color: var(--pico-color);
 }
 
@@ -378,7 +400,8 @@ label {
 }
 
 .btn-link {
-    background: none; border: none;
+    background: none;
+    border: none;
     color: var(--pico-muted-color);
     cursor: pointer;
     font-size: 0.75rem;
@@ -388,7 +411,8 @@ label {
     text-transform: uppercase;
     letter-spacing: 0.5px;
     transition: color 0.2s ease;
-    width: auto; margin-bottom: 0;
+    width: auto;
+    margin-bottom: 0;
 }
 
 .btn-link:hover {
@@ -424,7 +448,9 @@ label {
     align-items: center;
 }
 
-.filter-badge:hover { border-color: var(--pico-primary-hover); }
+.filter-badge:hover {
+    border-color: var(--pico-primary-hover);
+}
 
 .filter-info h5 {
     font-size: 0.85rem;
@@ -439,13 +465,15 @@ label {
 }
 
 .btn-remove-filter {
-    background: none; border: none;
+    background: none;
+    border: none;
     color: var(--pico-muted-color);
     font-size: 1rem;
     cursor: pointer;
     padding: 0.25rem;
     transition: color 0.2s ease;
-    width: auto; margin-bottom: 0;
+    width: auto;
+    margin-bottom: 0;
 }
 
 .btn-remove-filter:hover {
@@ -531,7 +559,9 @@ label {
 }
 
 .results-table th {
-    transition: background-color 0.2s ease, color 0.2s ease;
+    transition:
+        background-color 0.2s ease,
+        color 0.2s ease;
 }
 
 .results-table th:hover {
@@ -551,7 +581,9 @@ label {
     padding: 0.75rem;
 }
 
-.plot-select-item:hover { border-color: var(--pico-primary-hover); }
+.plot-select-item:hover {
+    border-color: var(--pico-primary-hover);
+}
 
 .plot-select-item input {
     cursor: pointer;
@@ -606,7 +638,9 @@ label {
     box-shadow: 0 0 12px rgba(16, 185, 129, 0.15);
 }
 
-.exporter-icon { font-size: 2rem; }
+.exporter-icon {
+    font-size: 2rem;
+}
 
 .exporter-card h4 {
     font-size: 0.95rem;
@@ -623,7 +657,8 @@ label {
 /* Toast/Alerts */
 .toast {
     position: fixed;
-    bottom: 1.5rem; right: 1.5rem;
+    bottom: 1.5rem;
+    right: 1.5rem;
     background-color: #1a1212;
     border: 1px solid rgba(239, 68, 68, 0.3);
     border-radius: 8px;
@@ -642,11 +677,13 @@ label {
 }
 
 .toast-close {
-    background: none; border: none;
+    background: none;
+    border: none;
     color: var(--pico-muted-color);
     font-size: 1.1rem;
     cursor: pointer;
-    width: auto; margin-bottom: 0;
+    width: auto;
+    margin-bottom: 0;
 }
 
 .toast-close:hover {
@@ -654,11 +691,19 @@ label {
     background: none;
 }
 
-.hidden { display: none !important; }
+.hidden {
+    display: none !important;
+}
 
 @keyframes slideIn {
-    from { transform: translateY(50px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
+    from {
+        transform: translateY(50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
 }
 
 /* Custom styling to link the Group Column select and the Subgroups checklist using a lighter green accent */
@@ -706,7 +751,10 @@ label {
 
 .text-row {
     position: absolute;
-    top: 0; bottom: 0; left: 0; right: 0;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -720,13 +768,17 @@ label {
     font-size: 20px;
     font-family: 'Courier New', monospace;
     font-weight: bold;
-    text-shadow: 0 0 6px var(--pico-primary), 0 0 12px rgba(16, 185, 129, 0.4);
+    text-shadow:
+        0 0 6px var(--pico-primary),
+        0 0 12px rgba(16, 185, 129, 0.4);
     line-height: 1;
     white-space: pre;
     opacity: 1;
 }
 
-.letter.eaten { opacity: 0; }
+.letter.eaten {
+    opacity: 0;
+}
 
 .pacman-wrapper {
     position: absolute;
@@ -751,8 +803,12 @@ label {
 }
 
 @keyframes chomp {
-    0%   { clip-path: polygon(50% 50%, 100% 15%, 100% 0%, 0% 0%, 0% 100%, 100% 100%, 100% 85%); }
-    100% { clip-path: polygon(50% 50%, 100% 48%, 100% 0%, 0% 0%, 0% 100%, 100% 100%, 100% 52%); }
+    0% {
+        clip-path: polygon(50% 50%, 100% 15%, 100% 0%, 0% 0%, 0% 100%, 100% 100%, 100% 85%);
+    }
+    100% {
+        clip-path: polygon(50% 50%, 100% 48%, 100% 0%, 0% 0%, 0% 100%, 100% 100%, 100% 52%);
+    }
 }
 
 .pac-body.pooping {
@@ -761,16 +817,10 @@ label {
 
 @keyframes clench {
     0% {
-        clip-path: polygon(
-            0% 0%, 100% 0%, 100% 100%, 0% 100%,
-            0% 54%, 4% 50%, 0% 46%
-        );
+        clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%, 0% 54%, 4% 50%, 0% 46%);
     }
     100% {
-        clip-path: polygon(
-            0% 0%, 100% 0%, 100% 100%, 0% 100%,
-            0% 64%, 14% 50%, 0% 36%
-        );
+        clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%, 0% 64%, 14% 50%, 0% 36%);
     }
 }
 
