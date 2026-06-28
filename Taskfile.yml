@@ -7,16 +7,29 @@ tasks:
       - uv sync
 
   lint:
-    desc: Run ruff linter and formatter check
+    desc: Run Python and JS linters and formatters check
     cmds:
       - uv run ruff check .
       - uv run ruff format --check .
+      - task: lint:js
+
+  lint:js:
+    desc: Run ESLint and Prettier check on JS files
+    cmds:
+      - uv run pre-commit run eslint --all-files
+      - uv run pre-commit run prettier --all-files
 
   format:
-    desc: Auto-format code with ruff
+    desc: Auto-format Python and JS code
     cmds:
       - uv run ruff check --fix .
       - uv run ruff format .
+      - task: format:js
+
+  format:js:
+    desc: Auto-format JS files with Prettier
+    cmds:
+      - uv run pre-commit run prettier --all-files || true
 
   typecheck:
     desc: Run mypy in strict mode
@@ -78,4 +91,3 @@ tasks:
     desc: Bump patch version using bump-my-version
     cmds:
       - uv run bump-my-version bump patch
-
