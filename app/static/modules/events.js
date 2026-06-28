@@ -66,8 +66,33 @@ export function initEventListeners() {
                 if (els.clustersSection) els.clustersSection.classList.add('hidden');
                 if (els.clustersList) els.clustersList.innerHTML = '';
                 if (els.optClusterExclusion) els.optClusterExclusion.classList.add('hidden');
-                if (els.tabFlat) els.tabFlat.classList.add('active');
-                if (els.tabHierarchical) els.tabHierarchical.classList.remove('active');
+                if (els.tabFlat) {
+                    els.tabFlat.classList.add('active');
+                    els.tabFlat.style.borderBottomColor = 'var(--pico-primary)';
+                    els.tabFlat.style.color = 'var(--pico-color)';
+                }
+                if (els.tabHierarchical) {
+                    els.tabHierarchical.classList.remove('active');
+                    els.tabHierarchical.style.borderBottomColor = 'transparent';
+                    els.tabHierarchical.style.color = 'var(--pico-muted-color)';
+                    els.tabHierarchical.disabled = false;
+                    els.tabHierarchical.style.opacity = '';
+                    els.tabHierarchical.style.cursor = 'pointer';
+                    els.tabHierarchical.title = '';
+                }
+
+                // Show flat tab content and hide hierarchical tab content
+                const flatTabContent = document.getElementById('flat-tab-content');
+                if (flatTabContent) flatTabContent.classList.remove('hidden');
+
+                // Move Group Column select to Flat container
+                const groupColContainer = document.getElementById('group-col-container');
+                const flatGroupContainer = document.getElementById('flat-group-container');
+                if (groupColContainer && flatGroupContainer) {
+                    flatGroupContainer.appendChild(groupColContainer);
+                }
+
+                if (els.enableHierarchy) els.enableHierarchy.checked = false;
 
                 await startNewSession();
             }
@@ -357,6 +382,36 @@ export function initEventListeners() {
                     els.tabHierarchical.style.color = 'var(--pico-muted-color)';
                 }
 
+                // Show flat tab content and hide hierarchical tab content
+                const flatTabContent = document.getElementById('flat-tab-content');
+                if (flatTabContent) flatTabContent.classList.remove('hidden');
+
+                // Move Group Column select to Flat container
+                const groupColContainer = document.getElementById('group-col-container');
+                const flatGroupContainer = document.getElementById('flat-group-container');
+                if (groupColContainer && flatGroupContainer) {
+                    flatGroupContainer.appendChild(groupColContainer);
+                }
+
+                if (els.enableHierarchy) els.enableHierarchy.checked = false;
+
+                // Grey out Hierarchical tab if only one discrete column is present
+                const discreteCount = state.selectedDatasetColumns.filter((col) => col.is_discrete).length;
+                if (els.tabHierarchical) {
+                    if (discreteCount <= 1) {
+                        els.tabHierarchical.disabled = true;
+                        els.tabHierarchical.style.opacity = '0.5';
+                        els.tabHierarchical.style.cursor = 'not-allowed';
+                        els.tabHierarchical.title =
+                            'Hierarchical mode requires at least two discrete columns (one for group, one for cluster).';
+                    } else {
+                        els.tabHierarchical.disabled = false;
+                        els.tabHierarchical.style.opacity = '';
+                        els.tabHierarchical.style.cursor = 'pointer';
+                        els.tabHierarchical.title = '';
+                    }
+                }
+
                 els.datasetDetails.classList.remove('hidden');
                 if (els.btnSidebarNext) els.btnSidebarNext.disabled = false;
                 els.uploadStatus.textContent = 'Upload successful!';
@@ -385,7 +440,20 @@ export function initEventListeners() {
             els.tabHierarchical.style.borderBottomColor = 'transparent';
             els.tabHierarchical.style.color = 'var(--pico-muted-color)';
 
+            // Move Group Column select to Flat container
+            const groupColContainer = document.getElementById('group-col-container');
+            const flatGroupContainer = document.getElementById('flat-group-container');
+            if (groupColContainer && flatGroupContainer) {
+                flatGroupContainer.appendChild(groupColContainer);
+            }
+
+            // Toggle tab content visibility
+            const flatTabContent = document.getElementById('flat-tab-content');
+            if (flatTabContent) flatTabContent.classList.remove('hidden');
             els.hierarchyConfigSection.classList.add('hidden');
+
+            if (els.enableHierarchy) els.enableHierarchy.checked = false;
+
             if (els.clustersSection) els.clustersSection.classList.add('hidden');
             if (els.optClusterExclusion) els.optClusterExclusion.classList.add('hidden');
             if (els.filterType.value === 'cluster_exclusion') {
@@ -397,6 +465,7 @@ export function initEventListeners() {
         });
 
         els.tabHierarchical.addEventListener('click', async () => {
+            if (els.tabHierarchical.disabled) return;
             state.isHierarchical = true;
             els.tabHierarchical.classList.add('active');
             els.tabHierarchical.style.borderBottomColor = 'var(--pico-primary)';
@@ -406,7 +475,20 @@ export function initEventListeners() {
             els.tabFlat.style.borderBottomColor = 'transparent';
             els.tabFlat.style.color = 'var(--pico-muted-color)';
 
+            // Move Group Column select to Hierarchical container
+            const groupColContainer = document.getElementById('group-col-container');
+            const hierarchicalGroupContainer = document.getElementById('hierarchical-group-container');
+            if (groupColContainer && hierarchicalGroupContainer) {
+                hierarchicalGroupContainer.appendChild(groupColContainer);
+            }
+
+            // Toggle tab content visibility
+            const flatTabContent = document.getElementById('flat-tab-content');
+            if (flatTabContent) flatTabContent.classList.add('hidden');
             els.hierarchyConfigSection.classList.remove('hidden');
+
+            if (els.enableHierarchy) els.enableHierarchy.checked = true;
+
             if (els.optClusterExclusion) els.optClusterExclusion.classList.remove('hidden');
 
             populateHierarchyDropdowns();

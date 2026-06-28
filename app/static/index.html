@@ -99,15 +99,12 @@
                                 <span id="detail-desc" class="value"></span>
                             </div>
 
-                            <div style="margin-top: 1.5rem; margin-bottom: 1.5rem">
-                                <label for="group-col-select">Group Column (Independent Variable)</label>
-                                <select id="group-col-select"></select>
-                            </div>
-
+                            <!-- Tabs selection right after file upload details -->
                             <nav
                                 class="experiment-tabs"
                                 style="
-                                    margin-bottom: 1.5rem;
+                                    margin-top: 1.5rem;
+                                    margin-bottom: 1rem;
                                     border-bottom: 1px solid var(--pico-border-color);
                                     display: flex;
                                     gap: 1rem;
@@ -151,103 +148,124 @@
 
                             <input type="checkbox" id="enable-hierarchy" style="display: none" />
 
+                            <!-- Explanation of what a hierarchical experiment is -->
                             <div
-                                id="hierarchy-config-section"
-                                class="hidden"
+                                id="experiment-explanation"
                                 style="
-                                    border: 1px dashed var(--pico-border-color);
-                                    padding: 1rem;
-                                    border-radius: 8px;
+                                    background: rgba(16, 185, 129, 0.03);
+                                    border-left: 3px solid var(--pico-primary);
+                                    padding: 0.75rem 1rem;
+                                    border-radius: 6px;
                                     margin-bottom: 1.5rem;
-                                    background: rgba(255, 255, 255, 0.01);
+                                    font-size: 0.775rem;
+                                    color: var(--pico-muted-color);
+                                    line-height: 1.4;
                                 "
                             >
-                                <h4
-                                    style="
-                                        font-size: 0.9rem;
-                                        margin-top: 0;
-                                        margin-bottom: 0.75rem;
-                                        color: var(--pico-primary);
-                                        font-weight: 600;
-                                    "
+                                <strong style="color: var(--pico-primary); display: block; margin-bottom: 0.35rem"
+                                    >💡 Flat vs. Hierarchical Experiments</strong
                                 >
-                                    Hierarchical Structure Mapping
-                                </h4>
-
+                                <div>
+                                    <strong>Flat Experiment (Default):</strong> Standard A/B test where each observation
+                                    row is completely independent.
+                                </div>
+                                <div style="margin-top: 0.4rem">
+                                    <strong>Hierarchical Experiment:</strong> Measurements (Level 0) are nested inside
+                                    intermediate clusters (Level 1), which are assigned to treatment groups (Level 2).
+                                </div>
                                 <div
                                     style="
-                                        background: rgba(16, 185, 129, 0.03);
-                                        border-left: 3px solid var(--pico-primary);
-                                        padding: 0.75rem 1rem;
-                                        border-radius: 6px;
-                                        margin-bottom: 1.25rem;
-                                        font-size: 0.775rem;
-                                        color: var(--pico-muted-color);
-                                        line-height: 1.4;
+                                        margin-top: 0.5rem;
+                                        display: grid;
+                                        grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+                                        gap: 0.5rem;
+                                        border-top: 1px dashed rgba(255, 255, 255, 0.08);
+                                        padding-top: 0.5rem;
+                                        font-size: 0.725rem;
                                     "
                                 >
-                                    <strong style="color: var(--pico-primary); display: block; margin-bottom: 0.35rem"
-                                        >💡 Flat vs. Hierarchical Experiments</strong
-                                    >
                                     <div>
-                                        <strong>Flat Experiment (Default):</strong> Standard A/B test where each
-                                        observation row is completely independent.
+                                        <strong>🏫 Education:</strong><br />Group &rarr; Class (L1) &rarr; Student (L0)
                                     </div>
-                                    <div style="margin-top: 0.4rem">
-                                        <strong>Hierarchical Experiment:</strong> Measurements (Level 0) are nested
-                                        inside intermediate clusters (Level 1), which are assigned to treatment groups
-                                        (Level 2).
+                                    <div>
+                                        <strong>🔬 Semiconductors:</strong><br />Group &rarr; Wafer (L1) &rarr; Chip
+                                        (L0)
                                     </div>
-                                    <div
+                                    <div>
+                                        <strong>🏥 Clinical Trials:</strong><br />Group &rarr; Clinic (L1) &rarr;
+                                        Patient (L0)
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Flat tab content container -->
+                            <div id="flat-tab-content">
+                                <div id="flat-group-container">
+                                    <!-- group-col-container starts here -->
+                                    <div id="group-col-container" style="margin-top: 1.5rem; margin-bottom: 1.5rem">
+                                        <label for="group-col-select">Group Column (Independent Variable)</label>
+                                        <select id="group-col-select"></select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Hierarchical tab content container -->
+                            <div id="hierarchy-config-section" class="hidden">
+                                <div id="hierarchical-group-container">
+                                    <!-- group-col-container will move here when Hierarchical is active -->
+                                </div>
+                                <div
+                                    id="hierarchy-fields"
+                                    style="
+                                        border: 1px dashed var(--pico-border-color);
+                                        padding: 1rem;
+                                        border-radius: 8px;
+                                        margin-bottom: 1.5rem;
+                                        background: rgba(255, 255, 255, 0.01);
+                                    "
+                                >
+                                    <h4
                                         style="
-                                            margin-top: 0.5rem;
-                                            display: grid;
-                                            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-                                            gap: 0.5rem;
-                                            border-top: 1px dashed rgba(255, 255, 255, 0.08);
-                                            padding-top: 0.5rem;
-                                            font-size: 0.725rem;
+                                            font-size: 0.9rem;
+                                            margin-top: 0;
+                                            margin-bottom: 0.75rem;
+                                            color: var(--pico-primary);
+                                            font-weight: 600;
                                         "
                                     >
-                                        <div>
-                                            <strong>🏫 Education:</strong><br />Group &rarr; Class (L1) &rarr; Student
-                                            (L0)
-                                        </div>
-                                        <div>
-                                            <strong>🔬 Semiconductors:</strong><br />Group &rarr; Wafer (L1) &rarr; Chip
-                                            (L0)
-                                        </div>
-                                        <div>
-                                            <strong>🏥 Clinical Trials:</strong><br />Group &rarr; Clinic (L1) &rarr;
-                                            Patient (L0)
-                                        </div>
-                                    </div>
-                                </div>
+                                        Hierarchical Structure Mapping
+                                    </h4>
 
-                                <div class="auto-grid" style="--grid-min: 200px; --grid-gap: 1rem">
-                                    <div>
-                                        <label for="cluster-col-select"
-                                            >Cluster Column (Level 1 - e.g. school, batch)</label
-                                        >
-                                        <select id="cluster-col-select"></select>
+                                    <div class="auto-grid" style="--grid-min: 200px; --grid-gap: 1rem">
+                                        <div>
+                                            <label for="cluster-col-select"
+                                                >Cluster Column (Level 1 - e.g. school, batch)</label
+                                            >
+                                            <select id="cluster-col-select"></select>
+                                        </div>
+                                        <div>
+                                            <label for="unit-col-select"
+                                                >Unit Column (Level 0 - e.g. student, id)</label
+                                            >
+                                            <select id="unit-col-select"></select>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <label for="unit-col-select">Unit Column (Level 0 - e.g. student, id)</label>
-                                        <select id="unit-col-select"></select>
-                                    </div>
-                                </div>
-                                <div class="auto-grid" style="--grid-min: 200px; --grid-gap: 1rem; margin-top: 0.75rem">
-                                    <div>
-                                        <label for="x-col-select">X Spatial Coordinate (Optional)</label>
-                                        <select id="x-col-select">
-                                            <option value="">None</option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label for="y-col-select">Y Spatial Coordinate (Optional)</label>
-                                        <select id="y-col-select">
-                                            <option value="">None</option>
-                                        </select>
+                                    <div
+                                        class="auto-grid"
+                                        style="--grid-min: 200px; --grid-gap: 1rem; margin-top: 0.75rem"
+                                    >
+                                        <div>
+                                            <label for="x-col-select">X Spatial Coordinate (Optional)</label>
+                                            <select id="x-col-select">
+                                                <option value="">None</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label for="y-col-select">Y Spatial Coordinate (Optional)</label>
+                                            <select id="y-col-select">
+                                                <option value="">None</option>
+                                            </select>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
