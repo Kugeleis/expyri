@@ -1,21 +1,16 @@
-"""Shared test fixtures."""
-
-from collections.abc import AsyncIterator
 from typing import Any
 
 import pytest
-from httpx import ASGITransport, AsyncClient
+from fastapi.testclient import TestClient
 
 from app.main import create_app
 
 
 @pytest.fixture
-async def client() -> AsyncIterator[AsyncClient]:
-    """Provide an async HTTP test client for the FastAPI app."""
+def client() -> TestClient:
+    """Provide an HTTP test client for the FastAPI app."""
     application = create_app()
-    transport = ASGITransport(app=application)
-    async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        yield ac
+    return TestClient(application)
 
 
 @pytest.fixture
