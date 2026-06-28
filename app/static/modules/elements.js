@@ -8,6 +8,8 @@ export const els = {
     groupColSelect: document.getElementById('group-col-select'),
     enableHierarchy: document.getElementById('enable-hierarchy'),
     hierarchyConfigSection: document.getElementById('hierarchy-config-section'),
+    tabFlat: document.getElementById('tab-flat'),
+    tabHierarchical: document.getElementById('tab-hierarchical'),
     clusterColSelect: document.getElementById('cluster-col-select'),
     unitColSelect: document.getElementById('unit-col-select'),
     xColSelect: document.getElementById('x-col-select'),
@@ -19,6 +21,9 @@ export const els = {
     subgroupsSection: document.getElementById('subgroups-section'),
     subgroupsSearch: document.getElementById('subgroups-search'),
     subgroupsList: document.getElementById('subgroups-list'),
+    clustersSection: document.getElementById('clusters-section'),
+    clustersSearch: document.getElementById('clusters-search'),
+    clustersList: document.getElementById('clusters-list'),
 
     activeFilters: document.getElementById('active-filters'),
     filterType: document.getElementById('filter-type'),

@@ -7,7 +7,8 @@ import {
     updatePlotsFilter,
     updatePlotsCounter,
     validateStep1Next,
-    renderSubgroupsList
+    renderSubgroupsList,
+    renderClustersList
 } from './ui.js';
 
 // Start a new wizard session
@@ -49,14 +50,15 @@ export async function fetchApplicableMethods() {
         const hasContinuous = state.selectedValueColumns.size > 0;
         const hasDiscrete = state.selectedDiscreteColumns.size > 0;
 
-        const continuousMethods = rawMethods.filter(m => m.variable_type === 'continuous');
-        const discreteMethods = rawMethods.filter(m => m.variable_type === 'discrete');
+        const continuousMethods = rawMethods.filter((m) => m.variable_type === 'continuous');
+        const discreteMethods = rawMethods.filter((m) => m.variable_type === 'discrete');
 
         let totalContinuousApplicable = continuousMethods.length;
         let totalDiscreteApplicable = discreteMethods.length;
 
         if ((hasContinuous && totalContinuousApplicable === 0) || (hasDiscrete && totalDiscreteApplicable === 0)) {
-            els.methodsList.innerHTML = '<p class="no-filters-msg">No statistical methods are applicable to your current dataset properties. Please check your data or adjust preprocessing filters.</p>';
+            els.methodsList.innerHTML =
+                '<p class="no-filters-msg">No statistical methods are applicable to your current dataset properties. Please check your data or adjust preprocessing filters.</p>';
             return;
         }
 
@@ -79,7 +81,7 @@ export async function fetchApplicableMethods() {
             grid.style.setProperty('--grid-gap', '1rem');
             grid.style.marginBottom = '1.25rem';
 
-            continuousMethods.forEach(method => {
+            continuousMethods.forEach((method) => {
                 const card = document.createElement('article');
                 card.className = 'method-card continuous-method-card';
                 card.dataset.name = method.name;
@@ -90,7 +92,9 @@ export async function fetchApplicableMethods() {
                 `;
 
                 card.addEventListener('click', (e) => {
-                    els.methodsList.querySelectorAll('.continuous-method-card').forEach(c => c.classList.remove('selected'));
+                    els.methodsList
+                        .querySelectorAll('.continuous-method-card')
+                        .forEach((c) => c.classList.remove('selected'));
                     const activeCard = e.currentTarget;
                     activeCard.classList.add('selected');
 
@@ -117,7 +121,7 @@ export async function fetchApplicableMethods() {
             grid.style.setProperty('--grid-gap', '1rem');
             grid.style.marginBottom = '1.25rem';
 
-            discreteMethods.forEach(method => {
+            discreteMethods.forEach((method) => {
                 const card = document.createElement('article');
                 card.className = 'method-card discrete-method-card';
                 card.dataset.name = method.name;
@@ -128,7 +132,9 @@ export async function fetchApplicableMethods() {
                 `;
 
                 card.addEventListener('click', (e) => {
-                    els.methodsList.querySelectorAll('.discrete-method-card').forEach(c => c.classList.remove('selected'));
+                    els.methodsList
+                        .querySelectorAll('.discrete-method-card')
+                        .forEach((c) => c.classList.remove('selected'));
                     const activeCard = e.currentTarget;
                     activeCard.classList.add('selected');
 
@@ -186,7 +192,8 @@ export async function fetchApplicablePlots() {
         els.plotsSelector.innerHTML = '';
         if (els.btnSidebarNext) els.btnSidebarNext.disabled = true;
         state.selectedPlots = [];
-        els.plotsDisplay.innerHTML = '<span class="no-plots-msg">Select plot types and click Generate Plots above.</span>';
+        els.plotsDisplay.innerHTML =
+            '<span class="no-plots-msg">Select plot types and click Generate Plots above.</span>';
 
         if (state.applicablePlots.length === 0) {
             els.plotsSelector.innerHTML = '<p class="no-filters-msg">No visualizations applicable.</p>';
@@ -199,7 +206,7 @@ export async function fetchApplicablePlots() {
             return;
         }
 
-        state.applicablePlots.forEach(plot => {
+        state.applicablePlots.forEach((plot) => {
             const card = document.createElement('article');
             card.className = 'plot-select-item';
             card.dataset.name = plot.name;
@@ -228,7 +235,7 @@ export async function fetchApplicablePlots() {
                 if (checkbox.checked) {
                     state.selectedPlots.push(plot.name);
                 } else {
-                    state.selectedPlots = state.selectedPlots.filter(p => p !== plot.name);
+                    state.selectedPlots = state.selectedPlots.filter((p) => p !== plot.name);
                 }
                 updatePlotsCounter();
             };
@@ -244,7 +251,7 @@ export async function fetchApplicablePlots() {
                 if (checkbox.checked) {
                     state.selectedPlots.push(plot.name);
                 } else {
-                    state.selectedPlots = state.selectedPlots.filter(p => p !== plot.name);
+                    state.selectedPlots = state.selectedPlots.filter((p) => p !== plot.name);
                 }
                 updatePlotsCounter();
             });
@@ -311,7 +318,7 @@ export async function generatePlotsPreview() {
 
         // Group plots by variable (column_name)
         const plotsByVar = {};
-        data.plot_results.forEach(plot => {
+        data.plot_results.forEach((plot) => {
             const col = plot.column_name || 'General';
             if (!plotsByVar[col]) {
                 plotsByVar[col] = [];
@@ -344,7 +351,7 @@ export async function generatePlotsPreview() {
             title.textContent = colName;
 
             // Fetch statistical properties for this column to display as badges next to the title
-            const statResult = state.statResults ? state.statResults.find(res => res.column_name === colName) : null;
+            const statResult = state.statResults ? state.statResults.find((res) => res.column_name === colName) : null;
             if (statResult) {
                 const statsContainer = document.createElement('div');
                 statsContainer.className = 'card-header-stats';
@@ -418,7 +425,7 @@ export async function generatePlotsPreview() {
             row.style.setProperty('--grid-gap', '1.25rem');
             row.style.width = '100%';
 
-            plots.forEach(plot => {
+            plots.forEach((plot) => {
                 const plotWrapper = document.createElement('div');
                 plotWrapper.className = 'plot-image-wrapper';
                 plotWrapper.style.textAlign = 'center';
@@ -484,5 +491,37 @@ export async function updateSubgroupsList() {
     } catch (err) {
         showError(err.message);
         els.subgroupsSection.classList.add('hidden');
+    }
+}
+
+// Fetch unique values for a cluster column (subgroups) from the dataset
+export async function updateClustersList() {
+    const datasetId = state.selectedDatasetId;
+    const clusterCol = els.clusterColSelect.value;
+
+    if (!clusterCol || !state.isHierarchical) {
+        if (els.clustersSection) els.clustersSection.classList.add('hidden');
+        state.selectedClusters = new Set();
+        state.availableClusters = [];
+        validateStep1Next();
+        return;
+    }
+
+    try {
+        const response = await fetch(`/wizard/datasets/${datasetId}/columns/${clusterCol}/unique`);
+        if (!response.ok) throw new Error('Failed to fetch unique values for cluster column.');
+
+        const clusters = await response.json();
+
+        state.availableClusters = clusters;
+        state.selectedClusters = new Set(clusters);
+
+        renderClustersList();
+    } catch (err) {
+        showError(err.message);
+        if (els.clustersSection) els.clustersSection.classList.add('hidden');
+        state.selectedClusters = new Set();
+        state.availableClusters = [];
+        validateStep1Next();
     }
 }

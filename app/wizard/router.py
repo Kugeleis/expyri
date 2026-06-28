@@ -10,7 +10,7 @@ from typing import Any, Literal
 
 import pandas as pd
 from fastapi import APIRouter, Depends, File, HTTPException, Response, UploadFile
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from app.core.session import (
     ClusterExclusion,
@@ -101,6 +101,8 @@ def get_filtered_dataset(
 
     if session.group_column and session.selected_groups:
         df = df[df[session.group_column].astype(str).isin(session.selected_groups)]
+    if session.hierarchy and session.hierarchy.selected_clusters:
+        df = df[df[session.hierarchy.cluster_col].astype(str).isin(session.hierarchy.selected_clusters)]
     return df
 
 
@@ -654,6 +656,7 @@ class HierarchyRequest(BaseModel):
 
     group_col: str
     cluster_col: str
+    selected_clusters: list[str] = Field(default_factory=list)
     unit_col: str | None = None
     x_col: str | None = None
     y_col: str | None = None
@@ -699,6 +702,7 @@ def set_hierarchy(  # noqa: C901
     session.hierarchy = HierarchyConfig(
         group_col=req.group_col,
         cluster_col=req.cluster_col,
+        selected_clusters=req.selected_clusters,
         unit_col=req.unit_col,
         x_col=req.x_col,
         y_col=req.y_col,

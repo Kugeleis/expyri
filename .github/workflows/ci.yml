@@ -34,6 +34,9 @@ jobs:
       - name: Run ruff format check
         run: uv run ruff format --check .
 
+      - name: Run JS syntax and style checks
+        run: task lint:js
+
       - name: Run mypy type checks
         run: uv run mypy --strict app
 

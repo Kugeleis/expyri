@@ -8,7 +8,7 @@ import { fetchApplicableMethods, fetchApplicablePlots } from './api.js';
 export function navigateToStep(stepKey) {
     state.currentStep = stepKey;
 
-    let activeIndex = stepsConfig.findIndex(s => s.key === stepKey);
+    let activeIndex = stepsConfig.findIndex((s) => s.key === stepKey);
     if (activeIndex === -1) activeIndex = 0;
 
     stepsConfig.forEach((step, idx) => {
@@ -47,7 +47,7 @@ export function navigateToStep(stepKey) {
 export function updateSidebarButtons() {
     if (!els.btnSidebarBack || !els.btnSidebarNext) return;
 
-    const activeIndex = stepsConfig.findIndex(s => s.key === state.currentStep);
+    const activeIndex = stepsConfig.findIndex((s) => s.key === state.currentStep);
 
     // Back button visibility
     if (activeIndex === 0) {
@@ -65,7 +65,7 @@ export function updateSidebarButtons() {
     switch (state.currentStep) {
         case 'dataset_selection':
             // Logic handled by validateStep1Next in ui.js
-            import('./ui.js').then(ui => ui.validateStep1Next());
+            import('./ui.js').then((ui) => ui.validateStep1Next());
             break;
         case 'filters':
             els.btnSidebarNext.disabled = false; // Filters are optional
