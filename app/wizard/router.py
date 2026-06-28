@@ -801,17 +801,22 @@ def update_sort(
     store: SessionStore = Depends(get_session_store),
 ) -> Response:
     """Sort results table by clicked column header."""
+    available_sort_fields = {"column_name"}
+    if getattr(session, "results_df", None) is not None and isinstance(session.results_df, pd.DataFrame):
+        available_sort_fields.update(str(col) for col in session.results_df.columns)
+    safe_field = field if field in available_sort_fields else "column_name"
+
     current_sort_field = request.cookies.get("sort_field", "column_name")
     current_sort_asc_str = request.cookies.get("sort_asc", "true")
 
     sort_asc = True
-    if current_sort_field == field:
+    if current_sort_field == safe_field:
         sort_asc = current_sort_asc_str != "true"
 
     limit = float(request.cookies.get("plots_sig_filter", 0.05))
 
-    res = render_step(request, session, store, plots_sig_filter=limit, sort_field=field, sort_asc=sort_asc)
-    res.set_cookie("sort_field", field)
+    res = render_step(request, session, store, plots_sig_filter=limit, sort_field=safe_field, sort_asc=sort_asc)
+    res.set_cookie("sort_field", safe_field)
     res.set_cookie("sort_asc", "true" if sort_asc else "false")
     return res
 
