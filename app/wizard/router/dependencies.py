@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import base64
 import io
 import os
@@ -6,10 +8,11 @@ from typing import Any
 
 import matplotlib
 from fastapi import Depends, HTTPException, Request, Response
-from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
 matplotlib.use("Agg")
+from typing import cast
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -23,22 +26,36 @@ from app.stats.base import (
     stat_registry,
 )
 from app.stats.properties import compute_properties
+from app.wizard.service import WizardService
 from app.wizard.steps import _completed_steps
 
 templates = Jinja2Templates(directory="app/templates")
 
-_session_store = InMemorySessionStore()
+
+_fallback_store: SessionStore = InMemorySessionStore()
 
 
-def get_session_store() -> SessionStore:
+def get_session_store(request: Request = None) -> SessionStore:  # type: ignore[assignment]
     """Dependency provider for the SessionStore."""
-    return _session_store
+    if request is None:
+        return _fallback_store
+    if not hasattr(request.app.state, "session_store"):
+        request.app.state.session_store = InMemorySessionStore()
+    return cast(SessionStore, request.app.state.session_store)
 
 
 def get_dataset_repository() -> DatasetRepository:
     """Dependency provider for the DatasetRepository."""
     data_dir = Path(os.getenv("EXPYRI_DATA_DIR", "data"))
     return MultiFormatDatasetRepository(data_dir)
+
+
+def get_wizard_service(
+    store: SessionStore = Depends(get_session_store),
+    repo: DatasetRepository = Depends(get_dataset_repository),
+) -> WizardService:
+    """Dependency provider for the WizardService."""
+    return WizardService(store, repo)
 
 
 def get_session(
@@ -80,12 +97,6 @@ def get_filtered_dataset(
     if session.hierarchy and session.hierarchy.selected_clusters:
         df = df[df[session.hierarchy.cluster_col].astype(str).isin(session.hierarchy.selected_clusters)]
     return df
-
-
-def _get_grouped_data(df: pd.DataFrame, group_col: str, value_col: str) -> dict[str, list[Any]]:
-    """Helper to group a DataFrame by a column and extract non-null value lists."""
-    grouped = df.groupby(group_col)[value_col]
-    return {str(name): list(group.dropna().values) for name, group in grouped}
 
 
 def generate_significance_chart_base64(stat_results: list[dict[str, Any]], limit: float) -> str | None:
@@ -249,12 +260,6 @@ def render_step(  # noqa: C901
     }
 
     if "hx-request" in request.headers:
-        workspace_html = templates.get_template("partials/workspace.html").render(context)
-        session_info_html = templates.get_template("partials/session_info.html").render(context)
-        sidebar_actions_html = templates.get_template("partials/sidebar_actions.html").render(context)
-        steps_nav_html = templates.get_template("partials/steps_nav.html").render(context)
-
-        full_html = f"{workspace_html}\n{session_info_html}\n{sidebar_actions_html}\n{steps_nav_html}"
-        return HTMLResponse(content=full_html)
+        return templates.TemplateResponse(request=request, name="layouts/oob_update.html", context=context)
     else:
         return templates.TemplateResponse(request=request, name="base.html", context=context)
