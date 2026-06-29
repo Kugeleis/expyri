@@ -19,27 +19,30 @@ The wizard maintains state using an in-memory session store (interfaced via a pr
 
 ```mermaid
 graph TD
+    subgraph Clients [Frontend Clients]
+        HTML["HTMX Web App (Jinja2)"]
+        JSON["JSON HTTP Clients (REST)"]
+    end
+
+    subgraph Service [Core Service Layer]
+        WS["WizardService (Core Logic)"]
+    end
+
+    subgraph Store [Session Storage]
+        StoreDB["InMemorySessionStore (with TTL)"]
+    end
+
     subgraph Registries [Plugin Registries]
-        FR["filter_registry: Registry(Filter)"]
-        SR["stat_registry: Registry(StatMethod)"]
-        PR["plot_registry: Registry(PlotGenerator)"]
-        ER["exporter_registry: Registry(Exporter)"]
+        FR["filter_registry"]
+        SR["stat_registry"]
+        PR["plot_registry"]
+        ER["exporter_registry"]
     end
 
-    subgraph Flow [Wizard Steps]
-        S1["1. Dataset Selection"] --> S1b["1b. Hierarchical Config"]
-        S1b --> S2["2. Preprocessing Filters"]
-        S2 --> S3["3. Statistical Method Selection"]
-        S3 --> S4["4. Run Evaluation"]
-        S4 --> S5["5. Plot Selection"]
-        S5 --> S6["6. Report Export"]
-    end
-
-    S1b -.->|Computes Cluster Aggregates & ICC| S2
-    S2 -.->|Queries & Executes| FR
-    S3 -.->|Filters Applicable| SR
-    S5 -.->|Filters Applicable| PR
-    S6 -.->|Generates Format| ER
+    HTML -->|POST Forms / hx-post| WS
+    JSON -->|JSON Payloads| WS
+    WS <-->|Read / Write / Evict| StoreDB
+    WS -.->|Queries & Executes| Registries
 ```
 
 ---
@@ -167,39 +170,26 @@ Quality gates are strictly enforced. All tasks can be run via the task runner:
 
 ```text
 ├── app/                      # Core FastAPI web application
-│   ├── core/                 # Session models, step definitions, and storage interfaces
+│   ├── core/                 # Session models, storage interfaces, and TTL cleanup
 │   ├── datasets/             # Dataset loading and schema repositories
 │   │   ├── models.py         # Dataset Pydantic models
 │   │   ├── repository.py     # Dataset loader and repository classes
 │   │   └── utils.py          # Column resolution helper functions
-│   ├── exporters/            # Extensible export plugins
-│   │   ├── base.py           # Exporter base class and registry
-│   │   └── builtin/          # Built-in exporters (CSV, JSON, PDF, etc.)
-│   ├── filters/              # Extensible preprocessing filters
-│   │   ├── base.py           # Filter base class and registry
-│   │   └── builtin/          # Built-in filters (numeric range, category filters)
-│   ├── main.py               # Application factory and startup orchestrator
-│   ├── plots/                # Extensible plot generators
-│   │   ├── base.py           # PlotGenerator base class and registry
-│   │   └── builtin/          # Built-in plot generators (boxplot, ECDF, violin)
-│   ├── static/               # Client-side single-page application
-│   │   ├── modules/          # Modular ES6 frontend submodules
-│   │   │   ├── api.js        # Backend fetch request wrappers
-│   │   │   ├── elements.js   # Cached DOM element references
-│   │   │   ├── events.js     # Event listeners registration
-│   │   │   ├── helpers.js    # Shared helper utilities and error handlers
-│   │   │   ├── navigation.js # Step-by-step panel navigation handlers
-│   │   │   ├── state.js      # Global reactive state
-│   │   │   └── ui.js         # DOM updates and visual rendering
-│   │   ├── app.js            # Main bootstrap entry point
-│   │   ├── index.html        # Wizard layout interface
-│   │   └── style.css         # Single-green custom-themed Pico CSS overrides
-│   ├── stats/                # Extensible statistical plugins
-│   │   ├── base.py           # StatMethod ABC, global registry, and re-export facade
-│   │   ├── builtin/          # Built-in evaluation methods (t-test, ANOVA, Kruskal-Wallis, etc.)
-│   │   ├── models.py         # Schemas and Pydantic models for statistical results
-│   │   └── properties.py     # Data properties auto-computation logic
+│   ├── exporters/            # Extensible export plugins (CSV, JSON, PDF)
+│   ├── filters/              # Extensible preprocessing filters (numeric range, category)
+│   ├── main.py               # Application factory and lifespan setup
+│   ├── plots/                # Extensible plot generators (boxplot, ECDF, violin)
+│   ├── static/               # Client-side static assets (Pico CSS, simple JS helpers)
+│   ├── stats/                # Extensible statistical plugins (t-test, ANOVA, LMM, etc.)
+│   ├── templates/            # Jinja2 HTML templates
+│   │   ├── base.html         # Main page frame layout
+│   │   ├── layouts/          # HTMX Out-of-Band composition layouts
+│   │   └── partials/         # Step-specific and sidebar layout partials
 │   └── wizard/               # Router endpoints, request schemas, and transition controls
+│       ├── router/           # Endpoint controllers for HTMX, JSON, and compatibility
+│       ├── service.py        # Centralized WizardService orchestrating all domain logic
+│       ├── schemas.py        # Pydantic schemas for JSON payloads
+│       └── steps.py          # Step sequence, guards, and transition definitions
 ├── test_data/                # CSV datasets used for verification (e.g., nycflights.csv)
 └── tests/                    # QA verification suite (unit, integration, and end-to-end)
 ```
