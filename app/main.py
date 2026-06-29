@@ -8,7 +8,8 @@ from __future__ import annotations
 
 import importlib
 import importlib.metadata
-from collections.abc import Awaitable, Callable
+from collections.abc import AsyncIterator, Awaitable, Callable
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse
@@ -29,12 +30,22 @@ except importlib.metadata.PackageNotFoundError:
     __version__ = "0.1.0"
 
 
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    """Manage lifecycle of the FastAPI application, initializing session store."""
+    from app.core.session import InMemorySessionStore
+
+    app.state.session_store = InMemorySessionStore()
+    yield
+
+
 def create_app() -> FastAPI:
     """Create and configure the FastAPI application."""
     application = FastAPI(
         title="ExPyRi — Experiment Evaluation Wizard",
         description="Multi-step wizard for statistical experiment evaluation",
         version=__version__,
+        lifespan=lifespan,
     )
 
     # Register router
