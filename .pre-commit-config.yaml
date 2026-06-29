@@ -9,7 +9,7 @@ repos:
       - id: check-added-large-files
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.15.18
+    rev: v0.15.20
     hooks:
       - id: ruff
         args: [--fix]
@@ -29,14 +29,15 @@ repos:
         entry: mypy --strict app
 
   - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: v3.1.0
+    rev: v4.0.0-alpha.8
     hooks:
       - id: prettier
         types_or: [javascript, css, html]
         exclude: ^docs/
+        args: [--no-error-on-unmatched-pattern]
 
   - repo: https://github.com/pre-commit/mirrors-eslint
-    rev: v9.16.0
+    rev: v10.6.0
     hooks:
       - id: eslint
         files: \.[jt]sx?$

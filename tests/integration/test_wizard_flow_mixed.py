@@ -280,4 +280,3 @@ def test_mixed_type_plot_generation(client: TestClient) -> None:
     plot_results = session_data["plot_results"]
     assert len(plot_results) == 1
     assert plot_results[0]["plot_type"] == "boxplot"
-
