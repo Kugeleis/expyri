@@ -19,7 +19,12 @@ from app.datasets.utils import resolve_selected_discrete_columns, resolve_select
 from app.filters.base import apply_filter_pipeline
 from app.plots.base import PlotResult, plot_registry
 from app.stats.base import StatResult, stat_registry
-from app.stats.properties import build_cluster_aggregates, compute_properties, compute_quick_icc
+from app.stats.properties import (
+    build_cluster_aggregates,
+    compute_properties,
+    compute_properties_for_columns,
+    compute_quick_icc,
+)
 from app.wizard.steps import WizardStep, reset_to_step, validate_step_transition
 
 
@@ -681,3 +686,56 @@ class WizardService:
 
         res.column_name = value_col
         return cast(StatResult, res)
+
+    def get_available_groups_and_clusters(self, session: WizardSession) -> tuple[list[str], list[str]]:
+        """Retrieve sorted unique group values and cluster values for the active dataset."""
+        groups: list[str] = []
+        clusters: list[str] = []
+        if not session.dataset_id:
+            return groups, clusters
+
+        try:
+            df = self.repo.load_dataset(session.dataset_id)
+            if session.group_column:
+                groups = sorted(df[session.group_column].dropna().astype(str).unique().tolist())
+            if session.hierarchy and session.hierarchy.cluster_col:
+                clusters = sorted(df[session.hierarchy.cluster_col].dropna().astype(str).unique().tolist())
+        except Exception:
+            pass
+        return groups, clusters
+
+    def get_applicable_methods(self, session: WizardSession) -> tuple[dict[str, Any], dict[str, Any]]:
+        """Compute dataset properties and query registries for applicable statistical methods."""
+        applicable_continuous: dict[str, Any] = {}
+        applicable_discrete: dict[str, Any] = {}
+        if session.current_step != "stat_method":
+            return applicable_continuous, applicable_discrete
+
+        try:
+            filtered_df = self._get_filtered_df_with_groups(session)
+            if session.selected_value_columns:
+                props_map = compute_properties_for_columns(session, filtered_df, session.selected_value_columns)
+                applicable_continuous = stat_registry.get_applicable_intersect(props_map)
+            if session.selected_discrete_columns:
+                props_map_discrete = compute_properties_for_columns(
+                    session, filtered_df, session.selected_discrete_columns
+                )
+                applicable_discrete = stat_registry.get_applicable_intersect(props_map_discrete)
+        except Exception:
+            pass
+        return applicable_continuous, applicable_discrete
+
+    def get_applicable_plots(self, session: WizardSession) -> dict[str, Any]:
+        """Compute dataset properties and query registries for applicable plot generators."""
+        applicable_plots: dict[str, Any] = {}
+        if session.current_step != "plot_selection":
+            return applicable_plots
+
+        try:
+            filtered_df = self._get_filtered_df_with_groups(session)
+            if session.selected_value_columns:
+                props = compute_properties(session, filtered_df, session.selected_value_columns[0])
+                applicable_plots = plot_registry.get_applicable(props)
+        except Exception:
+            pass
+        return applicable_plots

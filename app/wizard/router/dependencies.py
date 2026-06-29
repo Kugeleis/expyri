@@ -7,25 +7,21 @@ from pathlib import Path
 from typing import Any
 
 import matplotlib
-from fastapi import Depends, HTTPException, Request, Response
-from fastapi.templating import Jinja2Templates
 
 matplotlib.use("Agg")
+import contextlib
 from typing import cast
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from fastapi import Depends, HTTPException, Request, Response
+from fastapi.templating import Jinja2Templates
 
 from app.core.session import InMemorySessionStore, SessionStore, WizardSession
 from app.datasets.repository import DatasetRepository, MultiFormatDatasetRepository
 from app.filters.base import apply_filter_pipeline
-from app.plots.base import plot_registry
-from app.stats.base import (
-    compute_properties_for_columns,
-    stat_registry,
-)
-from app.stats.properties import compute_properties
+from app.stats.base import stat_registry
 from app.wizard.service import WizardService
 from app.wizard.steps import _completed_steps
 
@@ -159,7 +155,7 @@ def generate_significance_chart_base64(stat_results: list[dict[str, Any]], limit
     return img_str
 
 
-def render_step(  # noqa: C901
+def render_step(
     request: Request,
     session: WizardSession,
     store: SessionStore,
@@ -181,8 +177,6 @@ def render_step(  # noqa: C901
         session.stat_results.sort(key=sort_key, reverse=not sort_asc)
 
     columns: list[Any] = []
-    available_groups: list[str] = []
-    available_clusters: list[str] = []
     applicable_continuous: dict[str, Any] = {}
     applicable_discrete: dict[str, Any] = {}
     applicable_plots: dict[str, Any] = {}
@@ -190,31 +184,16 @@ def render_step(  # noqa: C901
     matched_count = 0
 
     repo = get_dataset_repository()
+    service = WizardService(store, repo)
 
     if session.dataset_id:
-        try:
+        with contextlib.suppress(Exception):
             columns = repo.get_schema(session.dataset_id).columns or []
-            df = repo.load_dataset(session.dataset_id)
-            if session.group_column:
-                available_groups = sorted(df[session.group_column].dropna().astype(str).unique().tolist())
-            if session.hierarchy and session.hierarchy.cluster_col:
-                available_clusters = sorted(df[session.hierarchy.cluster_col].dropna().astype(str).unique().tolist())
-        except Exception:
-            pass
+
+    available_groups, available_clusters = service.get_available_groups_and_clusters(session)
 
     if session.current_step == "stat_method":
-        try:
-            filtered_df = get_filtered_dataset(session, repo)
-            if session.selected_value_columns:
-                props_map = compute_properties_for_columns(session, filtered_df, session.selected_value_columns)
-                applicable_continuous = stat_registry.get_applicable_intersect(props_map)
-            if session.selected_discrete_columns:
-                props_map_discrete = compute_properties_for_columns(
-                    session, filtered_df, session.selected_discrete_columns
-                )
-                applicable_discrete = stat_registry.get_applicable_intersect(props_map_discrete)
-        except Exception:
-            pass
+        applicable_continuous, applicable_discrete = service.get_applicable_methods(session)
 
     elif session.current_step in ("results", "plot_selection", "export"):
         if session.stat_results:
@@ -226,13 +205,7 @@ def render_step(  # noqa: C901
             sig_chart_base64 = generate_significance_chart_base64(session.stat_results, plots_sig_filter)
 
         if session.current_step == "plot_selection":
-            try:
-                filtered_df = get_filtered_dataset(session, repo)
-                if session.selected_value_columns:
-                    props = compute_properties(session, filtered_df, session.selected_value_columns[0])
-                    applicable_plots = plot_registry.get_applicable(props)
-            except Exception:
-                pass
+            applicable_plots = service.get_applicable_plots(session)
 
     context = {
         "request": request,
