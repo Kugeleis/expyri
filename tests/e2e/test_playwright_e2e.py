@@ -150,6 +150,9 @@ def test_playwright_restart_session(playwright_server: str, page: Page) -> None:
     # Wait for the restart button to be visible again on the new page
     page.wait_for_selector(".btn-restart")
 
+    # 7. Verify that dataset select has returned to the default state (no dataset selected)
+    expect(page.locator("select[name='dataset_id']")).to_have_value("")
+
     # 6. Verify that a new session ID was generated
     new_hx_post = page.locator(".btn-restart").get_attribute("hx-post")
     assert new_hx_post is not None
@@ -159,9 +162,6 @@ def test_playwright_restart_session(playwright_server: str, page: Page) -> None:
 
     assert session_id_1 != session_id_2
     assert dialog_handled, "Confirmation dialog was not intercepted"
-
-    # 7. Verify that dataset select has returned to the default state (no dataset selected)
-    expect(page.locator("select[name='dataset_id']")).to_have_value("")
 
 
 def test_playwright_full_wizard_flow(playwright_server: str, page: Page) -> None:
