@@ -11,7 +11,7 @@
             &larr;
         </button>
     {% endif %}
-    
+
     {% if session.current_step != "export" %}
         {% set steps_list = ["dataset_selection", "filters", "stat_method", "results", "plot_selection", "export"] %}
         {% set current_idx = steps_list.index(session.current_step) %}

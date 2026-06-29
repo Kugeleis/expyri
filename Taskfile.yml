@@ -37,9 +37,10 @@ tasks:
       - uv run mypy --strict app
 
   test:
-    desc: Run tests with coverage
+    desc: Run pre-commit checks and all tests with coverage (including E2E)
     cmds:
-      - uv run pytest --cov=app --cov-report=term-missing --cov-fail-under=80 --ignore=tests/e2e/test_playwright_e2e.py
+      - uv run pre-commit run --all-files
+      - uv run pytest --cov=app --cov-report=term-missing --cov-fail-under=90
 
   check:
     desc: Run all quality gates (lint, typecheck, test) — fails fast

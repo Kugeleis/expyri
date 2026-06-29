@@ -27,7 +27,7 @@
                     <span class="icon">📊</span>
                     <h1>ExPyRi</h1>
                 </div>
-                
+
                 {% include "partials/session_info.html" %}
                 {% include "partials/sidebar_actions.html" %}
                 {% include "partials/steps_nav.html" %}
@@ -37,8 +37,8 @@
             <main class="main-content">
                 <header class="main-header">
                     <h2>Experiment Evaluation Wizard</h2>
-                    <button class="outline secondary btn-restart" 
-                            hx-post="/wizard/sessions/{{ session.session_id }}/restart" 
+                    <button class="outline secondary btn-restart"
+                            hx-post="/wizard/sessions/{{ session.session_id }}/restart"
                             hx-target="body"
                             hx-confirm="Are you sure you want to restart the session? All configuration will be lost.">
                         Restart Session
