@@ -290,9 +290,7 @@ label {
     display: flex;
 }
 
-#panel-step-3 {
-    overflow: hidden;
-}
+
 
 .step-panel h3 {
     font-size: 1.15rem;
