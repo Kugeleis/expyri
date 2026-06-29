@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import base64
 import io
 import os
@@ -5,40 +7,51 @@ from pathlib import Path
 from typing import Any
 
 import matplotlib
-from fastapi import Depends, HTTPException, Request, Response
-from fastapi.responses import HTMLResponse
-from fastapi.templating import Jinja2Templates
 
 matplotlib.use("Agg")
+import contextlib
+from typing import cast
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from fastapi import Depends, HTTPException, Request, Response
+from fastapi.templating import Jinja2Templates
 
 from app.core.session import InMemorySessionStore, SessionStore, WizardSession
 from app.datasets.repository import DatasetRepository, MultiFormatDatasetRepository
 from app.filters.base import apply_filter_pipeline
-from app.plots.base import plot_registry
-from app.stats.base import (
-    compute_properties_for_columns,
-    stat_registry,
-)
-from app.stats.properties import compute_properties
+from app.stats.base import stat_registry
+from app.wizard.service import WizardService
 from app.wizard.steps import _completed_steps
 
 templates = Jinja2Templates(directory="app/templates")
 
-_session_store = InMemorySessionStore()
+
+_fallback_store: SessionStore = InMemorySessionStore()
 
 
-def get_session_store() -> SessionStore:
+def get_session_store(request: Request = None) -> SessionStore:  # type: ignore[assignment]
     """Dependency provider for the SessionStore."""
-    return _session_store
+    if request is None:
+        return _fallback_store
+    if not hasattr(request.app.state, "session_store"):
+        request.app.state.session_store = InMemorySessionStore()
+    return cast(SessionStore, request.app.state.session_store)
 
 
 def get_dataset_repository() -> DatasetRepository:
     """Dependency provider for the DatasetRepository."""
     data_dir = Path(os.getenv("EXPYRI_DATA_DIR", "data"))
     return MultiFormatDatasetRepository(data_dir)
+
+
+def get_wizard_service(
+    store: SessionStore = Depends(get_session_store),
+    repo: DatasetRepository = Depends(get_dataset_repository),
+) -> WizardService:
+    """Dependency provider for the WizardService."""
+    return WizardService(store, repo)
 
 
 def get_session(
@@ -80,12 +93,6 @@ def get_filtered_dataset(
     if session.hierarchy and session.hierarchy.selected_clusters:
         df = df[df[session.hierarchy.cluster_col].astype(str).isin(session.hierarchy.selected_clusters)]
     return df
-
-
-def _get_grouped_data(df: pd.DataFrame, group_col: str, value_col: str) -> dict[str, list[Any]]:
-    """Helper to group a DataFrame by a column and extract non-null value lists."""
-    grouped = df.groupby(group_col)[value_col]
-    return {str(name): list(group.dropna().values) for name, group in grouped}
 
 
 def generate_significance_chart_base64(stat_results: list[dict[str, Any]], limit: float) -> str | None:
@@ -148,7 +155,7 @@ def generate_significance_chart_base64(stat_results: list[dict[str, Any]], limit
     return img_str
 
 
-def render_step(  # noqa: C901
+def render_step(
     request: Request,
     session: WizardSession,
     store: SessionStore,
@@ -170,8 +177,6 @@ def render_step(  # noqa: C901
         session.stat_results.sort(key=sort_key, reverse=not sort_asc)
 
     columns: list[Any] = []
-    available_groups: list[str] = []
-    available_clusters: list[str] = []
     applicable_continuous: dict[str, Any] = {}
     applicable_discrete: dict[str, Any] = {}
     applicable_plots: dict[str, Any] = {}
@@ -179,31 +184,16 @@ def render_step(  # noqa: C901
     matched_count = 0
 
     repo = get_dataset_repository()
+    service = WizardService(store, repo)
 
     if session.dataset_id:
-        try:
+        with contextlib.suppress(Exception):
             columns = repo.get_schema(session.dataset_id).columns or []
-            df = repo.load_dataset(session.dataset_id)
-            if session.group_column:
-                available_groups = sorted(df[session.group_column].dropna().astype(str).unique().tolist())
-            if session.hierarchy and session.hierarchy.cluster_col:
-                available_clusters = sorted(df[session.hierarchy.cluster_col].dropna().astype(str).unique().tolist())
-        except Exception:
-            pass
+
+    available_groups, available_clusters = service.get_available_groups_and_clusters(session)
 
     if session.current_step == "stat_method":
-        try:
-            filtered_df = get_filtered_dataset(session, repo)
-            if session.selected_value_columns:
-                props_map = compute_properties_for_columns(session, filtered_df, session.selected_value_columns)
-                applicable_continuous = stat_registry.get_applicable_intersect(props_map)
-            if session.selected_discrete_columns:
-                props_map_discrete = compute_properties_for_columns(
-                    session, filtered_df, session.selected_discrete_columns
-                )
-                applicable_discrete = stat_registry.get_applicable_intersect(props_map_discrete)
-        except Exception:
-            pass
+        applicable_continuous, applicable_discrete = service.get_applicable_methods(session)
 
     elif session.current_step in ("results", "plot_selection", "export"):
         if session.stat_results:
@@ -215,13 +205,7 @@ def render_step(  # noqa: C901
             sig_chart_base64 = generate_significance_chart_base64(session.stat_results, plots_sig_filter)
 
         if session.current_step == "plot_selection":
-            try:
-                filtered_df = get_filtered_dataset(session, repo)
-                if session.selected_value_columns:
-                    props = compute_properties(session, filtered_df, session.selected_value_columns[0])
-                    applicable_plots = plot_registry.get_applicable(props)
-            except Exception:
-                pass
+            applicable_plots = service.get_applicable_plots(session)
 
     context = {
         "request": request,
@@ -249,12 +233,6 @@ def render_step(  # noqa: C901
     }
 
     if "hx-request" in request.headers:
-        workspace_html = templates.get_template("partials/workspace.html").render(context)
-        session_info_html = templates.get_template("partials/session_info.html").render(context)
-        sidebar_actions_html = templates.get_template("partials/sidebar_actions.html").render(context)
-        steps_nav_html = templates.get_template("partials/steps_nav.html").render(context)
-
-        full_html = f"{workspace_html}\n{session_info_html}\n{sidebar_actions_html}\n{steps_nav_html}"
-        return HTMLResponse(content=full_html)
+        return templates.TemplateResponse(request=request, name="layouts/oob_update.html", context=context)
     else:
         return templates.TemplateResponse(request=request, name="base.html", context=context)

@@ -87,20 +87,53 @@ def run_iterative_grubbs(df: pd.DataFrame, cluster_col: str, value_col: str, alp
 
 
 def compute_quick_icc(df: pd.DataFrame, cluster_col: str, metric: str) -> float:
-    """Calculate Intra-class Correlation (ICC) using a quick null LMM fit."""
-    import statsmodels.formula.api as smf
-
+    """Calculate Intra-class Correlation (ICC) using a fast ANOVA-based method."""
     clean_df = df[[cluster_col, metric]].dropna()
-    if clean_df[cluster_col].nunique() < 2 or len(clean_df) < 3:
+    k_unique = clean_df[cluster_col].nunique()
+    n_total = len(clean_df)
+    if k_unique < 2 or n_total < 3:
         return float("nan")
+
     try:
-        model = smf.mixedlm(f"{metric} ~ 1", clean_df, groups=clean_df[cluster_col])
-        result = model.fit()
-        var_w = result.scale
-        var_b = result.cov_re.iloc[0, 0]
-        if var_b + var_w == 0:
+        # Calculate cluster sizes (n_i)
+        sizes = clean_df.groupby(cluster_col)[metric].count()
+        if (sizes <= 1).all():
+            return 0.0
+
+        # Overall mean
+        grand_mean = float(clean_df[metric].mean())
+
+        # Sum of squares between (SSB)
+        cluster_means = clean_df.groupby(cluster_col)[metric].mean()
+        ssb = float(((cluster_means - grand_mean) ** 2 * sizes).sum())
+
+        # Sum of squares within (SSW)
+        cluster_vars = clean_df.groupby(cluster_col)[metric].var(ddof=1)
+        ssw = float(((sizes - 1) * cluster_vars.fillna(0)).sum())
+
+        df_b = k_unique - 1
+        df_w = n_total - k_unique
+
+        if df_w <= 0:
             return float("nan")
-        return float(var_b / (var_b + var_w))
+
+        msb = ssb / df_b
+        msw = ssw / df_w
+
+        # k0 adjustment for unequal sizes: k0 = (N - sum(n_i^2)/N) / (K - 1)
+        sum_sq_sizes = float((sizes**2).sum())
+        k0 = (n_total - (sum_sq_sizes / n_total)) / df_b
+
+        if k0 <= 0:
+            return float("nan")
+
+        denominator = msb + (k0 - 1) * msw
+        if denominator == 0:
+            return 0.0
+
+        icc = (msb - msw) / denominator
+        # Clip ICC to range [0.0, 1.0] since variance components are non-negative
+        return max(0.0, min(1.0, float(icc)))
     except Exception:
         return float("nan")
 

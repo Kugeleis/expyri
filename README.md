@@ -19,27 +19,30 @@ The wizard maintains state using an in-memory session store (interfaced via a pr
 
 ```mermaid
 graph TD
+    subgraph Clients [Frontend Clients]
+        HTML["HTMX Web App (Jinja2)"]
+        JSON["JSON HTTP Clients (REST)"]
+    end
+
+    subgraph Service [Core Service Layer]
+        WS["WizardService (Core Logic)"]
+    end
+
+    subgraph Store [Session Storage]
+        StoreDB["InMemorySessionStore (with TTL)"]
+    end
+
     subgraph Registries [Plugin Registries]
-        FR["filter_registry: Registry(Filter)"]
-        SR["stat_registry: Registry(StatMethod)"]
-        PR["plot_registry: Registry(PlotGenerator)"]
-        ER["exporter_registry: Registry(Exporter)"]
+        FR["filter_registry"]
+        SR["stat_registry"]
+        PR["plot_registry"]
+        ER["exporter_registry"]
     end
 
-    subgraph Flow [Wizard Steps]
-        S1["1. Dataset Selection"] --> S1b["1b. Hierarchical Config"]
-        S1b --> S2["2. Preprocessing Filters"]
-        S2 --> S3["3. Statistical Method Selection"]
-        S3 --> S4["4. Run Evaluation"]
-        S4 --> S5["5. Plot Selection"]
-        S5 --> S6["6. Report Export"]
-    end
-
-    S1b -.->|Computes Cluster Aggregates & ICC| S2
-    S2 -.->|Queries & Executes| FR
-    S3 -.->|Filters Applicable| SR
-    S5 -.->|Filters Applicable| PR
-    S6 -.->|Generates Format| ER
+    HTML -->|POST Forms / hx-post| WS
+    JSON -->|JSON Payloads| WS
+    WS <-->|Read / Write / Evict| StoreDB
+    WS -.->|Queries & Executes| Registries
 ```
 
 ---
@@ -167,39 +170,26 @@ Quality gates are strictly enforced. All tasks can be run via the task runner:
 
 ```text
 ├── app/                      # Core FastAPI web application
-│   ├── core/                 # Session models, step definitions, and storage interfaces
+│   ├── core/                 # Session models, storage interfaces, and TTL cleanup
 │   ├── datasets/             # Dataset loading and schema repositories
 │   │   ├── models.py         # Dataset Pydantic models
 │   │   ├── repository.py     # Dataset loader and repository classes
 │   │   └── utils.py          # Column resolution helper functions
-│   ├── exporters/            # Extensible export plugins
-│   │   ├── base.py           # Exporter base class and registry
-│   │   └── builtin/          # Built-in exporters (CSV, JSON, PDF, etc.)
-│   ├── filters/              # Extensible preprocessing filters
-│   │   ├── base.py           # Filter base class and registry
-│   │   └── builtin/          # Built-in filters (numeric range, category filters)
-│   ├── main.py               # Application factory and startup orchestrator
-│   ├── plots/                # Extensible plot generators
-│   │   ├── base.py           # PlotGenerator base class and registry
-│   │   └── builtin/          # Built-in plot generators (boxplot, ECDF, violin)
-│   ├── static/               # Client-side single-page application
-│   │   ├── modules/          # Modular ES6 frontend submodules
-│   │   │   ├── api.js        # Backend fetch request wrappers
-│   │   │   ├── elements.js   # Cached DOM element references
-│   │   │   ├── events.js     # Event listeners registration
-│   │   │   ├── helpers.js    # Shared helper utilities and error handlers
-│   │   │   ├── navigation.js # Step-by-step panel navigation handlers
-│   │   │   ├── state.js      # Global reactive state
-│   │   │   └── ui.js         # DOM updates and visual rendering
-│   │   ├── app.js            # Main bootstrap entry point
-│   │   ├── index.html        # Wizard layout interface
-│   │   └── style.css         # Single-green custom-themed Pico CSS overrides
-│   ├── stats/                # Extensible statistical plugins
-│   │   ├── base.py           # StatMethod ABC, global registry, and re-export facade
-│   │   ├── builtin/          # Built-in evaluation methods (t-test, ANOVA, Kruskal-Wallis, etc.)
-│   │   ├── models.py         # Schemas and Pydantic models for statistical results
-│   │   └── properties.py     # Data properties auto-computation logic
+│   ├── exporters/            # Extensible export plugins (CSV, JSON, PDF)
+│   ├── filters/              # Extensible preprocessing filters (numeric range, category)
+│   ├── main.py               # Application factory and lifespan setup
+│   ├── plots/                # Extensible plot generators (boxplot, ECDF, violin)
+│   ├── static/               # Client-side static assets (Pico CSS, simple JS helpers)
+│   ├── stats/                # Extensible statistical plugins (t-test, ANOVA, LMM, etc.)
+│   ├── templates/            # Jinja2 HTML templates
+│   │   ├── base.html         # Main page frame layout
+│   │   ├── layouts/          # HTMX Out-of-Band composition layouts
+│   │   └── partials/         # Step-specific and sidebar layout partials
 │   └── wizard/               # Router endpoints, request schemas, and transition controls
+│       ├── router/           # Endpoint controllers for HTMX, JSON, and compatibility
+│       ├── service.py        # Centralized WizardService orchestrating all domain logic
+│       ├── schemas.py        # Pydantic schemas for JSON payloads
+│       └── steps.py          # Step sequence, guards, and transition definitions
 ├── test_data/                # CSV datasets used for verification (e.g., nycflights.csv)
 └── tests/                    # QA verification suite (unit, integration, and end-to-end)
 ```
@@ -255,24 +245,29 @@ The same recipe applies to:
 
 In Step 3, the wizard dynamically queries the backend to determine which statistical methods are applicable to your filtered dataset. This process relies on automated data property computation and applicability rules:
 
-1. **Auto-Computation (`compute_data_properties`)**:
-   When moving to Step 3, the backend evaluates the dataset properties including:
+### 1. Data Properties Auto-Computation
+When navigating to Step 3, the backend evaluates the dataset properties for each selected dependent column:
 
-   - **Normality**: Shapiro-Wilk or D'Agostino-Pearson tests per group.
-   - **Variance Homogeneity**: Levene's test to ensure groups have equal variances.
-   - **Sphericity**: Mauchly's test for repeated measures (with 3+ conditions).
-   - **Expected Cell Counts**: Contingency table evaluation for categorical outcomes.
-   - **Missing Data & Outliers**: Automated checks to summarize dataset health.
+*   **Normality (`Shapiro-Wilk`)**: Assessed per treatment group. Normality is satisfied if the test p-value $p > 0.05$ for all groups.
+*   **Variance Homogeneity (`Levene's Test`)**: Assessed across all groups. Homogeneity is satisfied if $p > 0.05$.
+*   **Sample Count (`n_groups`, `min_n_per_group`)**: Captures group size and count constraints (e.g. at least 2 observations per group are required for standard variance-based tests).
+*   **Hierarchy Clustered Data**: If Hierarchical Support is enabled, these statistical properties are calculated on the aggregated cluster means rather than individual unit observations to prevent pseudoreplication bias.
 
-2. **Applicability Checking (`is_applicable`)**:
-   Each registered statistical method implements `is_applicable(properties)` to declare its preconditions:
+### 2. Method Preconditions (`is_applicable`)
+Each statistical plugin implements `is_applicable(properties) -> bool` to declare its statistical assumptions:
 
-   - **Independent Two-Sample t-test**: Requires exactly 2 groups of numeric data, with $n \ge 2$ per group, and normality satisfied for all groups.
-   - **One-way ANOVA**: Requires $\ge 2$ groups of numeric data, with $n \ge 2$ per group, normality satisfied, and homogeneous variance.
-   - **Mann-Whitney U**: Non-parametric; requires exactly 2 groups of numeric data with $n \ge 2$ per group.
-   - **Kruskal-Wallis H**: Non-parametric; requires $\ge 2$ groups of numeric data with $n \ge 2$ per group.
+*   **Independent Two-Sample t-test**: Requires exactly 2 groups of numeric data, $n \ge 2$ per group, normality satisfied, and homogeneous variance.
+*   **One-way ANOVA**: Requires $\ge 2$ groups of numeric data, $n \ge 2$ per group, normality satisfied, and homogeneous variance.
+*   **Mann-Whitney U**: Non-parametric; requires exactly 2 groups of numeric data with $n \ge 2$ per group.
+*   **Kruskal-Wallis H**: Non-parametric; requires $\ge 2$ groups of numeric data with $n \ge 2$ per group.
+*   **Linear Mixed Model (LMM)**: Hierarchical; requires clustered data configuration and continuous metric.
+*   **Chi-Square Test**: Categorical; requires discrete/binary columns with expected cell counts $\ge 5$ in the contingency table.
 
-If any preconditions are not met, the method is filtered out from the list of selectable options in the GUI.
+### 3. Multiple Column Selection Intersection
+If multiple dependent variables/metrics are selected for evaluation:
+*   The wizard calculates properties for **each** column independently.
+*   It then intersects the sets of applicable methods (`get_applicable_intersect`).
+*   A statistical method is offered in the UI **only if it is applicable to all selected columns**. For example, if you select one normal column and one highly skewed column, parametric tests like the *t-test* or *ANOVA* will be filtered out because they violate the assumptions of the skewed column; only non-parametric alternatives (like *Mann-Whitney* or *Kruskal-Wallis*) will be offered.
 
 ---
 

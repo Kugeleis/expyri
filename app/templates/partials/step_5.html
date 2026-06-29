@@ -7,7 +7,7 @@
     <form hx-post="/wizard/sessions/{{ session.session_id }}/generate-plots" hx-target="#workspace-container">
         <div class="plots-selector-row" style="background-color: rgba(255, 255, 255, 0.01); padding: 0.75rem; border: 1px solid var(--pico-border-color); border-radius: 8px; margin-bottom: 1.5rem;">
             <div style="font-weight: 600; font-size: 0.85rem; margin-bottom: 0.5rem;">Available Plot Types</div>
-            
+
             <div id="plots-selector" style="display: flex; flex-wrap: wrap; gap: 1.5rem; align-items: center; margin-bottom: 0.75rem;">
                 {% for name, plot in applicable_plots.items() %}
                     <label style="display: flex; align-items: center; gap: 0.25rem; margin-bottom: 0; cursor: pointer;">
@@ -47,7 +47,7 @@
                         </div>
                         {% if ns.col_res %}
                             <div style="font-size: 0.8rem; color: var(--pico-muted-color); font-weight: normal;">
-                                <span>Method: 
+                                <span>Method:
                                     {% if ns.col_res.method_name == "ttest" %}t-Test
                                     {% elif ns.col_res.method_name == "anova" %}ANOVA
                                     {% elif ns.col_res.method_name == "mann_whitney" %}Mann-Whitney U

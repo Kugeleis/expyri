@@ -44,3 +44,15 @@ def test_store_save_updates() -> None:
     assert retrieved is not None
     assert retrieved.dataset_id == "test_dataset"
     assert retrieved.updated_at >= old_updated
+
+
+def test_store_session_ttl_cleanup() -> None:
+    """Expired sessions are cleaned up."""
+    from datetime import timedelta
+
+    store = InMemorySessionStore(lifetime_seconds=10)
+    session = store.create()
+    # Backdate the updated_at time manually in the internal store
+    session.updated_at = session.updated_at - timedelta(seconds=11)
+    # Retrieving it should trigger cleanup and return None
+    assert store.get(session.session_id) is None
