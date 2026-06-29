@@ -245,24 +245,29 @@ The same recipe applies to:
 
 In Step 3, the wizard dynamically queries the backend to determine which statistical methods are applicable to your filtered dataset. This process relies on automated data property computation and applicability rules:
 
-1. **Auto-Computation (`compute_data_properties`)**:
-   When moving to Step 3, the backend evaluates the dataset properties including:
+### 1. Data Properties Auto-Computation
+When navigating to Step 3, the backend evaluates the dataset properties for each selected dependent column:
 
-   - **Normality**: Shapiro-Wilk or D'Agostino-Pearson tests per group.
-   - **Variance Homogeneity**: Levene's test to ensure groups have equal variances.
-   - **Sphericity**: Mauchly's test for repeated measures (with 3+ conditions).
-   - **Expected Cell Counts**: Contingency table evaluation for categorical outcomes.
-   - **Missing Data & Outliers**: Automated checks to summarize dataset health.
+*   **Normality (`Shapiro-Wilk`)**: Assessed per treatment group. Normality is satisfied if the test p-value $p > 0.05$ for all groups.
+*   **Variance Homogeneity (`Levene's Test`)**: Assessed across all groups. Homogeneity is satisfied if $p > 0.05$.
+*   **Sample Count (`n_groups`, `min_n_per_group`)**: Captures group size and count constraints (e.g. at least 2 observations per group are required for standard variance-based tests).
+*   **Hierarchy Clustered Data**: If Hierarchical Support is enabled, these statistical properties are calculated on the aggregated cluster means rather than individual unit observations to prevent pseudoreplication bias.
 
-2. **Applicability Checking (`is_applicable`)**:
-   Each registered statistical method implements `is_applicable(properties)` to declare its preconditions:
+### 2. Method Preconditions (`is_applicable`)
+Each statistical plugin implements `is_applicable(properties) -> bool` to declare its statistical assumptions:
 
-   - **Independent Two-Sample t-test**: Requires exactly 2 groups of numeric data, with $n \ge 2$ per group, and normality satisfied for all groups.
-   - **One-way ANOVA**: Requires $\ge 2$ groups of numeric data, with $n \ge 2$ per group, normality satisfied, and homogeneous variance.
-   - **Mann-Whitney U**: Non-parametric; requires exactly 2 groups of numeric data with $n \ge 2$ per group.
-   - **Kruskal-Wallis H**: Non-parametric; requires $\ge 2$ groups of numeric data with $n \ge 2$ per group.
+*   **Independent Two-Sample t-test**: Requires exactly 2 groups of numeric data, $n \ge 2$ per group, normality satisfied, and homogeneous variance.
+*   **One-way ANOVA**: Requires $\ge 2$ groups of numeric data, $n \ge 2$ per group, normality satisfied, and homogeneous variance.
+*   **Mann-Whitney U**: Non-parametric; requires exactly 2 groups of numeric data with $n \ge 2$ per group.
+*   **Kruskal-Wallis H**: Non-parametric; requires $\ge 2$ groups of numeric data with $n \ge 2$ per group.
+*   **Linear Mixed Model (LMM)**: Hierarchical; requires clustered data configuration and continuous metric.
+*   **Chi-Square Test**: Categorical; requires discrete/binary columns with expected cell counts $\ge 5$ in the contingency table.
 
-If any preconditions are not met, the method is filtered out from the list of selectable options in the GUI.
+### 3. Multiple Column Selection Intersection
+If multiple dependent variables/metrics are selected for evaluation:
+*   The wizard calculates properties for **each** column independently.
+*   It then intersects the sets of applicable methods (`get_applicable_intersect`).
+*   A statistical method is offered in the UI **only if it is applicable to all selected columns**. For example, if you select one normal column and one highly skewed column, parametric tests like the *t-test* or *ANOVA* will be filtered out because they violate the assumptions of the skewed column; only non-parametric alternatives (like *Mann-Whitney* or *Kruskal-Wallis*) will be offered.
 
 ---
 
