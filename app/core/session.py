@@ -74,21 +74,40 @@ class SessionStore(Protocol):
 class InMemorySessionStore:
     """In-memory implementation of ``SessionStore``."""
 
-    def __init__(self) -> None:
-        """Initialize an empty store."""
+    def __init__(self, lifetime_seconds: int = 1800) -> None:
+        """Initialize an empty store with a session lifetime."""
         self._sessions: dict[str, WizardSession] = {}
+        self.lifetime_seconds = lifetime_seconds
+
+    def _cleanup_expired(self) -> None:
+        """Remove sessions that have exceeded their lifetime."""
+        now = datetime.now(UTC)
+        expired_ids = [
+            sid
+            for sid, session in self._sessions.items()
+            if (now - session.updated_at).total_seconds() > self.lifetime_seconds
+        ]
+        for sid in expired_ids:
+            self._sessions.pop(sid, None)
 
     def create(self) -> WizardSession:
         """Create and store a new session."""
+        self._cleanup_expired()
         session = WizardSession()
         self._sessions[session.session_id] = session
         return session
 
     def get(self, session_id: str) -> WizardSession | None:
-        """Return the session or ``None`` if not found."""
-        return self._sessions.get(session_id)
+        """Return the session or ``None`` if not found or expired."""
+        self._cleanup_expired()
+        session = self._sessions.get(session_id)
+        if session is not None:
+            session.updated_at = datetime.now(UTC)
+            return session
+        return None
 
     def save(self, session: WizardSession) -> None:
         """Persist updates to an existing session."""
+        self._cleanup_expired()
         session.updated_at = datetime.now(UTC)
         self._sessions[session.session_id] = session
