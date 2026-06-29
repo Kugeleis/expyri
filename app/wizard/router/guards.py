@@ -5,7 +5,7 @@ Provides dependency factories to validate step transitions before endpoints run.
 
 from __future__ import annotations
 
-from typing import Callable
+from collections.abc import Callable
 
 from fastapi import Depends
 

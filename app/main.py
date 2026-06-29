@@ -66,18 +66,16 @@ def create_app() -> FastAPI:
     # Mount static files at /static
     application.mount("/static", StaticFiles(directory="app/static"), name="static")
 
-    # Add middleware to disable caching for static assets during development
+    # Add middleware to disable caching globally to prevent state caching issues
     @application.middleware("http")
     async def add_no_cache_headers(
         request: Request,
         call_next: Callable[[Request], Awaitable[Response]],
     ) -> Response:
         response = await call_next(request)
-        path = request.url.path
-        if path.startswith("/static"):
-            response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
-            response.headers["Pragma"] = "no-cache"
-            response.headers["Expires"] = "0"
+        response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
         return response
 
     # Register centralized exception handler for step transitions
