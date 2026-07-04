@@ -263,3 +263,34 @@ def test_restart_session_works_on_all_steps(client: TestClient) -> None:
         resp = client.post(f"/wizard/sessions/{session_id}/restart", headers={"HX-Request": "true"})
         assert resp.status_code == 200
         assert resp.headers.get("HX-Redirect") == "/"
+
+
+def test_export_get_routes(client: TestClient) -> None:
+    """Test that the GET /wizard/sessions/{session_id}/export routes work."""
+    from app.core.session import InMemorySessionStore
+
+    client.app.state.session_store = InMemorySessionStore()
+    store = client.app.state.session_store
+    session = store.create()
+    session_id = session.session_id
+
+    # Configure session to satisfy guard checks and setup
+    session.current_step = "export"
+    session.dataset_id = "preselect_test"
+    session.group_column = "group"
+    session.selected_value_columns = ["numeric_val"]
+    session.selected_method = "ttest"
+    session.stat_results = [
+        {"column_name": "numeric_val", "method_name": "ttest", "test_statistic": 1.0, "p_value": 0.01, "summary": "ok"}
+    ]
+    store.save(session)
+
+    # Test CSV GET
+    resp = client.get(f"/wizard/sessions/{session_id}/export?format=csv")
+    assert resp.status_code == 200
+    assert "text/csv" in resp.headers.get("content-type", "")
+
+    # Test JSON GET
+    resp = client.get(f"/wizard/sessions/{session_id}/export?format=json")
+    assert resp.status_code == 200
+    assert "application/json" in resp.headers.get("content-type", "")

@@ -163,10 +163,51 @@ def export_results_json(
     stat_results = [StatResult.model_validate(res) for res in session.stat_results]
     plots = [PlotResult.model_validate(p) for p in session.plot_results]
 
-    export_res = exporter.export(stat_results, plots, filtered_df)
+    export_res = exporter.export(stat_results, plots, filtered_df, session=session)
 
-    # Save export choice in service
+    # Save export choice in service and ensure current step is export
+    session.current_step = WizardStep.EXPORT.value
     session.export_format = req.export_format
+    service.store.save(session)
+
+    return Response(
+        content=export_res.content,
+        media_type=export_res.content_type,
+        headers={"Content-Disposition": f"attachment; filename={export_res.filename}"},
+    )
+
+
+@router.get("/sessions/{session_id}/export")
+def export_results_get(
+    session_id: str,
+    format: str,
+    session: WizardSession = Depends(_export_guard),
+    repo: DatasetRepository = Depends(get_dataset_repository),
+    service: WizardService = Depends(get_wizard_service),
+) -> Response:
+    """GET compatibility route: Export the report via query parameter."""
+
+    try:
+        exporter = exporter_registry.get(format)
+    except KeyError:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Exporter {format!r} is not registered",
+        ) from None
+
+    if session.group_column is None:
+        raise HTTPException(status_code=400, detail="Incomplete setup")
+
+    filtered_df = get_filtered_dataset(session, repo)
+
+    stat_results = [StatResult.model_validate(res) for res in session.stat_results]
+    plots = [PlotResult.model_validate(p) for p in session.plot_results]
+
+    export_res = exporter.export(stat_results, plots, filtered_df, session=session)
+
+    # Save export choice in service and ensure current step is export
+    session.current_step = WizardStep.EXPORT.value
+    session.export_format = format
     service.store.save(session)
 
     return Response(
