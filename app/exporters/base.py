@@ -7,7 +7,7 @@ the global ``exporter_registry``.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import pandas as pd
 from pydantic import BaseModel, Field
@@ -48,6 +48,7 @@ class Exporter(ABC):
         stat_results: list[StatResult],
         plots: list[PlotResult],
         df: pd.DataFrame,
+        **kwargs: Any,
     ) -> ExportResult:
         """Export the session results, plots, or dataset.
 

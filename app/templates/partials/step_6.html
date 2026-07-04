@@ -26,5 +26,13 @@
                 <p>Export the preprocessed and cleaned dataset as a CSV file.</p>
             </article>
         </a>
+
+        <a href="/wizard/sessions/{{ session.session_id }}/export?format=parquet" style="text-decoration: none; color: inherit; display: block;">
+            <article class="exporter-card" style="margin-bottom: 0; cursor: pointer; height: 100%;">
+                <div class="exporter-icon">📦</div>
+                <h4>Parquet Dataset</h4>
+                <p>Export the cleaned dataset along with full session and statistical metadata in Parquet format.</p>
+            </article>
+        </a>
     </div>
 </section>

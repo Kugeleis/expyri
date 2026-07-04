@@ -33,6 +33,7 @@ class JsonExporter(Exporter):
         stat_results: list[StatResult],
         plots: list[PlotResult],
         df: pd.DataFrame,
+        **kwargs: Any,
     ) -> ExportResult:
         """Export session results and dataset to JSON format.
 

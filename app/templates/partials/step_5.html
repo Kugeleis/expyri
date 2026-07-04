@@ -12,7 +12,7 @@
                 {% for name, plot in applicable_plots.items() %}
                     <label style="display: flex; align-items: center; gap: 0.25rem; margin-bottom: 0; cursor: pointer;">
                         <input type="checkbox" name="selected_plots" value="{{ name }}"
-                               {% if name in session.selected_plots %}checked{% endif %} />
+                               {% if name in session.selected_plots or (not session.selected_plots and name == "boxplot") %}checked{% endif %} />
                         {{ name | title }}
                     </label>
                 {% endfor %}

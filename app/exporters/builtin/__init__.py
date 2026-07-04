@@ -6,6 +6,7 @@ All modules in this package are imported eagerly so that their
 
 from app.exporters.builtin.csv_exporter import CsvExporter
 from app.exporters.builtin.json_exporter import JsonExporter
+from app.exporters.builtin.parquet_exporter import ParquetExporter
 from app.exporters.builtin.pdf_exporter import PdfExporter
 
-__all__ = ["CsvExporter", "JsonExporter", "PdfExporter"]
+__all__ = ["CsvExporter", "JsonExporter", "PdfExporter", "ParquetExporter"]

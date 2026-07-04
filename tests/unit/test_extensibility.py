@@ -127,6 +127,7 @@ class DummyExporter(Exporter):
         stat_results: list[StatResult],
         plots: list[PlotResult],
         df: pd.DataFrame,
+        **kwargs: Any,
     ) -> ExportResult:
         """Export the results."""
         summary = stat_results[0].summary if stat_results else "None"

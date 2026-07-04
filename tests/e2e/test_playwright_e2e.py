@@ -135,7 +135,7 @@ def test_playwright_restart_session(playwright_server: str, page: Page) -> None:
 
     def handle_dialog(dialog: Dialog) -> None:
         nonlocal dialog_handled
-        assert "restart" in dialog.message.lower()
+        assert "new session" in dialog.message.lower()
         dialog_handled = True
         dialog.accept()
 
@@ -371,3 +371,39 @@ def test_playwright_visualization_cards(playwright_server: str, page: Page) -> N
 
     second_card_images = cards.nth(1).locator("img")
     expect(second_card_images).to_have_count(2)
+
+
+def test_no_scroll_on_method_selection(playwright_server: str, page: Page) -> None:
+    """Verify that selecting a method in Step 3 does not scroll the selection panel to the top."""
+    page.goto(playwright_server)
+
+    # Step 1: Upload dataset & submit
+    dataset_select = page.locator("select[name='dataset_id']")
+    dataset_select.wait_for()
+    dataset_select.select_option("playwright_normal_data.csv")
+    page.click("text=Continue")
+
+    # Step 2: Navigate to method selection
+    page.wait_for_selector("text=Choose Method")
+    page.click("text=Choose Method")
+    page.wait_for_selector("input[name='selected_method']")
+
+    # Let's scroll the active step panel down to simulate user position
+    panel_selector = "#panel-step-3"
+    page.evaluate(f"document.querySelector('{panel_selector}').scrollTop = 150")
+    scroll_pos_before = page.evaluate(f"document.querySelector('{panel_selector}').scrollTop")
+    assert scroll_pos_before > 0
+
+    # Select the radio button (e.g. Mann-Whitney)
+    page.locator("input[name='selected_method'][value='mann_whitney']").check()
+
+    # Wait for the check/HTMX update to complete
+    page.wait_for_selector("input[name='selected_method'][value='mann_whitney']:checked")
+
+    # Check scroll position after selection
+    scroll_pos_after = page.evaluate(f"document.querySelector('{panel_selector}').scrollTop")
+
+    # Assert that scroll position has NOT jumped to 0/top
+    assert scroll_pos_after > 0
+    # Assert they are close/same (within 10px)
+    assert abs(scroll_pos_before - scroll_pos_after) < 10
