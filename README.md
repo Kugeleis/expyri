@@ -146,6 +146,29 @@ Download your final results and plots in one of these structured formats:
 
 - **PDF Report**: A publication-ready document compiling the test description, evaluation table, decision flags, and embedded high-resolution figures.
 - **CSV / JSON Exports**: Standardized raw outputs of the statistical results for downstream pipelines.
+- **Interactive Explorer (Parquet with Metadata)**: Launches a Marimo notebook instance preloaded with your preprocessed dataset saved as a `.parquet` file. This Parquet file contains extensive session metadata stored in its schema metadata headers, allowing full reproducibility of the ExPyRi session.
+
+#### Parquet Metadata Structure
+When the Interactive Explorer is selected, ExPyRi writes the cleaned dataset and all execution metadata directly to the Parquet file's schema metadata headers (as JSON-encoded UTF-8 bytes). This makes all choices and info from ExPyRi fully reproducible.
+
+The Parquet file contains the following custom metadata keys:
+
+| Key | Description | Format |
+|---|---|---|
+| `dataset` | The ID/name of the source dataset | String |
+| `timestamp` | Time when the explorer was launched / file was generated | ISO 8601 UTC string |
+| `selected_statistical_methods` | Selected statistical method names | Object (e.g. `{"continuous": "...", "discrete": "..."}`) |
+| `statistic_results` | Full array of computed statistical test results | Array of result objects |
+| `plots_selected` | Names of the plots chosen for export | Array of strings |
+| `session_id` | Unique ID of the ExPyRi session | String |
+| `group_column` | The chosen grouping column | String |
+| `selected_value_columns` | Numeric metric columns selected | Array of strings |
+| `selected_discrete_columns` | Categorical metric columns selected | Array of strings |
+| `selected_groups` | Groups selected for comparison | Array of strings |
+| `filters_config` | Preprocessing filters applied | Array of filter configuration objects |
+| `plot_results` | Generated plot metadata | Array of plot result objects |
+| `hierarchy` | Hierarchical config settings (if hierarchical mode is enabled) | Object or `null` |
+| `excluded_clusters` | Hierarchical clusters excluded from analysis | Array of objects or `null` |
 
 ---
 

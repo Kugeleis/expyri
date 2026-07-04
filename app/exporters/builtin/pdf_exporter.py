@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import base64
 import io
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import pandas as pd
 from reportlab.lib.pagesizes import letter
@@ -37,6 +37,7 @@ class PdfExporter(Exporter):
         stat_results: list[StatResult],
         plots: list[PlotResult],
         df: pd.DataFrame,
+        **kwargs: Any,
     ) -> ExportResult:
         """Export session results and plots to a PDF report.
 

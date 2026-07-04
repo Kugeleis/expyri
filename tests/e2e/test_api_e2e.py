@@ -186,6 +186,19 @@ def test_e2e_wizard_flow(e2e_server: str) -> None:
         assert "statistical_results" in data
         assert data["statistical_results"][0]["method_name"] == "ttest_ind"
 
+        # Step 6: Export results as Parquet
+        resp = client.post(
+            f"/wizard/sessions/{session_id}/export",
+            json={"export_format": "parquet"},
+        )
+        assert resp.status_code == 200
+        assert resp.headers["content-type"] == "application/octet-stream"
+        cd = resp.headers["content-disposition"]
+        assert "attachment; filename=" in cd
+        filename = cd.split("filename=")[1]
+        assert filename.startswith("uploaded_data_")
+        assert filename.endswith(".parquet")
+
 
 def test_e2e_restart_session(e2e_server: str) -> None:
     """End-to-end test verifying that clicking the restart session button creates a new fresh session."""
