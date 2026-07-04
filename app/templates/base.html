@@ -40,8 +40,8 @@
                     <button class="outline secondary btn-restart"
                             hx-post="/wizard/sessions/{{ session.session_id }}/restart"
                             hx-target="body"
-                            hx-confirm="Are you sure you want to restart the session? All configuration will be lost.">
-                        Restart Session
+                            hx-confirm="Are you sure you want to start a new session? All configuration will be lost.">
+                        New Session
                     </button>
                 </header>
 
@@ -75,6 +75,21 @@
                     setTimeout(() => {
                         errorToast.style.display = 'none';
                     }, 5000);
+                }
+            });
+
+            // Preserve scroll position of step panels during HTMX swap
+            let activePanelScrollTop = 0;
+            document.body.addEventListener('htmx:beforeRequest', function(evt) {
+                const activePanel = document.querySelector('.step-panel.active');
+                if (activePanel) {
+                    activePanelScrollTop = activePanel.scrollTop;
+                }
+            });
+            document.body.addEventListener('htmx:afterSwap', function(evt) {
+                const activePanel = document.querySelector('.step-panel.active');
+                if (activePanel) {
+                    activePanel.scrollTop = activePanelScrollTop;
                 }
             });
         </script>
