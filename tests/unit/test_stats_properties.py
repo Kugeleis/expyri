@@ -341,13 +341,13 @@ def test_stats_properties_extra_edge_cases() -> None:
         assert expected is not None
 
     # 8. sphericity linalg exceptions and trace <= 0
-    with patch("numpy.linalg.qr", side_effect=Exception("Mock QR Error")):
+    with patch("numpy.linalg.qr", side_effect=np.linalg.LinAlgError("Mock QR Error")):
         df_spher_err = pd.DataFrame({"group": ["T1"] * 5 + ["T2"] * 5 + ["T3"] * 5, "value": [1.0] * 15})
         res_spher_err = compute_sphericity(df_spher_err, "value", "group", repeated_measures=True, n_conditions=3)
         assert res_spher_err is not None
         assert "Error constructing contrast matrix" in res_spher_err.note
 
-    with patch("numpy.linalg.det", side_effect=Exception("Mock Det Error")):
+    with patch("numpy.linalg.det", side_effect=np.linalg.LinAlgError("Mock Det Error")):
         df_spher_err2 = pd.DataFrame({"group": ["T1"] * 5 + ["T2"] * 5 + ["T3"] * 5, "value": [1.0] * 15})
         res_spher_err2 = compute_sphericity(df_spher_err2, "value", "group", repeated_measures=True, n_conditions=3)
         assert res_spher_err2 is not None

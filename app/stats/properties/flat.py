@@ -61,7 +61,7 @@ def compute_missing_summary(df: pd.DataFrame, outcome_col: str, group_col: str) 
                     significant=p_val_float < 0.05,
                     note=None,
                 )
-            except Exception as e:
+            except (RuntimeError, TypeError, ValueError) as e:
                 association = MissingnessAssociationResult(
                     test_used="Chi-Square",
                     statistic=None,

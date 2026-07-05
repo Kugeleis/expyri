@@ -62,7 +62,7 @@ def compute_normality(df: pd.DataFrame, outcome_col: str, group_col: str) -> dic
                 p_val_float = float(p_val)
                 is_normal = p_val_float > 0.05
                 note = None
-            except Exception as e:
+            except (RuntimeError, TypeError, ValueError) as e:
                 p_val_float = None
                 is_normal = False
                 note = f"Shapiro-Wilk failed: {e}"
@@ -73,7 +73,7 @@ def compute_normality(df: pd.DataFrame, outcome_col: str, group_col: str) -> dic
                 p_val_float = float(p_val)
                 is_normal = p_val_float > 0.05
                 note = None
-            except Exception as e:
+            except (RuntimeError, TypeError, ValueError) as e:
                 p_val_float = None
                 is_normal = False
                 note = f"D'Agostino-Pearson failed: {e}"
@@ -123,7 +123,7 @@ def compute_variance_homogeneity(
             p_value=p_val_float,
             equal_variances=p_val_float > 0.05,
         )
-    except Exception:
+    except (RuntimeError, TypeError, ValueError):
         return VarianceHomogeneityResult(
             test_used="Levene",
             statistic=0.0,
@@ -149,7 +149,7 @@ def compute_expected_cell_counts(
         expected_list = expected.tolist()
         min_val = float(np.min(expected))
         return expected_list, min_val
-    except Exception:
+    except (RuntimeError, TypeError, ValueError):
         row_totals = observed.sum(axis=1, keepdims=True)
         col_totals = observed.sum(axis=0, keepdims=True)
         n = observed.sum()
@@ -210,7 +210,7 @@ def compute_sphericity(
         _, R = np.linalg.qr(A)
         Q, _ = np.linalg.qr(A)
         M = Q[:, 1:]
-    except Exception as e:
+    except (np.linalg.LinAlgError, TypeError, ValueError) as e:
         return SphericityResult(
             statistic=0.0,
             p_value=0.0,
@@ -222,7 +222,7 @@ def compute_sphericity(
         S = M.T @ sigma @ M
         det_S = np.linalg.det(S)
         tr_S = np.trace(S)
-    except Exception as e:
+    except (np.linalg.LinAlgError, TypeError, ValueError) as e:
         return SphericityResult(
             statistic=0.0,
             p_value=0.0,

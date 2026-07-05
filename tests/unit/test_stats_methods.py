@@ -411,7 +411,7 @@ def test_stats_methods_extra_edge_cases() -> None:
         chi2_method.run({"A": ["Yes", "No"], "B": ["Yes", "No"]})
 
     # 3. TTestInd stats.levene raising exception
-    with patch("scipy.stats.levene", side_effect=Exception("Mock Levene Error")):
+    with patch("scipy.stats.levene", side_effect=ValueError("Mock Levene Error")):
         ttest = stat_registry.get("ttest_ind")
         res = ttest.run({"A": [1.0, 2.0, 3.0], "B": [4.0, 5.0, 6.0]})
         assert res is not None

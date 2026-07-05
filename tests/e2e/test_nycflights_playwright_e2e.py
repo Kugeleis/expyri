@@ -19,7 +19,7 @@ def _check_playwright_launch() -> bool:
             browser = p.chromium.launch()
             browser.close()
         return True
-    except Exception:
+    except playwright.sync_api.Error:
         return False
 
 

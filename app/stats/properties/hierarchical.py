@@ -134,7 +134,7 @@ def compute_quick_icc(df: pd.DataFrame, cluster_col: str, metric: str) -> float:
         icc = (msb - msw) / denominator
         # Clip ICC to range [0.0, 1.0] since variance components are non-negative
         return max(0.0, min(1.0, float(icc)))
-    except Exception:
+    except (KeyError, TypeError, ValueError, ZeroDivisionError):
         return float("nan")
 
 
@@ -206,7 +206,7 @@ def compute_hierarchical_properties(  # noqa: C901
                         note = None
                         if not is_normal:
                             normality_cluster_means = False
-                    except Exception as e:
+                    except (RuntimeError, TypeError, ValueError) as e:
                         p_val = None
                         is_normal = False
                         note = f"Shapiro-Wilk failed: {e}"
@@ -234,8 +234,8 @@ def compute_hierarchical_properties(  # noqa: C901
                             p_value=p_val_float,
                             equal_variances=homogeneity_cluster,
                         )
-                except Exception:
-                    pass
+                except (RuntimeError, TypeError, ValueError):
+                    var_homogeneity_result = None
 
         if min_clusters_per_group >= 4 and not agg_df.empty:
             outlier_clusters = run_iterative_grubbs(agg_df, config.cluster_col, "mean")
@@ -260,8 +260,8 @@ def compute_hierarchical_properties(  # noqa: C901
                     effect_size=0.8, nobs1=min_clusters_per_group, ratio=1.0, alpha=0.05, alternative="two-sided"
                 )
             )
-        except Exception:
-            pass
+        except (ImportError, RuntimeError, TypeError, ValueError):
+            power_at_observed_n = 0.0
     power_warning = power_at_observed_n < 0.8
 
     outliers_dict = {}
