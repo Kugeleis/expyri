@@ -64,7 +64,7 @@ class TTestInd(StatMethod):
         try:
             _, levene_p = stats.levene(g1, g2)
             equal_var = levene_p > 0.05
-        except Exception:
+        except (RuntimeError, TypeError, ValueError):
             equal_var = False
 
         t_stat, p_val = stats.ttest_ind(g1, g2, equal_var=equal_var)

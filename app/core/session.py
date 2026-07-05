@@ -12,6 +12,8 @@ from typing import Any, Protocol
 
 from pydantic import BaseModel, Field
 
+from app.filters.models import FilterConfig
+
 
 class HierarchyConfig(BaseModel):
     """Configuration for hierarchical data support."""
@@ -41,7 +43,7 @@ class WizardSession(BaseModel):
     selected_value_columns: list[str] = Field(default_factory=list)
     selected_discrete_columns: list[str] = Field(default_factory=list)
     selected_groups: list[str] = Field(default_factory=list)
-    filters_config: list[dict[str, Any]] = Field(default_factory=list)
+    filters_config: list[FilterConfig] = Field(default_factory=list)
     selected_method: str | None = None
     selected_discrete_method: str | None = None
     stat_results: list[dict[str, Any]] = Field(default_factory=list)

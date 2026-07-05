@@ -42,7 +42,7 @@ def select_dataset_id(
     """Select an existing dataset from the repository list."""
     session = service.select_dataset_id(session_id, dataset_id if dataset_id else None)
     store = get_session_store(request)
-    return render_step(request, session, store)
+    return render_step(request, session, store, repo=service.repo)
 
 
 @router.post("/sessions/{session_id}/toggle-hierarchy")
@@ -55,7 +55,7 @@ def toggle_hierarchy_htmx(
     """Toggle hierarchical configuration mode (HTMX view)."""
     session = service.toggle_hierarchy(session_id, enabled == "true")
     store = get_session_store(request)
-    return render_step(request, session, store)
+    return render_step(request, session, store, repo=service.repo)
 
 
 @router.post("/sessions/{session_id}/update-group-col")
@@ -68,7 +68,7 @@ def update_group_col(
     """Update active group column selection and reload subgroups."""
     session = service.update_group_col(session_id, group_column if group_column else None)
     store = get_session_store(request)
-    return render_step(request, session, store)
+    return render_step(request, session, store, repo=service.repo)
 
 
 @router.post("/sessions/{session_id}/update-cluster-col")
@@ -81,7 +81,7 @@ def update_cluster_col(
     """Update active cluster selection and reload clusters."""
     session = service.update_cluster_col(session_id, cluster_col if cluster_col else None)
     store = get_session_store(request)
-    return render_step(request, session, store)
+    return render_step(request, session, store, repo=service.repo)
 
 
 @router.post("/sessions/{session_id}/submit-dataset-config")
@@ -113,4 +113,4 @@ def submit_dataset_config(
         y_col=y_col,
     )
     store = get_session_store(request)
-    return render_step(request, session, store)
+    return render_step(request, session, store, repo=service.repo)

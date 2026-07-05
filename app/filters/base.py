@@ -7,11 +7,13 @@ and register themselves using the global ``filter_registry``.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from collections.abc import Sequence
 from typing import Any
 
 import pandas as pd
 
 from app.core.registry import Registry
+from app.filters.models import FilterConfigInput, normalize_filter_config
 
 
 class Filter(ABC):
@@ -61,7 +63,7 @@ class Filter(ABC):
 filter_registry: Registry[Filter] = Registry("filter")
 
 
-def apply_filter_pipeline(df: pd.DataFrame, filter_configs: list[dict[str, Any]]) -> pd.DataFrame:
+def apply_filter_pipeline(df: pd.DataFrame, filter_configs: Sequence[FilterConfigInput]) -> pd.DataFrame:
     """Apply a sequence of filter configurations to a DataFrame.
 
     Each configuration is a dictionary specifying the filter "name"
@@ -79,12 +81,13 @@ def apply_filter_pipeline(df: pd.DataFrame, filter_configs: list[dict[str, Any]]
     """
     current_df = df.copy()
     for config in filter_configs:
-        name = config.get("name")
+        normalized = normalize_filter_config(config)
+        name = normalized.name
         if not name:
             msg = "Filter configuration must contain a 'name' field."
             raise ValueError(msg)
 
-        params = config.get("params", {})
+        params = normalized.params
         if not isinstance(params, dict):
             msg = f"Filter 'params' must be a dictionary, got {type(params).__name__}"
             raise ValueError(msg)

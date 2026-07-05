@@ -80,8 +80,8 @@ class ClusterMeanANOVA(StatMethod):
                     _, corrected_pvals, _, _ = multipletests(p_vals, alpha=0.05, method="holm")
                     for r, cp in zip(records, corrected_pvals, strict=False):
                         r["p_value_corrected"] = float(cp)
-            except Exception:
-                pass
+            except (RuntimeError, TypeError, ValueError):
+                records = []
 
         posthoc_df = pd.DataFrame(records) if records else None
 

@@ -156,7 +156,7 @@ class ProportionKruskalWallis(StatMethod):
 
             try:
                 stat, p_val_mw = stats.mannwhitneyu(vals1, vals2, alternative="two-sided")
-            except Exception:
+            except (RuntimeError, TypeError, ValueError):
                 stat, p_val_mw = 0.0, 1.0
 
             records.append(

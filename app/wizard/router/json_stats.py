@@ -30,8 +30,7 @@ def configure_filters(
     service: WizardService = Depends(get_wizard_service),
 ) -> WizardSession:
     """JSON compatibility route: Configure and apply preprocessing filters."""
-    filter_configs = [f.model_dump() for f in req.filters_config]
-    return service.configure_filters(session_id, filter_configs)
+    return service.configure_filters(session_id, req.filters_config)
 
 
 @router.get("/sessions/{session_id}/methods", response_model=list[dict[str, str]])

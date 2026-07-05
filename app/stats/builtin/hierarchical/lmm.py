@@ -93,7 +93,7 @@ class LinearMixedModel(StatMethod):
                 n_clusters_used=n_clusters_used,
                 posthoc=fe_df,
             )
-        except Exception as e:
+        except (KeyError, RuntimeError, TypeError, ValueError, np.linalg.LinAlgError) as e:
             return StatResult(
                 column_name=groups.metric,
                 method_name=self.name,
