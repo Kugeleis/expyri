@@ -2,9 +2,6 @@
 
 from __future__ import annotations
 
-import shutil
-from pathlib import Path
-
 import pandas as pd
 from fastapi import APIRouter, Depends, File, HTTPException, Request, Response, UploadFile
 from fastapi.responses import JSONResponse
@@ -20,6 +17,7 @@ from app.wizard.router.dependencies import (
     get_wizard_service,
     render_step,
 )
+from app.wizard.router.uploads import store_uploaded_dataset
 from app.wizard.schemas import DatasetSelectionRequest
 from app.wizard.service import WizardService
 
@@ -66,26 +64,7 @@ def upload_dataset_anon(
     repo: DatasetRepository = Depends(get_dataset_repository),
 ) -> DatasetInfo:
     """JSON compatibility route: Anonymous file upload."""
-    if not file.filename:
-        raise HTTPException(status_code=400, detail="Filename not provided")
-
-    safe_filename = Path(file.filename).name
-    if not safe_filename or safe_filename in (".", ".."):
-        raise HTTPException(status_code=400, detail="Invalid filename")
-
-    data_dir = getattr(repo, "_data_dir", Path("data"))
-    data_dir.mkdir(parents=True, exist_ok=True)
-    file_path = data_dir / safe_filename
-
-    with file_path.open("wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
-
-    dataset_id = file_path.stem
-    try:
-        return repo.get_schema(dataset_id)
-    except KeyError:
-        file_path.unlink(missing_ok=True)
-        raise HTTPException(status_code=400, detail="Unsupported file format") from None
+    return store_uploaded_dataset(file, repo)
 
 
 @router.post("/sessions/{session_id}/upload", include_in_schema=False)
@@ -99,31 +78,11 @@ def upload_dataset_session_json(
     service: WizardService = Depends(get_wizard_service),
 ) -> Response:
     """JSON compatibility and HTMX route: Upload dataset to specific session."""
-    if not file.filename:
-        raise HTTPException(status_code=400, detail="Filename not provided")
-
-    safe_filename = Path(file.filename).name
-    if not safe_filename or safe_filename in (".", ".."):
-        raise HTTPException(status_code=400, detail="Invalid filename")
-
-    data_dir = getattr(repo, "_data_dir", Path("data"))
-    data_dir.mkdir(parents=True, exist_ok=True)
-    file_path = data_dir / safe_filename
-
-    with file_path.open("wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
-
-    dataset_id = file_path.stem
-    try:
-        repo.get_schema(dataset_id)
-    except KeyError:
-        file_path.unlink(missing_ok=True)
-        raise HTTPException(status_code=400, detail="Unsupported file format") from None
-
-    session = service.select_dataset_id(session_id, dataset_id)
+    dataset_info = store_uploaded_dataset(file, repo)
+    session = service.select_dataset_id(session_id, dataset_info.id)
 
     if "hx-request" in request.headers:
-        return render_step(request, session, store)
+        return render_step(request, session, store, repo=repo)
     else:
         import json
 

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import base64
 import io
+import logging
 import os
 from pathlib import Path
 from typing import Any
@@ -9,7 +10,6 @@ from typing import Any
 import matplotlib
 
 matplotlib.use("Agg")
-import contextlib
 from typing import cast
 
 import matplotlib.pyplot as plt
@@ -29,6 +29,7 @@ templates = Jinja2Templates(directory="app/templates")
 
 
 _fallback_store: SessionStore = InMemorySessionStore()
+logger = logging.getLogger(__name__)
 
 
 def get_session_store(request: Request = None) -> SessionStore:  # type: ignore[assignment]
@@ -162,19 +163,20 @@ def render_step(
     plots_sig_filter: float = 0.05,
     sort_field: str = "column_name",
     sort_asc: bool = True,
+    repo: DatasetRepository | None = None,
 ) -> Response:
     """Helper to render either the full workspace or HTMX out-of-band updates."""
     completed = _completed_steps(session)
     completed_names = {s.value for s in completed}
+    render_session = session.model_copy(deep=True)
 
-    # Sort results if present
-    if session.stat_results:
+    if render_session.stat_results:
 
         def sort_key(x: dict[str, Any]) -> tuple[bool, Any]:
             val = x.get(sort_field)
             return (val is None, val)
 
-        session.stat_results.sort(key=sort_key, reverse=not sort_asc)
+        render_session.stat_results = sorted(render_session.stat_results, key=sort_key, reverse=not sort_asc)
 
     columns: list[Any] = []
     applicable_continuous: dict[str, Any] = {}
@@ -183,12 +185,14 @@ def render_step(
     sig_chart_base64: str | None = None
     matched_count = 0
 
-    repo = get_dataset_repository()
-    service = WizardService(store, repo)
+    active_repo = repo or get_dataset_repository()
+    service = WizardService(store, active_repo)
 
     if session.dataset_id:
-        with contextlib.suppress(Exception):
-            columns = repo.get_schema(session.dataset_id).columns or []
+        try:
+            columns = active_repo.get_schema(session.dataset_id).columns or []
+        except (AttributeError, KeyError, TypeError, ValueError):
+            logger.exception("Failed to load schema for dataset %s while rendering wizard", session.dataset_id)
 
     available_groups, available_clusters = service.get_available_groups_and_clusters(session)
 
@@ -196,20 +200,20 @@ def render_step(
         applicable_continuous, applicable_discrete = service.get_applicable_methods(session)
 
     elif session.current_step in ("results", "plot_selection", "export"):
-        if session.stat_results:
+        if render_session.stat_results:
             matched_count = sum(
                 1
-                for res in session.stat_results
+                for res in render_session.stat_results
                 if res.get("p_value") is not None and res["p_value"] <= plots_sig_filter
             )
-            sig_chart_base64 = generate_significance_chart_base64(session.stat_results, plots_sig_filter)
+            sig_chart_base64 = generate_significance_chart_base64(render_session.stat_results, plots_sig_filter)
 
         if session.current_step == "plot_selection":
             applicable_plots = service.get_applicable_plots(session)
 
     context = {
         "request": request,
-        "session": session,
+        "session": render_session,
         "completed_steps": completed_names,
         "is_step_completed": session.current_step in completed_names,
         "columns": columns,
@@ -229,7 +233,7 @@ def render_step(
         "matched_count": matched_count,
         "sort_field": sort_field,
         "sort_asc": sort_asc,
-        "datasets": repo.list_datasets(),
+        "datasets": active_repo.list_datasets(),
     }
 
     if "hx-request" in request.headers:

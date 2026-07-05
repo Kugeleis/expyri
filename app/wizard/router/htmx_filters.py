@@ -57,7 +57,7 @@ def add_filter(
         reason=reason,
     )
     store = get_session_store(request)
-    return render_step(request, session, store)
+    return render_step(request, session, store, repo=service.repo)
 
 
 @router.delete("/sessions/{session_id}/filters/{index}")
@@ -70,7 +70,7 @@ def delete_filter(
     """Remove a filter by its index position."""
     session = service.delete_filter(session_id, index)
     store = get_session_store(request)
-    return render_step(request, session, store)
+    return render_step(request, session, store, repo=service.repo)
 
 
 @router.post("/sessions/{session_id}/submit-filters")
@@ -82,4 +82,4 @@ def submit_filters(
     """Submit the filters and move to Step 3 (Choose Method)."""
     session = service.submit_filters(session_id)
     store = get_session_store(request)
-    return render_step(request, session, store)
+    return render_step(request, session, store, repo=service.repo)

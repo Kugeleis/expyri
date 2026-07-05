@@ -94,7 +94,7 @@ async def go_to_step_compatibility(
 
     if "hx-request" in request.headers:
         store = get_session_store(request)
-        return render_step(request, updated_session, store)
+        return render_step(request, updated_session, store, repo=service.repo)
     else:
         import json
 

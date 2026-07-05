@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, Request, Response
 from fastapi.responses import HTMLResponse
 
 from app.core.session import SessionStore
+from app.datasets.repository import DatasetRepository
 from app.wizard.router.compatibility import router as compatibility_router
 from app.wizard.router.dependencies import (
     get_dataset_repository,
@@ -22,10 +23,11 @@ router = APIRouter(prefix="/wizard", tags=["wizard"])
 def index(
     request: Request,
     store: SessionStore = Depends(get_session_store),
+    repo: DatasetRepository = Depends(get_dataset_repository),
 ) -> Response:
     """Home route that automatically initializes a wizard session."""
     session = store.create()
-    return render_step(request, session, store)
+    return render_step(request, session, store, repo=repo)
 
 
 router.include_router(htmx_dataset_router)

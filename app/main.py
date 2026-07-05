@@ -55,13 +55,18 @@ def create_app() -> FastAPI:
     from fastapi.responses import HTMLResponse
 
     from app.core.session import SessionStore
-    from app.wizard.router import get_session_store, render_step
+    from app.datasets.repository import DatasetRepository
+    from app.wizard.router import get_dataset_repository, get_session_store, render_step
 
     @application.get("/", response_class=HTMLResponse)
-    def root(request: Request, store: SessionStore = Depends(get_session_store)) -> Response:
+    def root(
+        request: Request,
+        store: SessionStore = Depends(get_session_store),
+        repo: DatasetRepository = Depends(get_dataset_repository),
+    ) -> Response:
         """Render the wizard homepage with a new session."""
         session = store.create()
-        return render_step(request, session, store)
+        return render_step(request, session, store, repo=repo)
 
     # Mount static files at /static
     application.mount("/static", StaticFiles(directory="app/static"), name="static")

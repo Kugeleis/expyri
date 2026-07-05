@@ -21,7 +21,7 @@ def update_method(
     """Update selected statistical methods in session and re-render step 3."""
     session = service.update_method(session_id, selected_method, selected_discrete_method)
     store = get_session_store(request)
-    return render_step(request, session, store)
+    return render_step(request, session, store, repo=service.repo)
 
 
 @router.post("/sessions/{session_id}/submit-method")
@@ -35,7 +35,7 @@ def submit_method(
     """Verify methods, execute the evaluations, and transition to Step 4 (Results)."""
     session = service.submit_method(session_id, selected_method, selected_discrete_method)
     store = get_session_store(request)
-    return render_step(request, session, store)
+    return render_step(request, session, store, repo=service.repo)
 
 
 @router.post("/sessions/{session_id}/update-sig-limit")
@@ -52,7 +52,7 @@ def update_sig_limit(
     session = service.get_session(session_id)
     store = get_session_store(request)
     safe_plots_sig_filter = float(plots_sig_filter)
-    res = render_step(request, session, store, plots_sig_filter=safe_plots_sig_filter)
+    res = render_step(request, session, store, plots_sig_filter=safe_plots_sig_filter, repo=service.repo)
     res.set_cookie("plots_sig_filter", str(safe_plots_sig_filter))
     return res
 
@@ -79,7 +79,15 @@ def update_sort(
 
     session = service.get_session(session_id)
     store = get_session_store(request)
-    res = render_step(request, session, store, plots_sig_filter=limit, sort_field=safe_field, sort_asc=sort_asc)
+    res = render_step(
+        request,
+        session,
+        store,
+        plots_sig_filter=limit,
+        sort_field=safe_field,
+        sort_asc=sort_asc,
+        repo=service.repo,
+    )
     res.set_cookie("sort_field", safe_field)
     res.set_cookie("sort_asc", "true" if sort_asc else "false")
     return res
@@ -94,7 +102,7 @@ def submit_results(
     """Submit the statistical evaluation and transition to Step 5 (Visualizations)."""
     session = service.submit_results(session_id)
     store = get_session_store(request)
-    return render_step(request, session, store)
+    return render_step(request, session, store, repo=service.repo)
 
 
 @router.post("/sessions/{session_id}/generate-plots")
@@ -108,7 +116,7 @@ def generate_plots_htmx(
     limit = float(request.cookies.get("plots_sig_filter", 0.05))
     session = service.generate_plots(session_id, selected_plots, limit)
     store = get_session_store(request)
-    return render_step(request, session, store)
+    return render_step(request, session, store, repo=service.repo)
 
 
 @router.post("/sessions/{session_id}/submit-plots")
@@ -120,7 +128,7 @@ def submit_plots(
     """Submit visualizations and transition to Step 6 (Export)."""
     session = service.submit_plots(session_id)
     store = get_session_store(request)
-    return render_step(request, session, store)
+    return render_step(request, session, store, repo=service.repo)
 
 
 @router.post("/sessions/{session_id}/navigate")
@@ -133,4 +141,4 @@ def navigate(
     """General Back / Next navigation handler."""
     session = service.navigate(session_id, direction)
     store = get_session_store(request)
-    return render_step(request, session, store)
+    return render_step(request, session, store, repo=service.repo)
