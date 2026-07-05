@@ -10,6 +10,7 @@ import pytest
 from app.filters.base import apply_filter_pipeline, filter_registry
 from app.filters.builtin.category_filter import CategoryFilter
 from app.filters.builtin.numeric_range import NumericRangeFilter
+from app.filters.models import FilterConfig
 
 
 @pytest.fixture
@@ -201,6 +202,15 @@ def test_pipeline_valid(sample_df: pd.DataFrame) -> None:
     # city in Boston -> Bob, David
     assert len(res) == 2
     assert list(res["name"]) == ["Bob", "David"]
+
+
+def test_pipeline_accepts_typed_filter_config(sample_df: pd.DataFrame) -> None:
+    """Typed filter configs should execute the same way as legacy dictionaries."""
+    configs = [FilterConfig(name="numeric_range", params={"column": "age", "min": 30})]
+
+    res = apply_filter_pipeline(sample_df, configs)
+
+    assert list(res["age"]) == [30, 35, 40]
 
 
 @pytest.mark.parametrize(

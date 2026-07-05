@@ -6,26 +6,30 @@ to decouple HTTP endpoints from the core wizard behavior.
 
 from __future__ import annotations
 
-import inspect
-from typing import Any, Literal, cast
+import logging
+from collections.abc import Sequence
+from typing import Any
 
-import pandas as pd
 from fastapi import HTTPException
 
 from app.core.session import ClusterExclusion, HierarchyConfig, SessionStore, WizardSession
-from app.datasets.hierarchical import HierarchicalData
 from app.datasets.repository import DatasetRepository
 from app.datasets.utils import resolve_selected_discrete_columns, resolve_selected_value_columns
 from app.filters.base import apply_filter_pipeline
-from app.plots.base import PlotResult, plot_registry
+from app.filters.models import FilterConfigInput, normalize_filter_configs
+from app.plots.base import plot_registry
 from app.stats.base import StatResult, stat_registry
 from app.stats.properties import (
-    build_cluster_aggregates,
     compute_properties,
     compute_properties_for_columns,
-    compute_quick_icc,
 )
+from app.wizard.filtering import build_filter_config, extract_cluster_exclusions, get_filtered_df_with_groups
+from app.wizard.hierarchy import setup_hierarchy
+from app.wizard.plotting import generate_individual_plots, select_top_plot_columns
+from app.wizard.statistics import run_stat_for_column
 from app.wizard.steps import WizardStep, reset_to_step, validate_step_transition
+
+logger = logging.getLogger(__name__)
 
 
 class WizardService:
@@ -62,7 +66,8 @@ class WizardService:
                 df = self.repo.load_dataset(session.dataset_id)
                 session.selected_value_columns = resolve_selected_value_columns(df, "", [])
                 session.selected_discrete_columns = resolve_selected_discrete_columns(df, "", [])
-            except Exception:
+            except (KeyError, ValueError, TypeError):
+                logger.exception("Failed to infer default columns for dataset %s", session.dataset_id)
                 session.selected_value_columns = []
                 session.selected_discrete_columns = []
         else:
@@ -100,7 +105,12 @@ class WizardService:
                 try:
                     df = self.repo.load_dataset(session.dataset_id)
                     session.selected_groups = sorted(df[session.group_column].dropna().astype(str).unique().tolist())
-                except Exception:
+                except (KeyError, ValueError, TypeError):
+                    logger.exception(
+                        "Failed to load groups for dataset %s and group column %s",
+                        session.dataset_id,
+                        session.group_column,
+                    )
                     session.selected_groups = []
             else:
                 session.selected_groups = []
@@ -127,7 +137,12 @@ class WizardService:
                 try:
                     df = self.repo.load_dataset(session.dataset_id)
                     session.hierarchy.selected_clusters = sorted(df[cluster_col].dropna().astype(str).unique().tolist())
-                except Exception:
+                except (KeyError, ValueError, TypeError):
+                    logger.exception(
+                        "Failed to load clusters for dataset %s and cluster column %s",
+                        session.dataset_id,
+                        cluster_col,
+                    )
                     session.hierarchy.selected_clusters = []
             else:
                 session.hierarchy.selected_clusters = []
@@ -136,99 +151,6 @@ class WizardService:
 
         self.store.save(session)
         return session
-
-    def _validate_cluster_col(self, schema: Any, group_column: str, cluster_col: str) -> None:
-        """Validate hierarchical cluster column constraints."""
-        if cluster_col == group_column:
-            raise HTTPException(
-                status_code=400,
-                detail="Cluster column must not be the same as the group column.",
-            )
-        cluster_col_info = next((col for col in schema.columns or [] if col.name == cluster_col), None)
-        if not cluster_col_info:
-            raise HTTPException(status_code=400, detail=f"Cluster column {cluster_col!r} not found")
-        if cluster_col_info.is_numeric:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Cluster column {cluster_col!r} must be discrete/categorical, but it is numeric.",
-            )
-
-    def _filter_hierarchical_columns(
-        self,
-        session: WizardSession,
-        df: pd.DataFrame,
-        group_column: str,
-        cluster_col: str,
-        unit_col: str | None,
-        x_col: str | None,
-        y_col: str | None,
-        selected_value_columns: list[str],
-        selected_discrete_columns: list[str],
-    ) -> None:
-        """Filter selected columns by hierarchy mapping and type checks."""
-        ignored_cols = {group_column, cluster_col}
-        if unit_col:
-            ignored_cols.add(unit_col)
-        if x_col:
-            ignored_cols.add(x_col)
-        if y_col:
-            ignored_cols.add(y_col)
-
-        session.selected_value_columns = [
-            col
-            for col in selected_value_columns
-            if col not in ignored_cols
-            and col in df.columns
-            and (pd.api.types.is_numeric_dtype(df[col]) or pd.api.types.is_bool_dtype(df[col]))
-        ]
-
-        new_disc = []
-        for col in selected_discrete_columns:
-            if col in ignored_cols or col not in df.columns:
-                continue
-            if pd.api.types.is_numeric_dtype(df[col]) or pd.api.types.is_bool_dtype(df[col]):
-                unique_vals = set(df[col].dropna().unique())
-                if unique_vals.issubset({0, 1}):
-                    new_disc.append(col)
-        session.selected_discrete_columns = new_disc
-
-    def _setup_hierarchy(
-        self,
-        session: WizardSession,
-        schema: Any,
-        df: pd.DataFrame,
-        group_column: str,
-        cluster_col: str,
-        selected_clusters: list[str],
-        unit_col: str | None,
-        x_col: str | None,
-        y_col: str | None,
-        selected_value_columns: list[str],
-        selected_discrete_columns: list[str],
-    ) -> None:
-        """Helper to configure and validate hierarchical settings."""
-        self._validate_cluster_col(schema, group_column, cluster_col)
-
-        session.hierarchy = HierarchyConfig(
-            group_col=group_column,
-            cluster_col=cluster_col,
-            selected_clusters=selected_clusters,
-            unit_col=unit_col,
-            x_col=x_col,
-            y_col=y_col,
-        )
-
-        self._filter_hierarchical_columns(
-            session,
-            df,
-            group_column,
-            cluster_col,
-            unit_col,
-            x_col,
-            y_col,
-            selected_value_columns,
-            selected_discrete_columns,
-        )
 
     def submit_dataset_config(
         self,
@@ -271,7 +193,7 @@ class WizardService:
         if session.hierarchy:
             if not cluster_col:
                 raise HTTPException(status_code=400, detail="Cluster column is required in hierarchical mode")
-            self._setup_hierarchy(
+            setup_hierarchy(
                 session,
                 schema,
                 df,
@@ -323,32 +245,12 @@ class WizardService:
         except KeyError:
             raise HTTPException(status_code=400, detail="Dataset missing") from None
 
-        params: dict[str, Any] = {}
-        if filter_type == "numeric_range":
-            params["column"] = column
-            params["min"] = float(min_val) if min_val else None
-            params["max"] = float(max_val) if max_val else None
-        elif filter_type == "category_filter":
-            params["column"] = column
-            params["values"] = [v.strip() for v in values.split(",")] if values else []
-            params["mode"] = "exclude" if exclude else "include"
-        elif filter_type == "cluster_exclusion":
-            if not cluster_id or not reason:
-                raise HTTPException(status_code=400, detail="Cluster ID and Reason are required")
-            params["exclusions"] = [{"cluster_id": cluster_id, "reason": reason}]
-        else:
-            raise HTTPException(status_code=400, detail="Invalid filter type")
-
-        new_filter = {
-            "name": filter_type,
-            "column": column,
-            "params": params,
-        }
+        new_filter = build_filter_config(filter_type, column, min_val, max_val, values, exclude, cluster_id, reason)
 
         test_configs = session.filters_config + [new_filter]
         try:
             apply_filter_pipeline(df, test_configs)
-        except Exception as e:
+        except (KeyError, ValueError, TypeError) as e:
             raise HTTPException(status_code=400, detail=f"Invalid filter parameters: {e}") from None
 
         session.filters_config = test_configs
@@ -369,8 +271,8 @@ class WizardService:
 
         removed = session.filters_config.pop(index)
 
-        if removed.get("name") == "cluster_exclusion":
-            exclusions_list = removed.get("params", {}).get("exclusions", [])
+        if removed.name == "cluster_exclusion":
+            exclusions_list = removed.params.get("exclusions", [])
             for item in exclusions_list:
                 session.excluded_clusters = [
                     ex for ex in session.excluded_clusters if ex.cluster_id != str(item["cluster_id"])
@@ -379,7 +281,7 @@ class WizardService:
         self.store.save(session)
         return session
 
-    def configure_filters(self, session_id: str, filters_config: list[dict[str, Any]]) -> WizardSession:
+    def configure_filters(self, session_id: str, filters_config: Sequence[FilterConfigInput]) -> WizardSession:
         """JSON compatibility: configure and apply a batch of preprocessing filters."""
         session = self.get_session(session_id)
         validate_step_transition(session, WizardStep.FILTERS)
@@ -393,19 +295,14 @@ class WizardService:
             raise HTTPException(status_code=400, detail="Dataset missing") from None
 
         try:
-            apply_filter_pipeline(df, filters_config)
-        except Exception as e:
+            normalized_filters = normalize_filter_configs(filters_config)
+            apply_filter_pipeline(df, normalized_filters)
+        except (KeyError, ValueError, TypeError) as e:
             raise HTTPException(status_code=400, detail=str(e)) from None
 
-        session.filters_config = filters_config
+        session.filters_config = normalized_filters
 
-        excluded = []
-        for f in filters_config:
-            if f.get("name") == "cluster_exclusion":
-                exclusions_list = f.get("params", {}).get("exclusions", [])
-                for item in exclusions_list:
-                    excluded.append(ClusterExclusion(cluster_id=str(item["cluster_id"]), reason=str(item["reason"])))
-        session.excluded_clusters = excluded
+        session.excluded_clusters = extract_cluster_exclusions(normalized_filters)
 
         session.current_step = WizardStep.STAT_METHOD.value
         self.store.save(session)
@@ -428,25 +325,6 @@ class WizardService:
         session.selected_discrete_method = selected_discrete_method
         self.store.save(session)
         return session
-
-    def _get_filtered_df_with_groups(self, session: WizardSession) -> pd.DataFrame:
-        """Utility to retrieve and group-filter dataset based on session configuration."""
-        if not session.dataset_id:
-            raise HTTPException(status_code=400, detail="Dataset not selected")
-
-        try:
-            df = self.repo.load_dataset(session.dataset_id)
-        except KeyError:
-            raise HTTPException(status_code=400, detail="Dataset missing") from None
-
-        filtered_df = apply_filter_pipeline(df, session.filters_config)
-        if session.group_column and session.selected_groups:
-            filtered_df = filtered_df[filtered_df[session.group_column].astype(str).isin(session.selected_groups)]
-        if session.hierarchy and session.hierarchy.selected_clusters:
-            filtered_df = filtered_df[
-                filtered_df[session.hierarchy.cluster_col].astype(str).isin(session.hierarchy.selected_clusters)
-            ]
-        return filtered_df
 
     def _validate_and_save_methods(
         self, session: WizardSession, selected_method: str | None, selected_discrete_method: str | None
@@ -482,19 +360,19 @@ class WizardService:
         if is_incomplete:
             raise HTTPException(status_code=400, detail="Incomplete setup")
 
-        filtered_df = self._get_filtered_df_with_groups(session)
+        filtered_df = get_filtered_df_with_groups(session, self.repo)
         self._validate_and_save_methods(session, selected_method, selected_discrete_method)
 
         results: list[StatResult] = []
         if session.selected_value_columns and session.selected_method:
             method = stat_registry.get(session.selected_method)
             for val_col in session.selected_value_columns:
-                results.append(self._run_stat_for_column(filtered_df, val_col, method, session))
+                results.append(run_stat_for_column(filtered_df, val_col, method, session))
 
         if session.selected_discrete_columns and session.selected_discrete_method:
             discrete_method = stat_registry.get(session.selected_discrete_method)
             for disc_col in session.selected_discrete_columns:
-                results.append(self._run_stat_for_column(filtered_df, disc_col, discrete_method, session))
+                results.append(run_stat_for_column(filtered_df, disc_col, discrete_method, session))
 
         results.sort(key=lambda r: r.p_value if r.p_value is not None else 1.0)
         session.stat_results = [res.model_dump() for res in results]
@@ -509,34 +387,6 @@ class WizardService:
         session.current_step = WizardStep.PLOT_SELECTION.value
         self.store.save(session)
         return session
-
-    def _generate_individual_plots(
-        self, session: WizardSession, filtered_df: pd.DataFrame, top_columns: list[str], selected_plots: list[str]
-    ) -> list[PlotResult]:
-        """Helper to call applicable plot generators and collect results."""
-        plot_results: list[PlotResult] = []
-
-        for value_col in top_columns:
-            props = compute_properties(session, filtered_df, value_col)
-            applicable = plot_registry.get_applicable(props)
-            for name in selected_plots:
-                if name not in applicable:
-                    continue
-                generator = plot_registry.get(name)
-
-                sig = inspect.signature(generator.generate)
-                kwargs: dict[str, Any] = {}
-                is_hier = "hierarchy" in sig.parameters or any(
-                    p.kind == inspect.Parameter.VAR_KEYWORD for p in sig.parameters.values()
-                )
-                if is_hier:
-                    kwargs["hierarchy"] = session.hierarchy
-                    kwargs["excluded_clusters"] = [ex.cluster_id for ex in session.excluded_clusters]
-
-                plot_result = generator.generate(filtered_df, session.group_column or "", value_col, **kwargs)
-                plot_result.column_name = value_col
-                plot_results.append(plot_result)
-        return plot_results
 
     def generate_plots(
         self,
@@ -555,24 +405,9 @@ class WizardService:
         if is_incomplete:
             raise HTTPException(status_code=400, detail="Incomplete setup")
 
-        filtered_df = self._get_filtered_df_with_groups(session)
-
-        if session.stat_results:
-            if top_n_columns is not None:
-                ranked_cols = [res["column_name"] for res in session.stat_results if "column_name" in res]
-                top_columns = [col for col in ranked_cols if col and col in session.selected_value_columns][
-                    :top_n_columns
-                ]
-            else:
-                top_columns = [
-                    res["column_name"]
-                    for res in session.stat_results
-                    if "column_name" in res and res.get("p_value") is not None and res["p_value"] <= plots_sig_filter
-                ]
-        else:
-            top_columns = session.selected_value_columns[:top_n_columns] if top_n_columns is not None else []
-
-        plot_results = self._generate_individual_plots(session, filtered_df, top_columns, selected_plots)
+        filtered_df = get_filtered_df_with_groups(session, self.repo)
+        top_columns = select_top_plot_columns(session, plots_sig_filter, top_n_columns)
+        plot_results = generate_individual_plots(session, filtered_df, top_columns, selected_plots)
 
         session.selected_plots = selected_plots
         session.top_n_columns = len(top_columns)
@@ -632,57 +467,6 @@ class WizardService:
         self.store.save(session)
         return session
 
-    def _run_stat_for_column(
-        self,
-        filtered_df: pd.DataFrame,
-        value_col: str,
-        method: Any,
-        session: WizardSession,
-    ) -> StatResult:
-        """Internal helper to run evaluation on a single column (flat or hierarchical)."""
-        if session.hierarchy is not None:
-            unique_vals = set(filtered_df[value_col].dropna().unique())
-            is_bin = unique_vals.issubset({0, 1}) and len(unique_vals) > 0
-            is_num = pd.api.types.is_numeric_dtype(filtered_df[value_col]) or pd.api.types.is_bool_dtype(
-                filtered_df[value_col]
-            )
-            metric_kind: Literal["continuous", "binary_proportion", "unsupported"] = (
-                "binary_proportion" if is_bin else ("continuous" if is_num else "unsupported")
-            )
-            if metric_kind == "unsupported":
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"Column {value_col!r} is not supported in hierarchical mode.",
-                )
-            excluded_ids = [ex.cluster_id for ex in session.excluded_clusters]
-            cluster_agg = build_cluster_aggregates(filtered_df, session.hierarchy, excluded_ids, value_col, metric_kind)
-            clean_unit = filtered_df[~filtered_df[session.hierarchy.cluster_col].astype(str).isin(excluded_ids)]
-            icc = compute_quick_icc(clean_unit, session.hierarchy.cluster_col, value_col)
-            h_data = HierarchicalData(
-                unit_df=filtered_df,
-                cluster_agg=cluster_agg,
-                config=session.hierarchy,
-                excluded_clusters=excluded_ids,
-                metric=value_col,
-                metric_kind=metric_kind,
-                icc=icc,
-            )
-            try:
-                res = method.run(h_data)
-            except ValueError as e:
-                raise HTTPException(status_code=400, detail=str(e)) from None
-        else:
-            # Group flat data
-            grouped = filtered_df.groupby(session.group_column)[value_col]
-            group_data = {str(name): list(group.dropna().values) for name, group in grouped}
-            try:
-                res = method.run(group_data)
-            except ValueError as e:
-                raise HTTPException(status_code=400, detail=str(e)) from None
-
-        res.column_name = value_col
-        return cast(StatResult, res)
-
     def get_available_groups_and_clusters(self, session: WizardSession) -> tuple[list[str], list[str]]:
         """Retrieve sorted unique group values and cluster values for the active dataset."""
         groups: list[str] = []
@@ -696,8 +480,8 @@ class WizardService:
                 groups = sorted(df[session.group_column].dropna().astype(str).unique().tolist())
             if session.hierarchy and session.hierarchy.cluster_col:
                 clusters = sorted(df[session.hierarchy.cluster_col].dropna().astype(str).unique().tolist())
-        except Exception:
-            pass
+        except (KeyError, ValueError, TypeError):
+            logger.exception("Failed to load available groups or clusters for session %s", session.session_id)
         return groups, clusters
 
     def get_applicable_methods(self, session: WizardSession) -> tuple[dict[str, Any], dict[str, Any]]:
@@ -708,7 +492,7 @@ class WizardService:
             return applicable_continuous, applicable_discrete
 
         try:
-            filtered_df = self._get_filtered_df_with_groups(session)
+            filtered_df = get_filtered_df_with_groups(session, self.repo)
             if session.selected_value_columns:
                 props_map = compute_properties_for_columns(session, filtered_df, session.selected_value_columns)
                 applicable_continuous = stat_registry.get_applicable_intersect(props_map)
@@ -717,8 +501,8 @@ class WizardService:
                     session, filtered_df, session.selected_discrete_columns
                 )
                 applicable_discrete = stat_registry.get_applicable_intersect(props_map_discrete)
-        except Exception:
-            pass
+        except (AttributeError, KeyError, RuntimeError, TypeError, ValueError):
+            logger.exception("Failed to compute applicable methods for session %s", session.session_id)
         return applicable_continuous, applicable_discrete
 
     def get_applicable_plots(self, session: WizardSession) -> dict[str, Any]:
@@ -728,10 +512,10 @@ class WizardService:
             return applicable_plots
 
         try:
-            filtered_df = self._get_filtered_df_with_groups(session)
+            filtered_df = get_filtered_df_with_groups(session, self.repo)
             if session.selected_value_columns:
                 props = compute_properties(session, filtered_df, session.selected_value_columns[0])
                 applicable_plots = plot_registry.get_applicable(props)
-        except Exception:
-            pass
+        except (AttributeError, KeyError, RuntimeError, TypeError, ValueError):
+            logger.exception("Failed to compute applicable plots for session %s", session.session_id)
         return applicable_plots

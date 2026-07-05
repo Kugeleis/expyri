@@ -5,6 +5,7 @@ from __future__ import annotations
 import pytest
 
 from app.core.session import WizardSession
+from app.filters.models import dump_filter_configs
 from app.wizard.steps import (
     StepGuardError,
     WizardStep,
@@ -161,7 +162,7 @@ def test_reset_to_filters_clears_downstream() -> None:
     assert session.group_column == "g"
     assert session.selected_value_columns == ["v"]
     expected_filters = [{"name": "numeric_range", "params": {"column": "v", "min": 1}}]
-    assert session.filters_config == expected_filters
+    assert dump_filter_configs(session.filters_config) == expected_filters
 
     # Everything after filters should be cleared
     assert session.selected_method is None
@@ -210,7 +211,7 @@ def test_reset_to_stat_method_preserves_filters() -> None:
     reset_to_step(session, WizardStep.STAT_METHOD)
 
     assert session.dataset_id == "ds1"
-    assert session.filters_config == [{"name": "f"}]
+    assert dump_filter_configs(session.filters_config) == [{"name": "f"}]
     assert session.selected_method == "ttest"  # kept — it's the target step
     assert not session.stat_results  # cleared — after target
     assert session.selected_plots == []

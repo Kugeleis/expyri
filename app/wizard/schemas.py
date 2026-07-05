@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from pydantic import BaseModel, Field
+
+from app.filters.models import FilterConfig
 
 
 class DatasetSelectionRequest(BaseModel):
@@ -34,17 +34,10 @@ class DatasetSelectionRequest(BaseModel):
     )
 
 
-class FilterConfigEntry(BaseModel):
-    """A single filter configuration."""
-
-    name: str = Field(..., description="Name of the filter plugin.")
-    params: dict[str, Any] = Field(default_factory=dict, description="Configuration parameters.")
-
-
 class FiltersConfigRequest(BaseModel):
     """Payload for configuring preprocessing filters."""
 
-    filters_config: list[FilterConfigEntry] = Field(..., description="Sequence of filters to apply.")
+    filters_config: list[FilterConfig] = Field(..., description="Sequence of filters to apply.")
 
 
 class MethodSelectionRequest(BaseModel):

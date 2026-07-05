@@ -9,6 +9,8 @@ import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
 
+from app.filters.models import dump_filter_configs
+
 if TYPE_CHECKING:
     from app.core.session import WizardSession
 
@@ -31,7 +33,7 @@ def save_parquet_with_metadata(df: pd.DataFrame, session: WizardSession, path: P
         "selected_value_columns": session.selected_value_columns,
         "selected_discrete_columns": session.selected_discrete_columns,
         "selected_groups": session.selected_groups,
-        "filters_config": session.filters_config,
+        "filters_config": dump_filter_configs(session.filters_config),
         "selected_method": session.selected_method,
         "selected_discrete_method": session.selected_discrete_method,
         "plot_results": session.plot_results,
