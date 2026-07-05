@@ -2,6 +2,8 @@
 
 from fastapi.testclient import TestClient
 
+from app.main import __version__
+
 
 def test_app_starts(client: TestClient) -> None:
     """The application should respond to OpenAPI docs endpoint."""
@@ -16,6 +18,7 @@ def test_root_serves_homepage(client: TestClient) -> None:
     response = client.get("/")
     assert response.status_code == 200
     assert "ExPyRi" in response.text
+    assert f"v{__version__}" in response.text
     assert "Experiment Evaluation Wizard" in response.text
 
 

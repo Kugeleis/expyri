@@ -131,6 +131,7 @@ label {
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    min-width: 0;
 }
 
 .logo .icon {
@@ -140,12 +141,21 @@ label {
 .logo h1 {
     font-size: 1.3rem;
     font-weight: 700;
-    letter-spacing: -0.5px;
+    letter-spacing: 0;
     background: linear-gradient(135deg, #fff 0%, #a7f3d0 100%);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
     margin: 0;
+}
+
+.app-version {
+    color: var(--pico-muted-color);
+    font-size: 0.72rem;
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+    padding-top: 0.15rem;
 }
 
 .session-info {

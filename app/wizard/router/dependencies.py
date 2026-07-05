@@ -213,6 +213,7 @@ def render_step(
 
     context = {
         "request": request,
+        "app_version": getattr(request.scope.get("app"), "version", "0.1.0"),
         "session": render_session,
         "completed_steps": completed_names,
         "is_step_completed": session.current_step in completed_names,
