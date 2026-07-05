@@ -15,34 +15,58 @@ The project is built on SOLID open/closed principles, allowing developers to add
 
 ## Architecture Diagram
 
-The wizard maintains state using an in-memory session store (interfaced via a protocol dependency, allowing easy swap to Redis/DB). Each stage is guarded by step prerequisites. Applicability guards query registries to list options suited to the dataset's current characteristics (e.g., number of groups, normality, homogeneity of variance).
+The wizard maintains state using an in-memory session store (interfaced via a protocol dependency, allowing easy swap to Redis/DB). Datasets are loaded through a repository abstraction, and each stage is guarded by step prerequisites. Applicability guards query registries to list options suited to the dataset's current characteristics (e.g., number of groups, normality, homogeneity of variance).
 
 ```mermaid
-graph TD
-    subgraph Clients [Frontend Clients]
-        HTML["HTMX Web App (Jinja2)"]
-        JSON["JSON HTTP Clients (REST)"]
+flowchart TD
+    subgraph Clients
+        HTML["HTMX Web App"]
+        JSON["REST JSON Clients"]
     end
 
-    subgraph Service [Core Service Layer]
-        WS["WizardService (Core Logic)"]
+    subgraph Application
+        Router["FastAPI wizard routes"]
+        Service["WizardService"]
+        Guards["Step guards"]
     end
 
-    subgraph Store [Session Storage]
-        StoreDB["InMemorySessionStore (with TTL)"]
+    subgraph Storage
+        StoreDB["InMemorySessionStore TTL"]
+        Repo["MultiFormatDatasetRepository"]
+        DataDir["Data directory uploads and exports"]
     end
 
-    subgraph Registries [Plugin Registries]
-        FR["filter_registry"]
-        SR["stat_registry"]
-        PR["plot_registry"]
-        ER["exporter_registry"]
+    subgraph PluginRegistries
+        Filters["filter_registry"]
+        Stats["stat_registry"]
+        Plots["plot_registry"]
+        Exporters["exporter_registry"]
     end
 
-    HTML -->|POST Forms / hx-post| WS
-    JSON -->|JSON Payloads| WS
-    WS <-->|Read / Write / Evict| StoreDB
-    WS -.->|Queries & Executes| Registries
+    subgraph Outputs
+        StatResults["Statistical results"]
+        PlotImages["Generated plot images"]
+        Reports["PDF CSV JSON Parquet exports"]
+    end
+
+    HTML -->|forms and htmx| Router
+    JSON -->|JSON payloads| Router
+    Router --> Service
+    Service --> Guards
+    Service -->|read and write| StoreDB
+    StoreDB -->|session state| Service
+    Service -->|load schema and data| Repo
+    Repo --> DataDir
+    Service -->|apply preprocessing| Filters
+    Service -->|select and run methods| Stats
+    Service -->|generate visualizations| Plots
+    Stats --> StatResults
+    Plots --> PlotImages
+    Router -->|download requests| Exporters
+    Exporters --> Reports
+    StatResults --> Exporters
+    PlotImages --> Exporters
+    Repo -->|filtered dataset| Exporters
 ```
 
 ---
