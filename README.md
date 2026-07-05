@@ -5,7 +5,7 @@
 [![CI](https://github.com/Kugeleis/expyri/actions/workflows/ci.yml/badge.svg)](https://github.com/Kugeleis/expyri/actions/workflows/ci.yml)
 [![Docs](https://img.shields.io/badge/docs-GitHub%20Pages-blue.svg)](https://kugeleis.github.io/expyri/)
 [![CodeQL](https://github.com/Kugeleis/expyri/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/Kugeleis/expyri/actions/workflows/github-code-scanning/codeql)
-[![Python Version](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
+[![Python Version](https://img.shields.io/badge/python-3.14-blue.svg)](https://www.python.org/downloads/)
 
 ExPyRi is a modular, extensible FastAPI backend that guides users through a multi-step statistical evaluation wizard: **Dataset Selection → Preprocessing Filters → Statistical Method → Run Evaluation → Plot Selection → Report Export**.
 
@@ -55,7 +55,7 @@ graph TD
 
 ### Prerequisites
 
-- Python >= 3.12
+- Python 3.14
 - [uv](https://github.com/astral-sh/uv) (Python package manager)
 
 ### Installation
@@ -70,6 +70,48 @@ Start the FastAPI server with auto-reload:
 task dev
 ```
 The documentation will be available at `http://127.0.0.1:8000/docs`.
+
+### Running with Docker
+The Docker image is based on Astral's uv Python 3.14 slim image, `ghcr.io/astral-sh/uv:0.11.26-python3.14-trixie-slim`.
+
+Build the image locally:
+```bash
+docker build -t expyri .
+```
+
+Run ExPyRi on port 8000 with a persistent data directory:
+```bash
+docker run --rm -p 8000:8000 -v "$PWD/data:/app/data" expyri
+```
+
+The container sets `EXPYRI_DATA_DIR=/app/data`. Uploaded datasets are stored in that directory, and generated Parquet exports are written under `/app/data/exports`. Mounting a host directory or Docker volume at `/app/data` keeps uploads and exports across container restarts.
+
+The image runs as a non-root user with UID/GID `1000` by default so typical Linux bind mounts are writable. If your host user has a different ID, rebuild with matching IDs:
+```bash
+docker build --build-arg UID="$(id -u)" --build-arg GID="$(id -g)" -t expyri .
+```
+
+Convenience tasks are also available:
+```bash
+task docker:build
+task docker:run
+```
+
+### GHCR Image
+Published images are available from GitHub Container Registry:
+```bash
+docker pull ghcr.io/kugeleis/expyri:edge
+docker run --rm -p 8000:8000 -v "$PWD/data:/app/data" ghcr.io/kugeleis/expyri:edge
+```
+
+Image tags are published as follows:
+
+| Tag | Meaning |
+|---|---|
+| `edge` | Latest image built from the `master` branch |
+| `sha-<commit>` | Immutable image for a specific commit |
+| `<version>`, `<major>.<minor>`, `<major>` | Semver tags created from version tags such as `v0.7.1` |
+| `latest` | Latest version-tagged release image |
 
 ---
 
