@@ -381,6 +381,9 @@ def test_no_scroll_on_method_selection(playwright_server: str, page: Page) -> No
     dataset_select = page.locator("select[name='dataset_id']")
     dataset_select.wait_for()
     dataset_select.select_option("playwright_normal_data.csv")
+    page.wait_for_selector("select[name='group_column']")
+    page.locator("select[name='group_column']").select_option("group")
+    page.wait_for_selector("input[name='selected_groups']")
     page.click("text=Continue")
 
     # Step 2: Navigate to method selection
@@ -395,9 +398,22 @@ def test_no_scroll_on_method_selection(playwright_server: str, page: Page) -> No
     assert scroll_pos_before > 0
 
     # Select the radio button (e.g. Mann-Whitney)
+    page.evaluate(
+        """
+        window.__methodUpdateSettled = false;
+        function markMethodUpdateSettled(evt) {
+            if (evt.detail.elt && evt.detail.elt.id === 'workspace-container') {
+                window.__methodUpdateSettled = true;
+                document.body.removeEventListener('htmx:afterSettle', markMethodUpdateSettled);
+            }
+        }
+        document.body.addEventListener('htmx:afterSettle', markMethodUpdateSettled);
+        """
+    )
     page.locator("input[name='selected_method'][value='mann_whitney']").check()
 
     # Wait for the check/HTMX update to complete
+    page.wait_for_function("window.__methodUpdateSettled === true")
     page.wait_for_selector("input[name='selected_method'][value='mann_whitney']:checked")
 
     # Check scroll position after selection
