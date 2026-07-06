@@ -5,8 +5,8 @@
     </p>
 
     <!-- Upload/Select Section -->
-    <div style="margin-bottom: 1.5rem; display: flex; gap: 1rem; align-items: flex-end;">
-        <div style="flex: 1;">
+    <div class="dataset-picker-row">
+        <div class="dataset-picker-field">
             <label for="file-upload">Upload Dataset (CSV, XPT, HDF5, Parquet)</label>
             <input type="file" id="file-upload" name="file" accept=".csv,.xpt,.h5,.parquet"
                    hx-post="/wizard/sessions/{{ session.session_id }}/upload"
@@ -14,7 +14,7 @@
                    hx-target="#workspace-container"
                    hx-trigger="change" />
         </div>
-        <div style="flex: 1;">
+        <div class="dataset-picker-field">
             <label for="dataset-select">Or Select Existing Dataset</label>
             <select id="dataset-select" name="dataset_id"
                     hx-post="/wizard/sessions/{{ session.session_id }}/select-dataset-id"
@@ -22,6 +22,9 @@
                 <option value="">-- Select a dataset --</option>
                 {% for ds in datasets %}
                     <option value="{{ ds.id }}" {% if session.dataset_id == ds.id %}selected{% endif %}>{{ ds.name }} ({{ ds.id }})</option>
+                    {% if ds.filename and ds.filename != ds.id %}
+                        <option value="{{ ds.filename }}" hidden>{{ ds.name }} ({{ ds.filename }})</option>
+                    {% endif %}
                 {% endfor %}
             </select>
         </div>
@@ -29,21 +32,19 @@
 
     {% if session.dataset_id %}
         <div class="dataset-details" id="dataset-details">
-            <div class="details-meta" style="margin-top: 15px; margin-bottom: 1rem;">
-                <span class="label" style="font-weight: bold;">Selected Dataset:</span>
+            <div class="details-meta">
+                <span class="label">Selected Dataset:</span>
                 <span id="detail-desc" class="value">{{ session.dataset_id }}</span>
             </div>
 
             <!-- Flat vs Hierarchical Tabs -->
-            <nav class="experiment-tabs" style="margin-top: 1.5rem; margin-bottom: 1rem; border-bottom: 1px solid var(--pico-border-color); display: flex; width: 100%;">
+            <nav class="experiment-tabs">
                 <button type="button" class="tab-btn {% if not session.hierarchy %}active{% endif %}"
-                        style="flex: 1; background: none; border: none; border-bottom: 2px solid {% if not session.hierarchy %}var(--pico-primary){% else %}transparent{% endif %}; color: {% if not session.hierarchy %}var(--pico-color){% else %}var(--pico-muted-color){% endif %}; font-weight: 600; padding: 0.5rem 1rem; cursor: pointer;"
                         hx-post="/wizard/sessions/{{ session.session_id }}/toggle-hierarchy?enabled=false"
                         hx-target="#workspace-container">
                     Flat Experiment
                 </button>
                 <button type="button" class="tab-btn {% if session.hierarchy %}active{% endif %}"
-                        style="flex: 1; background: none; border: none; border-bottom: 2px solid {% if session.hierarchy %}var(--pico-primary){% else %}transparent{% endif %}; color: {% if session.hierarchy %}var(--pico-color){% else %}var(--pico-muted-color){% endif %}; font-weight: 600; padding: 0.5rem 1rem; cursor: pointer;"
                         hx-post="/wizard/sessions/{{ session.session_id }}/toggle-hierarchy?enabled=true"
                         hx-target="#workspace-container">
                     Hierarchical Experiment
@@ -52,11 +53,11 @@
 
             <form hx-post="/wizard/sessions/{{ session.session_id }}/submit-dataset-config" hx-target="#workspace-container">
                 <!-- Columns Config Form Grid -->
-                <div class="auto-grid" style="--grid-min: 300px; --grid-gap: 1.25rem;">
+                <div class="auto-grid grid-dataset-config">
                     <!-- Group / Cluster Selection -->
-                    <article style="padding: 1rem; margin-bottom: 0;">
-                        <div style="margin-bottom: 1rem;">
-                            <label for="group-col-select" style="font-weight: 600; color: var(--accent-blue);">Group Column (Independent Variable)</label>
+                    <article class="config-card">
+                        <div class="field-block">
+                            <label class="accent-label" for="group-col-select">Group Column (Independent Variable)</label>
                             <select id="group-col-select" name="group_column"
                                     hx-post="/wizard/sessions/{{ session.session_id }}/update-group-col"
                                     hx-target="#workspace-container"
@@ -69,14 +70,14 @@
                         </div>
 
                         {% if session.group_column and available_groups %}
-                            <div style="margin-top: 0.75rem;">
-                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem;">
-                                    <label style="font-weight: 600; color: var(--accent-blue); margin-bottom: 0;">Subgroups to Include</label>
-                                    <span style="font-size: 0.8rem; cursor: pointer; color: var(--pico-primary); user-select: none;" onclick="toggleCheckboxes(this, 'selected_groups')">☑ Toggle All</span>
+                            <div class="checklist-section">
+                                <div class="checklist-header">
+                                    <label class="checklist-title">Subgroups to Include</label>
+                                    <span class="toggle-all" onclick="toggleCheckboxes(this, 'selected_groups')">☑ Toggle All</span>
                                 </div>
-                                <div class="value-columns-list" style="max-height: 180px; overflow-y: auto; border: 1px solid var(--pico-border-color); padding: 0.5rem; border-radius: 4px;">
+                                <div class="value-columns-list value-columns-list-short">
                                     {% for grp in available_groups %}
-                                        <label style="display: block; margin-bottom: 0.25rem;">
+                                        <label class="checklist-label">
                                             <input type="checkbox" name="selected_groups" value="{{ grp }}"
                                                    {% if grp in session.selected_groups %}checked{% endif %} />
                                             {{ grp }}
@@ -89,9 +90,9 @@
 
                     <!-- Hierarchical Extra Config -->
                     {% if session.hierarchy %}
-                        <article style="padding: 1rem; margin-bottom: 0;">
-                            <div style="margin-bottom: 1rem;">
-                                <label for="cluster-col-select" style="font-weight: 600; color: var(--accent-blue);">Cluster Column (Level 1)</label>
+                        <article class="config-card">
+                            <div class="field-block">
+                                <label class="accent-label" for="cluster-col-select">Cluster Column (Level 1)</label>
                                 <select id="cluster-col-select" name="cluster_col"
                                         hx-post="/wizard/sessions/{{ session.session_id }}/update-cluster-col"
                                         hx-target="#workspace-container"
@@ -104,14 +105,14 @@
                             </div>
 
                             {% if session.hierarchy.cluster_col and available_clusters %}
-                                <div style="margin-top: 0.75rem;">
-                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem;">
-                                        <label style="font-weight: 600; color: var(--accent-blue); margin-bottom: 0;">Clusters to Include</label>
-                                        <span style="font-size: 0.8rem; cursor: pointer; color: var(--pico-primary); user-select: none;" onclick="toggleCheckboxes(this, 'selected_clusters')">☑ Toggle All</span>
+                                <div class="checklist-section">
+                                    <div class="checklist-header">
+                                        <label class="checklist-title">Clusters to Include</label>
+                                        <span class="toggle-all" onclick="toggleCheckboxes(this, 'selected_clusters')">☑ Toggle All</span>
                                     </div>
-                                    <div class="value-columns-list" style="max-height: 180px; overflow-y: auto; border: 1px solid var(--pico-border-color); padding: 0.5rem; border-radius: 4px;">
+                                    <div class="value-columns-list value-columns-list-short">
                                         {% for cls in available_clusters %}
-                                            <label style="display: block; margin-bottom: 0.25rem;">
+                                            <label class="checklist-label">
                                                 <input type="checkbox" name="selected_clusters" value="{{ cls }}"
                                                        {% if cls in session.hierarchy.selected_clusters %}checked{% endif %} />
                                                 {{ cls }}
@@ -122,9 +123,9 @@
                             {% endif %}
                         </article>
 
-                        <article style="padding: 1rem; margin-bottom: 0;">
-                            <header style="margin-bottom: 0.5rem; font-weight: bold; font-size: 0.95rem;">Unit & Spatial Coordinates (Optional)</header>
-                            <div style="margin-bottom: 0.75rem;">
+                        <article class="config-card">
+                            <header class="coordinates-title">Unit & Spatial Coordinates (Optional)</header>
+                            <div class="field-block-tight">
                                 <label for="unit-col-select">Unit Column (Level 0)</label>
                                 <select id="unit-col-select" name="unit_col">
                                     <option value="">None</option>
@@ -133,7 +134,7 @@
                                     {% endfor %}
                                 </select>
                             </div>
-                            <div class="auto-grid" style="--grid-min: 120px; --grid-gap: 0.75rem;">
+                            <div class="auto-grid grid-coordinate-fields">
                                 <div>
                                     <label for="x-col-select">X Coordinate</label>
                                     <select id="x-col-select" name="x_col">
@@ -158,16 +159,16 @@
                 </div>
 
                 <!-- Dependent Columns Selection -->
-                <div class="auto-grid" style="--grid-min: 300px; --grid-gap: 1.25rem; margin-top: 1.5rem;">
+                <div class="auto-grid grid-dependent-columns">
                     <!-- Continuous Dependent Columns Card -->
-                    <article class="config-card" style="padding: 1rem; margin-bottom: 0;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                            <label style="font-weight: 600; margin-bottom: 0;">Continuous Dependent Columns (Numeric)</label>
-                            <span style="font-size: 0.8rem; cursor: pointer; color: var(--pico-primary); user-select: none;" onclick="toggleCheckboxes(this, 'selected_value_columns')">☑ Toggle All</span>
+                    <article class="config-card">
+                        <div class="column-picker-header">
+                            <label class="column-picker-title">Continuous Dependent Columns (Numeric)</label>
+                            <span class="toggle-all" onclick="toggleCheckboxes(this, 'selected_value_columns')">☑ Toggle All</span>
                         </div>
-                        <div class="value-columns-list" style="max-height: 200px; overflow-y: auto; border: 1px solid var(--pico-border-color); padding: 0.5rem; border-radius: 4px;">
+                        <div class="value-columns-list value-columns-list-medium">
                             {% for col in columns if col.is_numeric and col.name != session.group_column and (not session.hierarchy or col.name != session.hierarchy.cluster_col) %}
-                                <label style="display: block; margin-bottom: 0.25rem;">
+                                <label class="checklist-label">
                                     <input type="checkbox" name="selected_value_columns" value="{{ col.name }}"
                                            {% if not session.selected_value_columns and not session.selected_discrete_columns or col.name in session.selected_value_columns %}checked{% endif %} />
                                     {{ col.name }}
@@ -177,14 +178,14 @@
                     </article>
 
                     <!-- Discrete Dependent Columns Card -->
-                    <article class="config-card" style="padding: 1rem; margin-bottom: 0;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                            <label style="font-weight: 600; margin-bottom: 0;">Discrete Dependent Columns (Categorical)</label>
-                            <span style="font-size: 0.8rem; cursor: pointer; color: var(--pico-primary); user-select: none;" onclick="toggleCheckboxes(this, 'selected_discrete_columns')">☑ Toggle All</span>
+                    <article class="config-card">
+                        <div class="column-picker-header">
+                            <label class="column-picker-title">Discrete Dependent Columns (Categorical)</label>
+                            <span class="toggle-all" onclick="toggleCheckboxes(this, 'selected_discrete_columns')">☑ Toggle All</span>
                         </div>
-                        <div class="value-columns-list" style="max-height: 200px; overflow-y: auto; border: 1px solid var(--pico-border-color); padding: 0.5rem; border-radius: 4px;">
+                        <div class="value-columns-list value-columns-list-medium">
                             {% for col in columns if not col.is_numeric and col.name != session.group_column and (not session.hierarchy or col.name != session.hierarchy.cluster_col) %}
-                                <label style="display: block; margin-bottom: 0.25rem;">
+                                <label class="checklist-label">
                                     <input type="checkbox" name="selected_discrete_columns" value="{{ col.name }}"
                                            {% if not session.selected_value_columns and not session.selected_discrete_columns or col.name in session.selected_discrete_columns %}checked{% endif %} />
                                     {{ col.name }}

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import base64
 import io
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -12,6 +12,7 @@ import numpy as np
 import pandas as pd
 
 from app.plots.base import PlotGenerator, PlotResult, plot_registry
+from app.plots.theme import PlotTheme, plot_context, save_plot
 
 if TYPE_CHECKING:
     from app.stats.base import DataProperties
@@ -49,7 +50,14 @@ class EcdfPlot(PlotGenerator):
             return False
         return all(size >= 1 for size in group_sizes.values())
 
-    def generate(self, df: pd.DataFrame, group_col: str, value_col: str) -> PlotResult:
+    def generate(
+        self,
+        df: pd.DataFrame,
+        group_col: str,
+        value_col: str,
+        theme: PlotTheme = "dark",
+        **_: Any,
+    ) -> PlotResult:
         """Generate an ECDF plot.
 
         Args:
@@ -62,26 +70,27 @@ class EcdfPlot(PlotGenerator):
         """
         groups = sorted(df[group_col].dropna().unique())
 
-        fig, ax = plt.subplots()
-        try:
-            for g in groups:
-                group_data = df[df[group_col] == g][value_col].dropna().values
-                if len(group_data) > 0:
-                    x = np.sort(group_data)
-                    y = np.arange(1, len(x) + 1) / len(x)
-                    ax.step(x, y, where="post", label=str(g))
+        with plot_context(theme):
+            fig, ax = plt.subplots()
+            try:
+                for g in groups:
+                    group_data = df[df[group_col] == g][value_col].dropna().values
+                    if len(group_data) > 0:
+                        x = np.sort(group_data)
+                        y = np.arange(1, len(x) + 1) / len(x)
+                        ax.step(x, y, where="post", label=str(g))
 
-            ax.set_title(f"ECDF of {value_col} by {group_col}")
-            ax.set_xlabel(value_col)
-            ax.set_ylabel("F_n(x)")
-            ax.legend()
+                ax.set_title(f"ECDF of {value_col} by {group_col}")
+                ax.set_xlabel(value_col)
+                ax.set_ylabel("F_n(x)")
+                ax.legend()
 
-            buf = io.BytesIO()
-            fig.savefig(buf, format="png", bbox_inches="tight")
-            buf.seek(0)
-            image_base64 = base64.b64encode(buf.read()).decode("utf-8")
-        finally:
-            plt.close(fig)
+                buf = io.BytesIO()
+                save_plot(fig, buf, theme=theme, format="png", bbox_inches="tight")
+                buf.seek(0)
+                image_base64 = base64.b64encode(buf.read()).decode("utf-8")
+            finally:
+                plt.close(fig)
 
         return PlotResult(
             column_name=None,

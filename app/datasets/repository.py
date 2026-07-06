@@ -227,6 +227,7 @@ class MultiFormatDatasetRepository:
                             id=stem,
                             name=stem.replace("_", " ").title(),
                             description=f"{ext_upper} dataset from {path.name}",
+                            filename=path.name,
                         )
                     )
         return datasets
@@ -245,6 +246,7 @@ class MultiFormatDatasetRepository:
             id=dataset_id,
             name=dataset_id.replace("_", " ").title(),
             description=f"{ext_upper} dataset from {path.name}",
+            filename=path.name,
             columns=columns,
         )
 

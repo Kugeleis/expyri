@@ -62,7 +62,7 @@ _STEP_FIELDS: dict[WizardStep, list[str]] = {
     WizardStep.FILTERS: ["filters_config", "excluded_clusters"],
     WizardStep.STAT_METHOD: ["selected_method", "selected_discrete_method"],
     WizardStep.RESULTS: ["stat_results"],
-    WizardStep.PLOT_SELECTION: ["selected_plots", "plot_results"],
+    WizardStep.PLOT_SELECTION: ["selected_plots", "plot_results", "plot_theme"],
     WizardStep.EXPORT: ["export_format"],
 }
 
@@ -80,6 +80,7 @@ _FIELD_DEFAULTS: dict[str, object] = {
     "stat_results": None,
     "selected_plots": [],
     "plot_results": [],
+    "plot_theme": "dark",
     "export_format": None,
 }
 

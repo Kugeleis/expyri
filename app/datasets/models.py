@@ -21,4 +21,5 @@ class DatasetInfo(BaseModel):
     id: str
     name: str
     description: str = ""
+    filename: str | None = None
     columns: list[ColumnInfo] = []

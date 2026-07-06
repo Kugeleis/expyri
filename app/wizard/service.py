@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Sequence
+from pathlib import PurePath
 from typing import Any
 
 from fastapi import HTTPException
@@ -55,11 +56,26 @@ class WizardService:
         # Clean up the old session if needed, then create a new one
         return self.store.create()
 
+    def _normalize_dataset_id(self, dataset_id: str | None) -> str | None:
+        """Map filename-style selections to canonical dataset IDs when possible."""
+        if not dataset_id:
+            return dataset_id
+
+        available_ids = {dataset.id for dataset in self.repo.list_datasets()}
+        if dataset_id in available_ids:
+            return dataset_id
+
+        dataset_path = PurePath(dataset_id)
+        if dataset_path.suffix and dataset_path.stem in available_ids:
+            return dataset_path.stem
+
+        return dataset_id
+
     def select_dataset_id(self, session_id: str, dataset_id: str | None) -> WizardSession:
         """Select a dataset for the session and reset the workflow to Step 1."""
         session = self.get_session(session_id)
         reset_to_step(session, WizardStep.DATASET_SELECTION)
-        session.dataset_id = dataset_id
+        session.dataset_id = self._normalize_dataset_id(dataset_id)
 
         if session.dataset_id:
             try:
@@ -394,6 +410,7 @@ class WizardService:
         selected_plots: list[str],
         plots_sig_filter: float,
         top_n_columns: int | None = None,
+        theme: str = "dark",
     ) -> WizardSession:
         """Execute plot generation via matplotlib backend and update session state."""
         session = self.get_session(session_id)
@@ -407,11 +424,12 @@ class WizardService:
 
         filtered_df = get_filtered_df_with_groups(session, self.repo)
         top_columns = select_top_plot_columns(session, plots_sig_filter, top_n_columns)
-        plot_results = generate_individual_plots(session, filtered_df, top_columns, selected_plots)
+        plot_results = generate_individual_plots(session, filtered_df, top_columns, selected_plots, theme=theme)
 
         session.selected_plots = selected_plots
         session.top_n_columns = len(top_columns)
         session.plot_results = [p.model_dump() for p in plot_results]
+        session.plot_theme = theme
         self.store.save(session)
         return session
 

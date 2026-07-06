@@ -16,8 +16,8 @@ tasks:
   lint:js:
     desc: Run ESLint and Prettier check on JS files
     cmds:
-      - uv run pre-commit run eslint --all-files
-      - uv run pre-commit run prettier --all-files
+      - uv run prek run eslint --all-files
+      - uv run prek run prettier --all-files
 
   format:
     desc: Auto-format Python and JS code
@@ -29,7 +29,7 @@ tasks:
   format:js:
     desc: Auto-format JS files with Prettier
     cmds:
-      - uv run pre-commit run prettier --all-files || true
+      - uv run prek run prettier --all-files || true
 
   typecheck:
     desc: Run mypy in strict mode
@@ -37,9 +37,9 @@ tasks:
       - uv run mypy --strict app
 
   test:
-    desc: Run pre-commit checks and all tests with coverage (including E2E)
+    desc: Run prek checks and all tests with coverage (including E2E)
     cmds:
-      - uv run pre-commit run --all-files
+      - uv run prek run --all-files
       - uv run pytest --cov=app --cov-report=term-missing --cov-fail-under=90
 
   check:

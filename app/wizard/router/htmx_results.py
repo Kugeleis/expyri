@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request, Response
 
+from app.plots.theme import normalize_plot_theme
 from app.wizard.router.dependencies import get_session_store, get_wizard_service, render_step
 from app.wizard.service import WizardService
 
@@ -114,7 +115,8 @@ def generate_plots_htmx(
 ) -> Response:
     """Execute plot generation via matplotlib backend and render Step 5."""
     limit = float(request.cookies.get("plots_sig_filter", 0.05))
-    session = service.generate_plots(session_id, selected_plots, limit)
+    theme = normalize_plot_theme(request.cookies.get("expyri_theme"))
+    session = service.generate_plots(session_id, selected_plots, limit, theme=theme)
     store = get_session_store(request)
     return render_step(request, session, store, repo=service.repo)
 

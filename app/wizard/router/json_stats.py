@@ -8,6 +8,7 @@ from app.core.session import WizardSession
 from app.datasets.repository import DatasetRepository
 from app.exporters.base import exporter_registry
 from app.plots.base import PlotResult, plot_registry
+from app.plots.theme import normalize_plot_theme
 from app.stats.base import StatResult, stat_registry
 from app.stats.properties import compute_properties, compute_properties_for_columns
 from app.wizard.router.dependencies import get_dataset_repository, get_filtered_dataset, get_session, get_wizard_service
@@ -132,6 +133,7 @@ def generate_plots_json(
         selected_plots=req.selected_plots,
         plots_sig_filter=0.05,
         top_n_columns=req.top_n_columns,
+        theme=normalize_plot_theme(None),
     )
     return service.go_to_step(session_id, WizardStep.EXPORT.value)
 

@@ -49,6 +49,7 @@ class WizardSession(BaseModel):
     stat_results: list[dict[str, Any]] = Field(default_factory=list)
     selected_plots: list[str] = Field(default_factory=list)
     plot_results: list[dict[str, Any]] = Field(default_factory=list)
+    plot_theme: str = "dark"
     top_n_columns: int = 1
     export_format: str | None = None
     hierarchy: HierarchyConfig | None = None

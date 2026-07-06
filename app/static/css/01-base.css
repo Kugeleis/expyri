@@ -1,0 +1,62 @@
+body {
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+    font-family: var(--pico-font-family);
+}
+
+/* Global button and input density overrides */
+button,
+input[type='submit'],
+input[type='button'],
+a[role='button'] {
+    padding: 0.4rem 0.8rem !important;
+    font-size: 0.85rem !important;
+}
+
+input,
+select,
+textarea {
+    padding: 0.4rem 0.75rem !important;
+    font-size: 0.85rem !important;
+}
+
+label {
+    font-size: 0.8rem !important;
+    margin-bottom: 0.25rem !important;
+}
+
+/* Background Glow Effects */
+.glow-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: -1;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.glow-circle {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(120px);
+    opacity: var(--app-glow-opacity);
+}
+
+.glow-1 {
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, var(--pico-primary) 0%, transparent 70%);
+    top: -100px;
+    right: 5%;
+}
+
+.glow-2 {
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, var(--accent-blue) 0%, transparent 70%);
+    bottom: -150px;
+    left: 5%;
+}

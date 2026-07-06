@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import base64
+import io
 
+import matplotlib.image as mpimg
 import pandas as pd
 import pytest
 
@@ -173,6 +175,19 @@ def test_boxplot_generate(sample_df: pd.DataFrame) -> None:
     # Verify valid PNG signature
     img_bytes = base64.b64decode(res.image_base64)
     assert img_bytes.startswith(b"\x89PNG\r\n\x1a\n")
+
+
+def test_boxplot_background_follows_theme(sample_df: pd.DataFrame) -> None:
+    """Generated plot PNG backgrounds should follow the requested app theme."""
+    bp = BoxPlot()
+    light = bp.generate(sample_df, "group", "value", theme="light")
+    dark = bp.generate(sample_df, "group", "value", theme="dark")
+
+    light_img = mpimg.imread(io.BytesIO(base64.b64decode(light.image_base64)))
+    dark_img = mpimg.imread(io.BytesIO(base64.b64decode(dark.image_base64)))
+
+    assert tuple(round(float(x), 3) for x in light_img[0, 0, :3]) == (0.961, 0.965, 0.973)
+    assert tuple(round(float(x), 3) for x in dark_img[0, 0, :3]) == (0.067, 0.078, 0.11)
 
 
 def test_violin_generate(sample_df: pd.DataFrame) -> None:

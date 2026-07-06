@@ -1,0 +1,145 @@
+/* Step 1: Column/Subgroup Checklists */
+.dataset-details {
+    background-color: var(--app-subtle-background);
+    border: 1px solid var(--pico-border-color);
+    border-radius: 8px;
+    padding: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.details-meta {
+    font-size: 0.9rem;
+    margin-top: 15px;
+    margin-bottom: 1rem;
+}
+.details-meta .label {
+    color: var(--pico-muted-color);
+    margin-right: 0.5rem;
+    font-weight: bold;
+}
+
+.dataset-picker-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.dataset-picker-field {
+    flex: 1;
+}
+
+.experiment-tabs {
+    display: flex;
+    width: 100%;
+    margin-top: 1.5rem;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid var(--pico-border-color);
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 0.5rem 1rem !important;
+    border: none;
+    border-bottom: 2px solid transparent;
+    background: none;
+    color: var(--pico-muted-color);
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.tab-btn.active {
+    border-bottom-color: var(--pico-primary);
+    color: var(--pico-color);
+}
+
+.config-card,
+.method-section,
+.plot-group-card {
+    padding: 1rem;
+    margin-bottom: 0;
+}
+
+.method-section,
+.plot-group-card {
+    margin-bottom: 1.5rem;
+}
+
+.field-block {
+    margin-bottom: 1rem;
+}
+
+.field-block-tight {
+    margin-bottom: 0.75rem;
+}
+
+.accent-label {
+    color: var(--accent-blue);
+    font-weight: 600;
+}
+
+.checklist-section {
+    margin-top: 0.75rem;
+}
+
+.checklist-header,
+.column-picker-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.25rem;
+}
+
+.column-picker-header {
+    margin-bottom: 0.5rem;
+}
+
+.checklist-title,
+.column-picker-title {
+    margin-bottom: 0;
+    font-weight: 600;
+}
+
+.checklist-title {
+    color: var(--accent-blue);
+}
+
+.toggle-all {
+    color: var(--pico-primary);
+    cursor: pointer;
+    font-size: 0.8rem;
+    user-select: none;
+}
+
+.checklist-label {
+    display: block;
+    margin-bottom: 0.25rem;
+}
+
+.coordinates-title {
+    margin-bottom: 0.5rem;
+    font-size: 0.95rem;
+    font-weight: bold;
+}
+
+.value-columns-list {
+    background-color: var(--app-subtle-background);
+    border: 1px solid var(--pico-border-color);
+    border-radius: 8px;
+    padding: 0.5rem 0.75rem;
+    max-height: 380px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.value-columns-list-short {
+    max-height: 180px;
+}
+
+.value-columns-list-medium {
+    max-height: 200px;
+}

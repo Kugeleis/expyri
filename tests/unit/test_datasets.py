@@ -38,6 +38,7 @@ def test_list_datasets(repo: CsvDatasetRepository) -> None:
     datasets = repo.list_datasets()
     assert len(datasets) == 1
     assert datasets[0].id == "sample"
+    assert datasets[0].filename == "sample.csv"
     assert isinstance(datasets[0], DatasetInfo)
 
 
@@ -71,6 +72,7 @@ def test_get_schema(repo: CsvDatasetRepository) -> None:
     """get_schema returns column metadata."""
     schema = repo.get_schema("sample")
     assert schema.id == "sample"
+    assert schema.filename == "sample.csv"
     assert len(schema.columns) == 2
     assert schema.columns[0].name == "group"
     assert schema.columns[1].name == "value"
@@ -208,6 +210,8 @@ def test_multi_format_repository(tmp_path: Path) -> None:
     assert len(datasets) == 3
     ids = {d.id for d in datasets}
     assert ids == {"ds_csv", "ds_pq", "ds_h5"}
+    filenames = {d.filename for d in datasets}
+    assert filenames == {"ds_csv.csv", "ds_pq.parquet", "ds_h5.h5"}
 
     # load dataset
     assert repo.load_dataset("ds_pq").shape == (1, 1)

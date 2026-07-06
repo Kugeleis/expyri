@@ -1,14 +1,15 @@
-<div class="sidebar-actions" id="sidebar-actions" style="display: flex; gap: 0.5rem; justify-content: space-between" hx-swap-oob="true">
+<div class="sidebar-actions" id="sidebar-actions" hx-swap-oob="true">
     {% if session.current_step != "dataset_selection" %}
         <button
-            class="secondary outline"
+            class="secondary outline sidebar-action-button"
             id="btn-sidebar-back"
-            style="flex: 1;"
+            aria-label="Go Back"
             title="Go Back"
             hx-post="/wizard/sessions/{{ session.session_id }}/navigate?direction=back"
             hx-target="#workspace-container"
         >
             &larr;
+            <span class="visually-hidden">Go Back</span>
         </button>
     {% endif %}
 
@@ -17,8 +18,9 @@
         {% set current_idx = steps_list.index(session.current_step) %}
         {% set next_step = steps_list[current_idx + 1] %}
         <button
+            class="sidebar-action-button"
             id="btn-sidebar-next"
-            style="flex: 1;"
+            aria-label="Continue"
             title="Continue"
             hx-post="/wizard/sessions/{{ session.session_id }}/go-to/{{ next_step }}"
             hx-include="#workspace-container form"
@@ -26,6 +28,7 @@
             {% if not is_step_completed %}disabled{% endif %}
         >
             &rarr;
+            <span class="visually-hidden">Continue</span>
         </button>
     {% endif %}
 </div>

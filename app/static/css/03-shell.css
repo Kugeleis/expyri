@@ -1,0 +1,285 @@
+/* App Container Layout */
+.app-container {
+    display: flex;
+    height: 100vh;
+    width: 100%;
+    overflow: hidden;
+}
+
+.sidebar {
+    width: 220px;
+    background-color: var(--app-sidebar-background);
+    border-right: 1px solid var(--pico-border-color);
+    padding: 1rem 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    backdrop-filter: blur(10px);
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    box-sizing: border-box;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 0;
+}
+
+.logo .icon {
+    font-size: 1.4rem;
+}
+
+.logo h1 {
+    font-size: 1.3rem;
+    font-weight: 700;
+    letter-spacing: 0;
+    background: linear-gradient(135deg, var(--app-logo-gradient-start) 0%, var(--app-logo-gradient-end) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin: 0;
+}
+
+.app-version {
+    color: var(--pico-muted-color);
+    font-size: 0.72rem;
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+    padding-top: 0.15rem;
+}
+
+.session-info {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    background-color: var(--app-subtle-background);
+    padding: 0.35rem 0.5rem;
+    border-radius: 6px;
+    border: 1px solid var(--pico-border-color);
+    font-size: 0.75rem;
+}
+
+.session-info .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: var(--pico-primary);
+    box-shadow: 0 0 6px var(--pico-primary);
+}
+
+.session-info .text {
+    color: var(--pico-muted-color);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Step Navigation */
+.steps-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    margin-top: 0.5rem;
+}
+
+.step-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
+    color: var(--pico-muted-color);
+    font-weight: 500;
+    font-size: 0.85rem;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    border: 1px solid transparent;
+}
+
+.step-nav-item .step-num {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: var(--app-soft-background);
+    border: 1px solid var(--pico-border-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.step-nav-item.active {
+    color: var(--pico-color);
+    background-color: var(--app-soft-background);
+    border-color: var(--pico-border-color);
+}
+
+.step-nav-item.active .step-num {
+    background-color: var(--pico-primary);
+    border-color: var(--pico-primary);
+    color: white;
+    box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+}
+
+.step-nav-item.completed {
+    color: var(--pico-muted-color);
+    cursor: pointer;
+}
+
+.step-nav-item.completed .step-num {
+    background-color: rgba(16, 185, 129, 0.12);
+    border-color: var(--success-green);
+    color: var(--success-green);
+}
+
+.step-nav-item.completed:hover {
+    background: var(--app-hover-background);
+    transform: translateX(2px);
+}
+
+.theme-toggle-wrapper {
+    margin-top: auto;
+    padding-top: 0.5rem;
+}
+
+.theme-toggle {
+    width: 2.3rem;
+    height: 2.3rem;
+    padding: 0 !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    background: var(--app-subtle-background);
+    color: var(--theme-toggle-icon-color);
+}
+
+.theme-toggle:hover {
+    border-color: transparent;
+    background: var(--app-hover-background);
+    color: var(--theme-toggle-icon-color);
+}
+
+.theme-toggle:focus-visible {
+    outline: 2px solid var(--pico-border-color);
+    outline-offset: 2px;
+}
+
+.theme-toggle-icon {
+    width: 1.1rem;
+    height: 1.1rem;
+    fill: none;
+    stroke: var(--theme-toggle-icon-color);
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.theme-toggle-icon-moon {
+    display: block;
+}
+
+.theme-toggle-icon-sun,
+[data-theme='dark'] .theme-toggle-icon-moon {
+    display: none;
+}
+
+[data-theme='dark'] .theme-toggle-icon-sun {
+    display: block;
+}
+
+/* Workspace Layout */
+.main-content {
+    flex: 1;
+    padding: 1rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    max-width: 100%;
+    height: 100vh;
+    overflow: hidden;
+}
+
+.main-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.main-header h2 {
+    font-size: 1.4rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.card-workspace {
+    background-color: var(--pico-card-background-color);
+    border: 1px solid var(--pico-border-color);
+    border-radius: 12px;
+    padding: 1.25rem;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 4px 16px var(--app-card-shadow);
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    flex: 1;
+    overflow: hidden;
+}
+
+.step-panel {
+    display: none;
+    flex-direction: column;
+    gap: 0.75rem;
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
+}
+
+.step-panel.active {
+    display: flex;
+}
+
+.step-panel h3 {
+    font-size: 1.15rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.step-desc {
+    color: var(--pico-muted-color);
+    font-size: 0.85rem;
+    line-height: 1.4;
+}
+
+/* Sidebar Actions */
+.sidebar-actions button {
+    font-size: 1.2rem !important;
+    padding: 0.4rem !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sidebar-actions {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: space-between;
+}
+
+.sidebar-action-button {
+    flex: 1;
+}
+
+.sidebar-actions button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}

@@ -1,0 +1,108 @@
+/* Step 5: Visualizations */
+
+.plots-selector-row {
+    padding: 0.75rem;
+    margin-bottom: 1.5rem;
+    border: 1px solid var(--pico-border-color);
+    border-radius: 8px;
+    background-color: var(--app-subtle-background);
+}
+
+.plots-selector-title {
+    margin-bottom: 0.5rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.plots-selector {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.plot-checkbox-option {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    margin-bottom: 0;
+    cursor: pointer;
+}
+
+.plots-selector-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--pico-border-color);
+}
+
+.plots-generation-counter {
+    color: var(--pico-muted-color);
+    font-size: 0.85rem;
+}
+
+.generate-plots-button {
+    width: auto;
+    margin: 0;
+    padding: 0.4rem 1rem !important;
+    font-size: 0.85rem !important;
+}
+
+.plots-display {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    width: 100%;
+}
+
+.no-plots-msg {
+    color: var(--pico-muted-color);
+    font-size: 0.85rem;
+}
+
+.plot-group-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding-bottom: 0.5rem;
+    margin-bottom: 0.75rem;
+    border-bottom: 1px solid var(--pico-border-color);
+    text-align: left;
+    font-weight: 600;
+}
+
+.plot-result-meta {
+    font-weight: normal;
+}
+
+.plot-gallery {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+}
+
+.plot-card {
+    flex: 1;
+    min-width: 280px;
+    max-width: 480px;
+    text-align: center;
+}
+
+.plot-title {
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.plot-image {
+    padding: 0.25rem;
+    border: 1px solid var(--pico-border-color);
+    border-radius: 4px;
+}
