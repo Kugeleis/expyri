@@ -2,10 +2,10 @@
     <h3>Step 4: Statistical Results</h3>
     <p class="step-desc">Below are the execution results of your statistical test.</p>
 
-    <article class="results-card" id="results-card" style="padding: 1.25rem;">
+    <article class="results-card" id="results-card">
         {% if sig_chart_base64 %}
-            <div style="text-align: center; margin-bottom: 1.5rem;">
-                <img src="data:image/png;base64,{{ sig_chart_base64 }}" alt="Significance Chart" style="max-width: 100%; height: auto; border-radius: 6px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.25);" />
+            <div class="chart-frame">
+                <img class="significance-img" src="data:image/png;base64,{{ sig_chart_base64 }}" alt="Significance Chart" />
             </div>
         {% endif %}
 
@@ -23,7 +23,7 @@
                                 ("p-value", "p_value"),
                                 ("Effect Size", "effect_size")
                             ] %}
-                                <th scope="col" style="cursor: pointer; user-select: none;"
+                                <th class="sortable-heading" scope="col"
                                     hx-post="/wizard/sessions/{{ session.session_id }}/update-sort?field={{ field }}"
                                     hx-target="#workspace-container">
                                     {{ label }}
@@ -33,7 +33,7 @@
                                 </th>
                             {% endfor %}
                             {% if session.hierarchy %}
-                                <th scope="col" style="cursor: pointer; user-select: none;"
+                                <th class="sortable-heading" scope="col"
                                     hx-post="/wizard/sessions/{{ session.session_id }}/update-sort?field=icc"
                                     hx-target="#workspace-container">
                                     ICC
@@ -41,7 +41,7 @@
                                         {% if sort_asc %} ▲{% else %} ▼{% endif %}
                                     {% endif %}
                                 </th>
-                                <th scope="col" style="cursor: pointer; user-select: none;"
+                                <th class="sortable-heading" scope="col"
                                     hx-post="/wizard/sessions/{{ session.session_id }}/update-sort?field=power"
                                     hx-target="#workspace-container">
                                     Power
@@ -59,7 +59,7 @@
                             {% set pval = res.p_value %}
                             {% set is_sig = pval is not none and pval <= limit %}
                             {% set is_strict = pval is not none and pval <= strictLimit %}
-                            <tr {% if is_strict %}style="background-color: rgba(16, 185, 129, 0.12);"{% elif is_sig %}style="background-color: rgba(250, 204, 21, 0.12);"{% endif %}>
+                            <tr class="{% if is_strict %}result-row-strict{% elif is_sig %}result-row-significant{% endif %}">
                                 <td>{{ res.column_name }}</td>
                                 <td>
                                     {% if res.method_name == "ttest" %}t-Test
@@ -85,10 +85,11 @@
         </div>
 
         <!-- Filter bar -->
-        <div id="plots-filter-form" style="margin-top: 1rem; border-top: 1px solid var(--pico-border-color); padding-top: 0.75rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
-            <div style="display: flex; align-items: center; gap: 0.75rem;">
-                <label for="plots-sig-filter" style="margin-bottom: 0; font-weight: 600; white-space: nowrap;">Plot top variables with p-value &le;</label>
+        <div class="plots-filter-form" id="plots-filter-form">
+            <div class="plots-filter-controls">
+                <label class="plots-filter-label" for="plots-sig-filter">Plot top variables with p-value &le;</label>
                 <input
+                    class="plots-sig-input"
                     type="number"
                     id="plots-sig-filter"
                     name="plots_sig_filter"
@@ -96,13 +97,12 @@
                     step="0.01"
                     min="0"
                     max="1"
-                    style="width: 90px; margin-bottom: 0;"
                     hx-post="/wizard/sessions/{{ session.session_id }}/update-sig-limit"
                     hx-target="#workspace-container"
                     hx-trigger="change"
                 />
             </div>
-            <span id="filtered-plots-counter" style="font-size: 0.8rem; color: var(--pico-muted-color); font-weight: 550;">
+            <span class="filtered-plots-counter" id="filtered-plots-counter">
                 Matches {{ matched_count }} variables
             </span>
         </div>

@@ -3,7 +3,21 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta name="color-scheme" content="light dark" />
         <title>ExPyRi — Experiment Evaluation Wizard</title>
+        <script>
+            (function () {
+                try {
+                    const storedTheme = localStorage.getItem('expyri-theme');
+                    if (storedTheme === 'light' || storedTheme === 'dark') {
+                        document.documentElement.dataset.theme = storedTheme;
+                        document.cookie = `expyri_theme=${storedTheme}; path=/; max-age=31536000; SameSite=Lax`;
+                    }
+                } catch {
+                    document.documentElement.dataset.theme = document.documentElement.dataset.theme || 'dark';
+                }
+            })();
+        </script>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
         <link
@@ -32,6 +46,30 @@
                 {% include "partials/session_info.html" %}
                 {% include "partials/sidebar_actions.html" %}
                 {% include "partials/steps_nav.html" %}
+                <div class="theme-toggle-wrapper">
+                    <button
+                        type="button"
+                        class="theme-toggle"
+                        id="theme-toggle"
+                        aria-label="Switch to light mode"
+                        title="Switch to light mode"
+                    >
+                        <svg class="theme-toggle-icon theme-toggle-icon-sun" aria-hidden="true" viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="4"></circle>
+                            <path d="M12 2v2"></path>
+                            <path d="M12 20v2"></path>
+                            <path d="m4.93 4.93 1.41 1.41"></path>
+                            <path d="m17.66 17.66 1.41 1.41"></path>
+                            <path d="M2 12h2"></path>
+                            <path d="M20 12h2"></path>
+                            <path d="m6.34 17.66-1.41 1.41"></path>
+                            <path d="m19.07 4.93-1.41 1.41"></path>
+                        </svg>
+                        <svg class="theme-toggle-icon theme-toggle-icon-moon" aria-hidden="true" viewBox="0 0 24 24">
+                            <path d="M20.99 12.73A8.5 8.5 0 1 1 11.27 3a6.5 6.5 0 0 0 9.72 9.72Z"></path>
+                        </svg>
+                    </button>
+                </div>
             </aside>
 
             <!-- Main Workspace -->
@@ -53,10 +91,10 @@
         </div>
 
         <!-- Error Toast (HTMX Error handling) -->
-        <div class="toast hidden" id="error-toast" style="display: none;">
+        <div class="toast hidden" id="error-toast">
             <span class="toast-icon">❌</span>
             <span class="toast-message" id="toast-msg">An error occurred</span>
-            <button class="toast-close" onclick="document.getElementById('error-toast').style.display='none';">&times;</button>
+            <button class="toast-close" id="toast-close" type="button">&times;</button>
         </div>
 
         <script>
@@ -71,29 +109,50 @@
                     } catch(e) {
                         toastMsg.textContent = evt.detail.xhr.responseText || "An error occurred";
                     }
-                    errorToast.style.display = 'flex';
                     errorToast.classList.remove('hidden');
                     setTimeout(() => {
-                        errorToast.style.display = 'none';
+                        errorToast.classList.add('hidden');
                     }, 5000);
                 }
             });
 
+            const toastClose = document.getElementById('toast-close');
+            if (toastClose) {
+                toastClose.addEventListener('click', function() {
+                    const errorToast = document.getElementById('error-toast');
+                    if (errorToast) {
+                        errorToast.classList.add('hidden');
+                    }
+                });
+            }
+
             // Preserve scroll position of step panels during HTMX swap
             let activePanelScrollTop = 0;
-            document.body.addEventListener('htmx:beforeRequest', function(evt) {
-                const activePanel = document.querySelector('.step-panel.active');
-                if (activePanel) {
-                    activePanelScrollTop = activePanel.scrollTop;
-                }
-            });
-            document.body.addEventListener('htmx:afterSwap', function(evt) {
+            function restoreActivePanelScroll() {
                 const activePanel = document.querySelector('.step-panel.active');
                 if (activePanel) {
                     activePanel.scrollTop = activePanelScrollTop;
                 }
+            }
+            document.body.addEventListener('htmx:beforeRequest', function(evt) {
+                const activePanel = document.querySelector('.step-panel.active');
+                if (activePanel) {
+                    activePanelScrollTop = activePanel.scrollTop || activePanelScrollTop;
+                }
             });
+            document.body.addEventListener('htmx:afterSwap', function(evt) {
+                restoreActivePanelScroll();
+            });
+            document.body.addEventListener('htmx:afterSettle', function(evt) {
+                requestAnimationFrame(restoreActivePanelScroll);
+            });
+            document.body.addEventListener('scroll', function(evt) {
+                if (evt.target && evt.target.classList && evt.target.classList.contains('step-panel')) {
+                    activePanelScrollTop = evt.target.scrollTop;
+                }
+            }, true);
         </script>
+        <script src="/static/app.js" defer></script>
         <script type="module" src="/static/pacman.js" defer></script>
     </body>
 </html>

@@ -12,7 +12,6 @@
              hx-post="/wizard/sessions/{{ session.session_id }}/go-to/{{ step_id }}"
              hx-include="#workspace-container form"
              hx-target="#workspace-container"
-             style="cursor: pointer;"
         >
             <span class="step-num">{{ loop.index }}</span>
             <span class="step-name">{{ label }}</span>

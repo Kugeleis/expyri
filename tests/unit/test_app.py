@@ -20,6 +20,9 @@ def test_root_serves_homepage(client: TestClient) -> None:
     assert "ExPyRi" in response.text
     assert f"v{__version__}" in response.text
     assert "Experiment Evaluation Wizard" in response.text
+    assert 'id="theme-toggle"' in response.text
+    assert 'data-theme="dark"' in response.text
+    assert "/static/app.js" in response.text
 
 
 def test_app_version_fallback() -> None:
