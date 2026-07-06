@@ -4,13 +4,14 @@ from __future__ import annotations
 
 import base64
 import io
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import matplotlib
 import matplotlib.pyplot as plt
 import pandas as pd
 
 from app.plots.base import PlotGenerator, PlotResult, plot_registry
+from app.plots.theme import PlotTheme, plot_context, save_plot
 
 if TYPE_CHECKING:
     from app.stats.base import DataProperties
@@ -48,7 +49,14 @@ class BoxPlot(PlotGenerator):
             return False
         return all(size >= 1 for size in group_sizes.values())
 
-    def generate(self, df: pd.DataFrame, group_col: str, value_col: str) -> PlotResult:
+    def generate(
+        self,
+        df: pd.DataFrame,
+        group_col: str,
+        value_col: str,
+        theme: PlotTheme = "dark",
+        **_: Any,
+    ) -> PlotResult:
         """Generate a box plot.
 
         Args:
@@ -63,19 +71,20 @@ class BoxPlot(PlotGenerator):
         groups = sorted(df[group_col].dropna().unique())
         data = [df[df[group_col] == g][value_col].dropna().values for g in groups]
 
-        fig, ax = plt.subplots()
-        try:
-            ax.boxplot(data, tick_labels=groups)
-            ax.set_title(f"Boxplot of {value_col} by {group_col}")
-            ax.set_xlabel(group_col)
-            ax.set_ylabel(value_col)
+        with plot_context(theme):
+            fig, ax = plt.subplots()
+            try:
+                ax.boxplot(data, tick_labels=groups)
+                ax.set_title(f"Boxplot of {value_col} by {group_col}")
+                ax.set_xlabel(group_col)
+                ax.set_ylabel(value_col)
 
-            buf = io.BytesIO()
-            fig.savefig(buf, format="png", bbox_inches="tight")
-            buf.seek(0)
-            image_base64 = base64.b64encode(buf.read()).decode("utf-8")
-        finally:
-            plt.close(fig)
+                buf = io.BytesIO()
+                save_plot(fig, buf, theme=theme, format="png", bbox_inches="tight")
+                buf.seek(0)
+                image_base64 = base64.b64encode(buf.read()).decode("utf-8")
+            finally:
+                plt.close(fig)
 
         return PlotResult(
             column_name=None,

@@ -7,7 +7,7 @@ themselves using the global ``plot_registry``.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import pandas as pd
 from pydantic import BaseModel, Field
@@ -59,13 +59,14 @@ class PlotGenerator(ABC):
         ...
 
     @abstractmethod
-    def generate(self, df: pd.DataFrame, group_col: str, value_col: str) -> PlotResult:
+    def generate(self, df: pd.DataFrame, group_col: str, value_col: str, **kwargs: Any) -> PlotResult:
         """Generate the plot and return it as a PlotResult.
 
         Args:
             df: The filtered dataset DataFrame.
             group_col: Column name representing the groups.
             value_col: Column name representing the values.
+            kwargs: Optional generator-specific rendering options.
 
         Returns:
             A PlotResult containing the base64-encoded plot image.

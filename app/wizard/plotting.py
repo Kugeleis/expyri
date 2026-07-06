@@ -35,6 +35,7 @@ def generate_individual_plots(
     filtered_df: pd.DataFrame,
     top_columns: list[str],
     selected_plots: list[str],
+    theme: str = "dark",
 ) -> list[PlotResult]:
     """Call applicable plot generators and collect results."""
     plot_results: list[PlotResult] = []
@@ -48,10 +49,11 @@ def generate_individual_plots(
             generator = plot_registry.get(name)
 
             sig = inspect.signature(generator.generate)
+            accepts_var_kwargs = any(p.kind == inspect.Parameter.VAR_KEYWORD for p in sig.parameters.values())
             kwargs: dict[str, Any] = {}
-            is_hier = "hierarchy" in sig.parameters or any(
-                p.kind == inspect.Parameter.VAR_KEYWORD for p in sig.parameters.values()
-            )
+            if "theme" in sig.parameters or accepts_var_kwargs:
+                kwargs["theme"] = theme
+            is_hier = "hierarchy" in sig.parameters or accepts_var_kwargs
             if is_hier:
                 kwargs["hierarchy"] = session.hierarchy
                 kwargs["excluded_clusters"] = [ex.cluster_id for ex in session.excluded_clusters]

@@ -394,6 +394,7 @@ class WizardService:
         selected_plots: list[str],
         plots_sig_filter: float,
         top_n_columns: int | None = None,
+        theme: str = "dark",
     ) -> WizardSession:
         """Execute plot generation via matplotlib backend and update session state."""
         session = self.get_session(session_id)
@@ -407,11 +408,12 @@ class WizardService:
 
         filtered_df = get_filtered_df_with_groups(session, self.repo)
         top_columns = select_top_plot_columns(session, plots_sig_filter, top_n_columns)
-        plot_results = generate_individual_plots(session, filtered_df, top_columns, selected_plots)
+        plot_results = generate_individual_plots(session, filtered_df, top_columns, selected_plots, theme=theme)
 
         session.selected_plots = selected_plots
         session.top_n_columns = len(top_columns)
         session.plot_results = [p.model_dump() for p in plot_results]
+        session.plot_theme = theme
         self.store.save(session)
         return session
 

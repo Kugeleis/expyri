@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from fastapi.responses import JSONResponse
 
 from app.core.session import WizardSession
+from app.plots.theme import normalize_plot_theme
 from app.wizard.router.dependencies import get_session, get_session_store, get_wizard_service, render_step
 from app.wizard.service import WizardService
 from app.wizard.steps import WizardStep
@@ -55,8 +56,9 @@ async def _handle_compatibility_form(
     elif current == WizardStep.PLOT_SELECTION:
         selected_plots = [str(x) for x in form_data.getlist("selected_plots")]
         limit = float(request.cookies.get("plots_sig_filter", 0.05))
+        theme = normalize_plot_theme(request.cookies.get("expyri_theme"))
         if is_forward:
-            service.generate_plots(session_id, selected_plots, limit)
+            service.generate_plots(session_id, selected_plots, limit, theme=theme)
         else:
             session.selected_plots = selected_plots
             service.store.save(session)
