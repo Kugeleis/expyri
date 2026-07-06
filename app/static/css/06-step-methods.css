@@ -1,0 +1,56 @@
+/* Step 3: Statistical Methods */
+.info-callout {
+    padding: 0.75rem 1rem;
+    margin-bottom: 1.5rem;
+    border-left: 4px solid var(--pico-primary);
+    border-radius: 4px;
+    background: var(--pico-primary-background);
+    font-size: 0.8rem;
+}
+
+.info-callout summary {
+    margin-bottom: 0;
+    color: var(--pico-primary);
+    font-weight: bold;
+    cursor: pointer;
+    outline: none;
+}
+
+.info-callout-body {
+    margin-top: 0.5rem;
+    color: var(--pico-muted-color);
+}
+
+.info-list {
+    margin: 0.5rem 0 0 1rem;
+    padding: 0;
+    font-size: 0.75rem;
+}
+
+.method-section-header {
+    margin-bottom: 0.75rem;
+    color: var(--pico-primary);
+    font-weight: bold;
+}
+
+.method-option {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    cursor: pointer;
+}
+
+.method-option-disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.method-option input {
+    margin-top: 0.2rem;
+}
+
+.method-description {
+    display: block;
+    color: var(--pico-muted-color);
+    font-size: 0.8rem;
+}

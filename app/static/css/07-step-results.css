@@ -1,0 +1,87 @@
+/* Step 4: Results Display */
+.results-card {
+    padding: 1.25rem;
+    margin: 0;
+}
+
+.results-table {
+    margin-top: 10px;
+}
+
+.results-table th {
+    transition:
+        background-color 0.2s ease,
+        color 0.2s ease;
+}
+
+.results-table th:hover {
+    background-color: rgba(16, 185, 129, 0.08);
+    color: var(--pico-primary);
+}
+
+.chart-frame {
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+.significance-img,
+.plot-image {
+    max-width: 100%;
+    height: auto;
+}
+
+.significance-img {
+    border-radius: 6px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.25);
+}
+
+.sortable-heading {
+    cursor: pointer;
+    user-select: none;
+}
+
+.result-row-strict {
+    background-color: rgba(16, 185, 129, 0.12);
+}
+
+.result-row-significant {
+    background-color: rgba(250, 204, 21, 0.12);
+}
+
+.plots-filter-form {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-top: 1rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--pico-border-color);
+}
+
+.plots-filter-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.plots-filter-label {
+    margin-bottom: 0;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.plots-sig-input {
+    width: 90px;
+    margin-bottom: 0;
+}
+
+.filtered-plots-counter,
+.plot-result-meta {
+    color: var(--pico-muted-color);
+    font-size: 0.8rem;
+}
+
+.filtered-plots-counter {
+    font-weight: 550;
+}

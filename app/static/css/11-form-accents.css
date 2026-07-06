@@ -1,0 +1,10 @@
+/* Custom styling to link the Group Column select and the Subgroups checklist using a lighter green accent */
+#group-col-select,
+#cluster-col-select {
+    --pico-primary: var(--accent-blue);
+    --pico-primary-hover: #059669;
+    --pico-primary-border: var(--accent-blue);
+    --pico-primary-background: rgba(52, 211, 153, 0.12);
+    --pico-form-element-active-border-color: var(--accent-blue);
+    --pico-form-element-focus-color: rgba(52, 211, 153, 0.12);
+}
