@@ -49,7 +49,7 @@
         <article class="add-filter-card">
             <h4>Add New Filter</h4>
             <form id="new-filter-form" hx-post="/wizard/sessions/{{ session.session_id }}/add-filter" hx-target="#workspace-container">
-                <div class="auto-grid grid-filter-form">
+                <div class="grid">
                     <div>
                         <label for="filter-type">Filter Type</label>
                         <select id="filter-type" name="filter_type"

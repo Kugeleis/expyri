@@ -41,7 +41,7 @@
 
 .tab-btn {
     flex: 1;
-    padding: 0.5rem 1rem !important;
+    padding: 0.5rem 1rem;
     border: none;
     border-bottom: 2px solid transparent;
     background: none;
@@ -53,18 +53,6 @@
 .tab-btn.active {
     border-bottom-color: var(--pico-primary);
     color: var(--pico-color);
-}
-
-.config-card,
-.method-section,
-.plot-group-card {
-    padding: 1rem;
-    margin-bottom: 0;
-}
-
-.method-section,
-.plot-group-card {
-    margin-bottom: 1.5rem;
 }
 
 .field-block {

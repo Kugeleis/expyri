@@ -44,13 +44,6 @@
     font-size: 0.85rem;
 }
 
-.generate-plots-button {
-    width: auto;
-    margin: 0;
-    padding: 0.4rem 1rem !important;
-    font-size: 0.85rem !important;
-}
-
 .plots-display {
     display: flex;
     flex-direction: column;

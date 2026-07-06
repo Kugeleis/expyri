@@ -211,6 +211,7 @@ def test_wizard_htmx_method_results_plots_export(client: TestClient) -> None:
     )
     assert resp.status_code == 200
     assert "results" in resp.text
+    assert 'class="results-table striped responsive"' in resp.text
 
     # Update sort on results
     resp = client.post(
@@ -235,6 +236,7 @@ def test_wizard_htmx_method_results_plots_export(client: TestClient) -> None:
     )
     assert resp.status_code == 200
     assert "plot_selection" in resp.text
+    assert 'id="btn-generate-plots"' in resp.text
 
     # Generate plots
     resp = client.post(

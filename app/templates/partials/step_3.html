@@ -32,7 +32,7 @@
                             <input type="radio" name="selected_method" value="{{ name }}"
                                    hx-post="/wizard/sessions/{{ session.session_id }}/update-method"
                                    hx-target="#workspace-container"
-                                   hx-swap="innerHTML"
+                                   hx-swap="none"
                                    hx-trigger="change"
                                    hx-include="#workspace-container form"
                                    {% if name not in applicable_continuous %}disabled{% endif %}
@@ -65,7 +65,7 @@
                             <input type="radio" name="selected_discrete_method" value="{{ name }}"
                                    hx-post="/wizard/sessions/{{ session.session_id }}/update-method"
                                    hx-target="#workspace-container"
-                                   hx-swap="innerHTML"
+                                   hx-swap="none"
                                    hx-trigger="change"
                                    hx-include="#workspace-container form"
                                    {% if name not in applicable_discrete %}disabled{% endif %}
