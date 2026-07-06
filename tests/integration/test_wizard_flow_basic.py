@@ -241,6 +241,26 @@ def test_restart_session_e2e(client: TestClient) -> None:
     assert new_session["current_step"] == "dataset_selection"
 
 
+def test_select_dataset_id_accepts_filename_alias(client: TestClient) -> None:
+    """Filename values from legacy dataset selects normalize to canonical dataset IDs."""
+    resp = client.post("/wizard/sessions")
+    assert resp.status_code == 200
+    session_id = resp.json()["session_id"]
+
+    resp = client.post(
+        f"/wizard/sessions/{session_id}/select-dataset-id",
+        data={"dataset_id": "preselect_test.csv"},
+        headers={"HX-Request": "true"},
+    )
+    assert resp.status_code == 200
+
+    resp = client.get(f"/wizard/sessions/{session_id}")
+    assert resp.status_code == 200
+    session = resp.json()
+    assert session["dataset_id"] == "preselect_test"
+    assert session["group_column"] is None
+
+
 def test_restart_session_works_on_all_steps(client: TestClient) -> None:
     """Test that restarting a session works successfully from all 6 steps."""
     from app.wizard.router import get_session_store
