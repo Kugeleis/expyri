@@ -9,11 +9,11 @@
             </div>
         {% endif %}
 
-        <div id="statResultsContainer" class="overflow-auto">
+        <div id="statResultsContainer">
             {% if not session.stat_results %}
                 <p>No statistical results generated.</p>
             {% else %}
-                <table class="results-table striped">
+                <table class="results-table striped responsive">
                     <thead>
                         <tr>
                             {% for label, field in [

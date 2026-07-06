@@ -27,21 +27,6 @@
     margin-top: 1.5rem;
 }
 
-.grid-filter-fields {
-    --grid-min: 180px;
-}
-
-.grid-filter-form {
-    --grid-min: 180px;
-    --grid-gap: 1rem;
-    margin-bottom: 1rem;
-}
-
-.grid-coordinate-fields {
-    --grid-min: 120px;
-    --grid-gap: 0.75rem;
-}
-
 .grid-exporters {
     --grid-min: 220px;
 }
@@ -71,6 +56,4 @@
 .control-button {
     width: auto;
     margin: 0;
-    padding: 0.25rem 0.5rem !important;
-    font-size: 0.75rem !important;
 }

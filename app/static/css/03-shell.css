@@ -221,12 +221,6 @@
 }
 
 .card-workspace {
-    background-color: var(--pico-card-background-color);
-    border: 1px solid var(--pico-border-color);
-    border-radius: 12px;
-    padding: 1.25rem;
-    backdrop-filter: blur(12px);
-    box-shadow: 0 4px 16px var(--app-card-shadow);
     min-height: 0;
     display: flex;
     flex-direction: column;
@@ -262,8 +256,8 @@
 
 /* Sidebar Actions */
 .sidebar-actions button {
-    font-size: 1.2rem !important;
-    padding: 0.4rem !important;
+    font-size: 1.2rem;
+    padding: 0.4rem;
     display: flex;
     align-items: center;
     justify-content: center;
