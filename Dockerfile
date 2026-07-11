@@ -7,7 +7,8 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     UV_COMPILE_BYTECODE=1 \
     UV_LINK_MODE=copy \
     PATH="/app/.venv/bin:$PATH" \
-    EXPYRI_DATA_DIR=/app/data
+    EXPYRI_DATA_DIR=/app/data \
+    HOME=/app
 
 WORKDIR /app
 
@@ -28,10 +29,11 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-dev
 
 RUN mkdir -p /app/data \
-    && chown -R app:app /app
+    && chown -R app:0 /app \
+    && chmod -R g=u /app
 
-USER app
+USER 1000
 
-EXPOSE 8000
+EXPOSE 8765
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8765"]

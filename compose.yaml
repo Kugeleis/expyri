@@ -1,0 +1,12 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: expyri:latest
+    container_name: expyri
+    ports:
+      - "8765:8765"
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped

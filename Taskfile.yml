@@ -59,7 +59,7 @@ tasks:
   dev:
     desc: Run the FastAPI app locally in development mode (with auto-reload)
     cmds:
-      - uv run uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+      - uv run uvicorn app.main:app --reload --host 127.0.0.1 --port 8765
 
   docker:build:
     desc: Build the ExPyRi Docker image
@@ -69,7 +69,7 @@ tasks:
   docker:run:
     desc: Run the ExPyRi Docker image with a persistent local data directory
     cmds:
-      - docker run --rm -p 8000:8000 -v "$PWD/data:/app/data" expyri
+      - docker run --rm -p 8765:8765 -v "$PWD/data:/app/data" expyri
 
   docs:generate:
     desc: Generate OpenAPI JSON schema and interactive ReDoc documentation

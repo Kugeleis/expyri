@@ -93,7 +93,7 @@ Start the FastAPI server with auto-reload:
 ```bash
 task dev
 ```
-The documentation will be available at `http://127.0.0.1:8000/docs`.
+The documentation will be available at `http://127.0.0.1:8765/docs`.
 
 ### Running with Docker
 The Docker image is based on Astral's uv Python 3.14 slim image, `ghcr.io/astral-sh/uv:0.11.26-python3.14-trixie-slim`.
@@ -103,9 +103,9 @@ Build the image locally:
 docker build -t expyri .
 ```
 
-Run ExPyRi on port 8000 with a persistent data directory:
+Run ExPyRi on port 8765 with a persistent data directory:
 ```bash
-docker run --rm -p 8000:8000 -v "$PWD/data:/app/data" expyri
+docker run --rm -p 8765:8765 -v "$PWD/data:/app/data" expyri
 ```
 
 The container sets `EXPYRI_DATA_DIR=/app/data`. Uploaded datasets are stored in that directory, and generated Parquet exports are written under `/app/data/exports`. Mounting a host directory or Docker volume at `/app/data` keeps uploads and exports across container restarts.
@@ -121,11 +121,17 @@ task docker:build
 task docker:run
 ```
 
+### Running with Docker Compose
+Alternatively, run the application using Docker Compose:
+```bash
+docker compose up --build -d
+```
+
 ### GHCR Image
 Published images are available from GitHub Container Registry:
 ```bash
 docker pull ghcr.io/kugeleis/expyri:edge
-docker run --rm -p 8000:8000 -v "$PWD/data:/app/data" ghcr.io/kugeleis/expyri:edge
+docker run --rm -p 8765:8765 -v "$PWD/data:/app/data" ghcr.io/kugeleis/expyri:edge
 ```
 
 Image tags are published as follows:
