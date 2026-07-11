@@ -45,3 +45,11 @@ docs/api/
 
 # node
 node_modules/
+
+# git-of-theseus analysis files
+authors.json
+cohorts.json
+dirs.json
+domains.json
+exts.json
+survival.json
