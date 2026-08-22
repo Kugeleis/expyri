@@ -10,16 +10,16 @@ from pydantic import BaseModel, Field
 from app.core.session import SessionStore, WizardSession
 from app.datasets.models import DatasetInfo
 from app.datasets.repository import DatasetRepository
+from app.wizard.dataset_service import WizardDatasetService
 from app.wizard.router.dependencies import (
     get_dataset_repository,
     get_session,
     get_session_store,
-    get_wizard_service,
+    get_wizard_dataset_service,
     render_step,
 )
 from app.wizard.router.uploads import store_uploaded_dataset
 from app.wizard.schemas import DatasetSelectionRequest
-from app.wizard.service import WizardService
 
 router = APIRouter()
 
@@ -75,18 +75,18 @@ def upload_dataset_session_json(
     session: WizardSession = Depends(get_session),
     repo: DatasetRepository = Depends(get_dataset_repository),
     store: SessionStore = Depends(get_session_store),
-    service: WizardService = Depends(get_wizard_service),
+    dataset_service: WizardDatasetService = Depends(get_wizard_dataset_service),
 ) -> Response:
     """JSON compatibility and HTMX route: Upload dataset to specific session."""
     dataset_info = store_uploaded_dataset(file, repo)
-    session = service.select_dataset_id(session_id, dataset_info.id)
+    session = dataset_service.select_dataset_id(session_id, dataset_info.id)
 
     if "hx-request" in request.headers:
         return render_step(request, session, store, repo=repo)
     else:
-        import json
+        from fastapi.encoders import jsonable_encoder
 
-        return JSONResponse(content=json.loads(session.model_dump_json()))
+        return JSONResponse(content=jsonable_encoder(session))
 
 
 @router.get("/datasets", response_model=list[DatasetInfo])
@@ -131,11 +131,11 @@ def get_column_unique_values(
 def select_dataset(
     session_id: str,
     req: DatasetSelectionRequest,
-    service: WizardService = Depends(get_wizard_service),
+    dataset_service: WizardDatasetService = Depends(get_wizard_dataset_service),
 ) -> WizardSession:
     """JSON compatibility route: Select a dataset and map columns."""
-    service.select_dataset_id(session_id, req.dataset_id)
-    return service.submit_dataset_config(
+    dataset_service.select_dataset_id(session_id, req.dataset_id)
+    return dataset_service.submit_dataset_config(
         session_id=session_id,
         group_column=req.group_column,
         selected_groups=req.selected_groups,
@@ -150,7 +150,7 @@ def set_hierarchy(
     req: HierarchyRequest,
     session: WizardSession = Depends(get_session),
     repo: DatasetRepository = Depends(get_dataset_repository),
-    service: WizardService = Depends(get_wizard_service),
+    dataset_service: WizardDatasetService = Depends(get_wizard_dataset_service),
 ) -> HierarchyResponse:
     """JSON compatibility route: Configure hierarchical settings."""
     if session.dataset_id is None:
@@ -161,8 +161,8 @@ def set_hierarchy(
     except KeyError:
         raise HTTPException(status_code=400, detail="Dataset missing") from None
 
-    service.toggle_hierarchy(session_id, enabled=True)
-    updated_session = service.submit_dataset_config(
+    dataset_service.toggle_hierarchy(session_id, enabled=True)
+    updated_session = dataset_service.submit_dataset_config(
         session_id=session_id,
         group_column=req.group_col,
         selected_groups=session.selected_groups,

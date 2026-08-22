@@ -5,7 +5,13 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, Form, HTTPException, Request, Response
 
 from app.plots.theme import normalize_plot_theme
-from app.wizard.router.dependencies import get_session_store, get_wizard_service, render_step
+from app.wizard.analysis_service import WizardAnalysisService
+from app.wizard.router.dependencies import (
+    get_session_store,
+    get_wizard_analysis_service,
+    get_wizard_service,
+    render_step,
+)
 from app.wizard.service import WizardService
 
 router = APIRouter()
@@ -18,9 +24,10 @@ def update_method(
     selected_method: str | None = Form(default=None),
     selected_discrete_method: str | None = Form(default=None),
     service: WizardService = Depends(get_wizard_service),
+    analysis_service: WizardAnalysisService = Depends(get_wizard_analysis_service),
 ) -> Response:
     """Update selected statistical methods in session and re-render step 3."""
-    session = service.update_method(session_id, selected_method, selected_discrete_method)
+    session = analysis_service.update_method(session_id, selected_method, selected_discrete_method)
     store = get_session_store(request)
     return render_step(request, session, store, repo=service.repo)
 
@@ -32,9 +39,10 @@ def submit_method(
     selected_method: str | None = Form(default=None),
     selected_discrete_method: str | None = Form(default=None),
     service: WizardService = Depends(get_wizard_service),
+    analysis_service: WizardAnalysisService = Depends(get_wizard_analysis_service),
 ) -> Response:
     """Verify methods, execute the evaluations, and transition to Step 4 (Results)."""
-    session = service.submit_method(session_id, selected_method, selected_discrete_method)
+    session = analysis_service.submit_method(session_id, selected_method, selected_discrete_method)
     store = get_session_store(request)
     return render_step(request, session, store, repo=service.repo)
 
@@ -99,9 +107,10 @@ def submit_results(
     session_id: str,
     request: Request,
     service: WizardService = Depends(get_wizard_service),
+    analysis_service: WizardAnalysisService = Depends(get_wizard_analysis_service),
 ) -> Response:
     """Submit the statistical evaluation and transition to Step 5 (Visualizations)."""
-    session = service.submit_results(session_id)
+    session = analysis_service.submit_results(session_id)
     store = get_session_store(request)
     return render_step(request, session, store, repo=service.repo)
 
@@ -112,11 +121,12 @@ def generate_plots_htmx(
     request: Request,
     selected_plots: list[str] = Form(default=[]),
     service: WizardService = Depends(get_wizard_service),
+    analysis_service: WizardAnalysisService = Depends(get_wizard_analysis_service),
 ) -> Response:
     """Execute plot generation via matplotlib backend and render Step 5."""
     limit = float(request.cookies.get("plots_sig_filter", 0.05))
     theme = normalize_plot_theme(request.cookies.get("expyri_theme"))
-    session = service.generate_plots(session_id, selected_plots, limit, theme=theme)
+    session = analysis_service.generate_plots(session_id, selected_plots, limit, theme=theme)
     store = get_session_store(request)
     return render_step(request, session, store, repo=service.repo)
 
@@ -126,9 +136,10 @@ def submit_plots(
     session_id: str,
     request: Request,
     service: WizardService = Depends(get_wizard_service),
+    analysis_service: WizardAnalysisService = Depends(get_wizard_analysis_service),
 ) -> Response:
     """Submit visualizations and transition to Step 6 (Export)."""
-    session = service.submit_plots(session_id)
+    session = analysis_service.submit_plots(session_id)
     store = get_session_store(request)
     return render_step(request, session, store, repo=service.repo)
 

@@ -7,7 +7,16 @@ from fastapi.responses import JSONResponse
 
 from app.core.session import WizardSession
 from app.plots.theme import normalize_plot_theme
-from app.wizard.router.dependencies import get_session, get_session_store, get_wizard_service, render_step
+from app.wizard.analysis_service import WizardAnalysisService
+from app.wizard.dataset_service import WizardDatasetService
+from app.wizard.router.dependencies import (
+    get_session,
+    get_session_store,
+    get_wizard_analysis_service,
+    get_wizard_dataset_service,
+    get_wizard_service,
+    render_step,
+)
 from app.wizard.service import WizardService
 from app.wizard.steps import WizardStep
 
@@ -20,6 +29,8 @@ async def _handle_compatibility_form(
     is_forward: bool,
     request: Request,
     service: WizardService,
+    analysis_service: WizardAnalysisService,
+    dataset_service: WizardDatasetService,
 ) -> None:
     """Helper to process and submit form configurations during compatibility step switching."""
     session = service.get_session(session_id)
@@ -28,7 +39,7 @@ async def _handle_compatibility_form(
     if current == WizardStep.DATASET_SELECTION and session.dataset_id:
         group_column_val = form_data.get("group_column")
         if group_column_val:
-            service.submit_dataset_config(
+            dataset_service.submit_dataset_config(
                 session_id=session_id,
                 group_column=str(group_column_val),
                 selected_groups=[str(x) for x in form_data.getlist("selected_groups")],
@@ -49,16 +60,16 @@ async def _handle_compatibility_form(
         selected_discrete_method = str(selected_discrete_method_val) if selected_discrete_method_val else None
 
         if is_forward:
-            service.submit_method(session_id, selected_method, selected_discrete_method)
+            analysis_service.submit_method(session_id, selected_method, selected_discrete_method)
         else:
-            service.update_method(session_id, selected_method, selected_discrete_method)
+            analysis_service.update_method(session_id, selected_method, selected_discrete_method)
 
     elif current == WizardStep.PLOT_SELECTION:
         selected_plots = [str(x) for x in form_data.getlist("selected_plots")]
         limit = float(request.cookies.get("plots_sig_filter", 0.05))
         theme = normalize_plot_theme(request.cookies.get("expyri_theme"))
         if is_forward:
-            service.generate_plots(session_id, selected_plots, limit, theme=theme)
+            analysis_service.generate_plots(session_id, selected_plots, limit, theme=theme)
         else:
             session.selected_plots = selected_plots
             service.store.save(session)
@@ -71,6 +82,8 @@ async def go_to_step_compatibility(
     request: Request,
     session: WizardSession = Depends(get_session),
     service: WizardService = Depends(get_wizard_service),
+    analysis_service: WizardAnalysisService = Depends(get_wizard_analysis_service),
+    dataset_service: WizardDatasetService = Depends(get_wizard_dataset_service),
 ) -> Response:
     """HTML and JSON compatibility route: Navigate back to a completed wizard step."""
     try:
@@ -89,7 +102,9 @@ async def go_to_step_compatibility(
     is_forward = target_idx > current_idx
 
     if "hx-request" in request.headers:
-        await _handle_compatibility_form(session_id, current, is_forward, request, service)
+        await _handle_compatibility_form(
+            session_id, current, is_forward, request, service, analysis_service, dataset_service
+        )
 
     # Perform final navigation state transition
     updated_session = service.go_to_step(session_id, step)
@@ -98,6 +113,6 @@ async def go_to_step_compatibility(
         store = get_session_store(request)
         return render_step(request, updated_session, store, repo=service.repo)
     else:
-        import json
+        from fastapi.encoders import jsonable_encoder
 
-        return JSONResponse(content=json.loads(updated_session.model_dump_json()))
+        return JSONResponse(content=jsonable_encoder(updated_session))
