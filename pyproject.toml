@@ -68,8 +68,17 @@ module = [
     "scipy.*",
     "matplotlib.*",
     "statsmodels.*",
+    "pyarrow.*",
+    "pyarrow",
 ]
 ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = [
+    "app.datasets.repository",
+    "app.core.parquet",
+]
+warn_unused_ignores = false
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
