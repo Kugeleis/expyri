@@ -7,6 +7,7 @@ Re-exports all components from models and properties modules to maintain
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from enum import StrEnum
 from typing import Any
 
 from app.core.registry import Registry
@@ -40,6 +41,13 @@ from app.stats.properties import (
 )
 
 
+class OutcomeType(StrEnum):
+    """The statistical scale/type of outcome variable handled by a method."""
+
+    CONTINUOUS = "continuous"
+    DISCRETE = "discrete"
+
+
 class StatMethod(ABC):
     """Abstract base class for all statistical evaluation methods."""
 
@@ -54,6 +62,11 @@ class StatMethod(ABC):
     def description(self) -> str:
         """Return a brief description of the statistical method."""
         ...
+
+    @property
+    def outcome_type(self) -> OutcomeType:
+        """Return the outcome type this method handles."""
+        return OutcomeType.CONTINUOUS
 
     @abstractmethod
     def is_applicable(self, properties: DataProperties) -> bool:
@@ -105,6 +118,7 @@ __all__ = [
     "_get_all_groups_normal",
     "_set_defaults_for_missing_fields",
     # Base/Registry
+    "OutcomeType",
     "StatMethod",
     "stat_registry",
     # Properties/Computations

@@ -7,7 +7,7 @@ from typing import Any
 import numpy as np
 import scipy.stats as stats
 
-from app.stats.base import DataProperties, StatMethod, StatResult, stat_registry
+from app.stats.base import DataProperties, OutcomeType, StatMethod, StatResult, stat_registry
 
 
 @stat_registry.register("chi_square")
@@ -23,6 +23,11 @@ class ChiSquare(StatMethod):
     def description(self) -> str:
         """Return a brief description of the statistical method."""
         return "Chi-Square Test of Independence (categorical)."
+
+    @property
+    def outcome_type(self) -> OutcomeType:
+        """Return the outcome type this method handles."""
+        return OutcomeType.DISCRETE
 
     def is_applicable(self, properties: DataProperties) -> bool:
         """Determine whether Chi-Square is applicable.
