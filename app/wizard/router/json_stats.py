@@ -11,7 +11,14 @@ from app.plots.base import PlotResult, plot_registry
 from app.plots.theme import normalize_plot_theme
 from app.stats.base import StatResult, stat_registry
 from app.stats.properties import compute_properties, compute_properties_for_columns
-from app.wizard.router.dependencies import get_dataset_repository, get_filtered_dataset, get_session, get_wizard_service
+from app.wizard.analysis_service import WizardAnalysisService
+from app.wizard.router.dependencies import (
+    get_dataset_repository,
+    get_filtered_dataset,
+    get_session,
+    get_wizard_analysis_service,
+    get_wizard_service,
+)
 from app.wizard.router.guards import require_step
 from app.wizard.schemas import ExportRequest, FiltersConfigRequest, MethodSelectionRequest, PlotSelectionRequest
 from app.wizard.service import WizardService
@@ -79,9 +86,10 @@ def select_method(
     session_id: str,
     req: MethodSelectionRequest,
     service: WizardService = Depends(get_wizard_service),
+    analysis_service: WizardAnalysisService = Depends(get_wizard_analysis_service),
 ) -> WizardSession:
     """JSON compatibility route: Select a statistical method."""
-    service.update_method(session_id, req.selected_method, req.selected_discrete_method)
+    analysis_service.update_method(session_id, req.selected_method, req.selected_discrete_method)
     return service.go_to_step(session_id, WizardStep.RESULTS.value)
 
 
@@ -90,9 +98,10 @@ def run_statistical_evaluation(
     session_id: str,
     session: WizardSession = Depends(get_session),
     service: WizardService = Depends(get_wizard_service),
+    analysis_service: WizardAnalysisService = Depends(get_wizard_analysis_service),
 ) -> list[StatResult]:
     """JSON compatibility route: Run statistical evaluations."""
-    updated_session = service.submit_method(
+    updated_session = analysis_service.submit_method(
         session_id=session_id,
         selected_method=session.selected_method,
         selected_discrete_method=session.selected_discrete_method,
@@ -126,9 +135,10 @@ def generate_plots_json(
     session_id: str,
     req: PlotSelectionRequest,
     service: WizardService = Depends(get_wizard_service),
+    analysis_service: WizardAnalysisService = Depends(get_wizard_analysis_service),
 ) -> WizardSession:
     """JSON compatibility route: Generate visualizations."""
-    service.generate_plots(
+    analysis_service.generate_plots(
         session_id=session_id,
         selected_plots=req.selected_plots,
         plots_sig_filter=0.05,
@@ -136,6 +146,43 @@ def generate_plots_json(
         theme=normalize_plot_theme(None),
     )
     return service.go_to_step(session_id, WizardStep.EXPORT.value)
+
+
+def _execute_export_flow(
+    export_format: str,
+    session: WizardSession,
+    repo: DatasetRepository,
+    service: WizardService,
+) -> Response:
+    """Helper to execute the shared export business logic and return the Response."""
+    try:
+        exporter = exporter_registry.get(export_format)
+    except KeyError:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Exporter {export_format!r} is not registered",
+        ) from None
+
+    if session.group_column is None:
+        raise HTTPException(status_code=400, detail="Incomplete setup")
+
+    filtered_df = get_filtered_dataset(session, repo)
+
+    stat_results = [StatResult.model_validate(res) for res in session.stat_results]
+    plots = [PlotResult.model_validate(p) for p in session.plot_results]
+
+    export_res = exporter.export(stat_results, plots, filtered_df, session=session)
+
+    # Save export choice in service and ensure current step is export
+    session.current_step = WizardStep.EXPORT.value
+    session.export_format = export_format
+    service.store.save(session)
+
+    return Response(
+        content=export_res.content,
+        media_type=export_res.content_type,
+        headers={"Content-Disposition": f"attachment; filename={export_res.filename}"},
+    )
 
 
 @router.post("/sessions/{session_id}/export")
@@ -147,35 +194,7 @@ def export_results_json(
     service: WizardService = Depends(get_wizard_service),
 ) -> Response:
     """JSON compatibility route: Export the report."""
-
-    try:
-        exporter = exporter_registry.get(req.export_format)
-    except KeyError:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Exporter {req.export_format!r} is not registered",
-        ) from None
-
-    if session.group_column is None:
-        raise HTTPException(status_code=400, detail="Incomplete setup")
-
-    filtered_df = get_filtered_dataset(session, repo)
-
-    stat_results = [StatResult.model_validate(res) for res in session.stat_results]
-    plots = [PlotResult.model_validate(p) for p in session.plot_results]
-
-    export_res = exporter.export(stat_results, plots, filtered_df, session=session)
-
-    # Save export choice in service and ensure current step is export
-    session.current_step = WizardStep.EXPORT.value
-    session.export_format = req.export_format
-    service.store.save(session)
-
-    return Response(
-        content=export_res.content,
-        media_type=export_res.content_type,
-        headers={"Content-Disposition": f"attachment; filename={export_res.filename}"},
-    )
+    return _execute_export_flow(req.export_format, session, repo, service)
 
 
 @router.get("/sessions/{session_id}/export")
@@ -187,32 +206,4 @@ def export_results_get(
     service: WizardService = Depends(get_wizard_service),
 ) -> Response:
     """GET compatibility route: Export the report via query parameter."""
-
-    try:
-        exporter = exporter_registry.get(format)
-    except KeyError:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Exporter {format!r} is not registered",
-        ) from None
-
-    if session.group_column is None:
-        raise HTTPException(status_code=400, detail="Incomplete setup")
-
-    filtered_df = get_filtered_dataset(session, repo)
-
-    stat_results = [StatResult.model_validate(res) for res in session.stat_results]
-    plots = [PlotResult.model_validate(p) for p in session.plot_results]
-
-    export_res = exporter.export(stat_results, plots, filtered_df, session=session)
-
-    # Save export choice in service and ensure current step is export
-    session.current_step = WizardStep.EXPORT.value
-    session.export_format = format
-    service.store.save(session)
-
-    return Response(
-        content=export_res.content,
-        media_type=export_res.content_type,
-        headers={"Content-Disposition": f"attachment; filename={export_res.filename}"},
-    )
+    return _execute_export_flow(format, session, repo, service)
