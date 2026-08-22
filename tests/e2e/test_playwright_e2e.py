@@ -375,13 +375,14 @@ def test_playwright_visualization_cards(playwright_server: str, page: Page) -> N
 
 def test_no_scroll_on_method_selection(playwright_server: str, page: Page) -> None:
     """Verify that selecting a method in Step 3 does not scroll the selection panel to the top."""
-    page.goto(playwright_server)
+    page.goto(f"{playwright_server}/")
 
     # Step 1: Upload dataset & submit
     dataset_select = page.locator("select[name='dataset_id']")
     dataset_select.wait_for()
-    dataset_select.select_option("playwright_normal_data.csv")
+    dataset_select.select_option("playwright_normal_data")
     page.wait_for_selector("select[name='group_column']")
+    page.wait_for_timeout(500)
     page.locator("select[name='group_column']").select_option("group")
     page.wait_for_selector("input[name='selected_groups']")
     page.click("text=Continue")

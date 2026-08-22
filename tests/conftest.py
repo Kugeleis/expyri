@@ -27,7 +27,7 @@ def hierarchical_df() -> Any:
         imbalanced: bool = False,
         boundary: bool = False,
     ) -> pd.DataFrame:
-        np.random.seed(42)  # For deterministic tests
+        rng = np.random.default_rng(42)  # For deterministic tests
         data = []
         groups = [f"Group_{chr(65 + i)}" for i in range(n_groups)]
         cluster_counter = 0
@@ -58,11 +58,11 @@ def hierarchical_df() -> Any:
                     y = float(u % 4)
 
                     if is_binary:
-                        val = 1.0 if is_boundary_cluster else float(np.random.choice([0.0, 1.0], p=[0.4, 0.6]))
+                        val = 1.0 if is_boundary_cluster else float(rng.choice([0.0, 1.0], p=[0.4, 0.6]))
                     else:
                         group_effect = g_idx * 2.0
-                        cluster_effect = float(np.random.normal(0, 0.5))
-                        unit_noise = float(np.random.normal(0, 1.0))
+                        cluster_effect = float(rng.normal(0, 0.5))
+                        unit_noise = float(rng.normal(0, 1.0))
                         val = 10.0 + group_effect + cluster_effect + unit_noise
 
                     data.append({"group": group, "cluster": cluster_id, "unit": unit_id, "x": x, "y": y, "metric": val})
