@@ -71,3 +71,79 @@ def test_render_step_sorts_copy_without_mutating_session(monkeypatch: pytest.Mon
     assert isinstance(rendered_session, WizardSession)
     assert [result["column_name"] for result in rendered_session.stat_results] == ["a", "b"]
     assert [result["column_name"] for result in session.stat_results] == ["b", "a"]
+
+
+def test_render_step_separates_discrete_and_continuous_methods(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    """render_step must separate methods into continuous and discrete based on their outcome_type."""
+    from typing import Any
+
+    from app.stats.base import DataProperties, OutcomeType, StatMethod, StatResult, stat_registry
+    from app.wizard.analysis_service import WizardAnalysisService
+
+    # Register a temporary custom discrete test
+    @stat_registry.register("custom_discrete_test")
+    class CustomDiscreteTest(StatMethod):
+        @property
+        def name(self) -> str:
+            return "custom_discrete_test"
+
+        @property
+        def description(self) -> str:
+            return "A custom discrete test"
+
+        @property
+        def outcome_type(self) -> OutcomeType:
+            return OutcomeType.DISCRETE
+
+        def is_applicable(self, properties: DataProperties) -> bool:
+            return True
+
+        def run(self, groups: Any) -> StatResult:
+            return StatResult(
+                method_name="custom_discrete_test",
+                test_statistic=1.0,
+                p_value=0.05,
+                summary="Done",
+                column_name=None,
+                effect_size=None,
+                icc=None,
+                power=None,
+                n_clusters_used=None,
+                posthoc=None,
+            )
+
+    try:
+        repo = MultiFormatDatasetRepository(tmp_path)
+        store = InMemorySessionStore()
+        session = WizardSession(current_step="stat_method")
+
+        captured_context: dict[str, object] = {}
+
+        def template_response(*, request: Request, name: str, context: dict[str, object]) -> JSONResponse:
+            captured_context.update(context)
+            return JSONResponse({"template": name})
+
+        monkeypatch.setattr(WizardAnalysisService, "get_applicable_methods", lambda self, sess: ({}, {}))
+        monkeypatch.setattr(dependencies, "get_dataset_repository", lambda: repo)
+        monkeypatch.setattr(dependencies.templates, "TemplateResponse", template_response)
+
+        response = dependencies.render_step(_request(), session, store)
+
+        assert response.status_code == 200
+        continuous_methods = captured_context["continuous_methods"]
+        discrete_methods = captured_context["discrete_methods"]
+
+        # Assert custom_discrete_test is classified under discrete methods
+        discrete_names = [name for name, _ in discrete_methods]
+        continuous_names = [name for name, _ in continuous_methods]
+
+        assert "custom_discrete_test" in discrete_names
+        assert "custom_discrete_test" not in continuous_names
+        assert "chi_square" in discrete_names
+        assert "chi_square" not in continuous_names
+        assert "ttest_ind" in continuous_names
+        assert "ttest_ind" not in discrete_names
+
+    finally:
+        # Clean up registry
+        stat_registry._plugins.pop("custom_discrete_test", None)

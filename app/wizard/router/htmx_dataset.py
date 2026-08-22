@@ -5,7 +5,13 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, Form, Request, Response
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 
-from app.wizard.router.dependencies import get_session_store, get_wizard_service, render_step
+from app.wizard.dataset_service import WizardDatasetService
+from app.wizard.router.dependencies import (
+    get_session_store,
+    get_wizard_dataset_service,
+    get_wizard_service,
+    render_step,
+)
 from app.wizard.service import WizardService
 
 router = APIRouter()
@@ -25,9 +31,9 @@ def restart_session(
 
     accept = request.headers.get("accept", "")
     if "application/json" in accept or "json" in accept:
-        import json
+        from fastapi.encoders import jsonable_encoder
 
-        return JSONResponse(content=json.loads(session.model_dump_json()))
+        return JSONResponse(content=jsonable_encoder(session))
 
     return RedirectResponse(url="/", status_code=303)
 
@@ -38,9 +44,10 @@ def select_dataset_id(
     request: Request,
     dataset_id: str = Form(...),
     service: WizardService = Depends(get_wizard_service),
+    dataset_service: WizardDatasetService = Depends(get_wizard_dataset_service),
 ) -> Response:
     """Select an existing dataset from the repository list."""
-    session = service.select_dataset_id(session_id, dataset_id if dataset_id else None)
+    session = dataset_service.select_dataset_id(session_id, dataset_id if dataset_id else None)
     store = get_session_store(request)
     return render_step(request, session, store, repo=service.repo)
 
@@ -51,9 +58,10 @@ def toggle_hierarchy_htmx(
     request: Request,
     enabled: str,
     service: WizardService = Depends(get_wizard_service),
+    dataset_service: WizardDatasetService = Depends(get_wizard_dataset_service),
 ) -> Response:
     """Toggle hierarchical configuration mode (HTMX view)."""
-    session = service.toggle_hierarchy(session_id, enabled == "true")
+    session = dataset_service.toggle_hierarchy(session_id, enabled == "true")
     store = get_session_store(request)
     return render_step(request, session, store, repo=service.repo)
 
@@ -64,9 +72,10 @@ def update_group_col(
     request: Request,
     group_column: str = Form(...),
     service: WizardService = Depends(get_wizard_service),
+    dataset_service: WizardDatasetService = Depends(get_wizard_dataset_service),
 ) -> Response:
     """Update active group column selection and reload subgroups."""
-    session = service.update_group_col(session_id, group_column if group_column else None)
+    session = dataset_service.update_group_col(session_id, group_column if group_column else None)
     store = get_session_store(request)
     return render_step(request, session, store, repo=service.repo)
 
@@ -77,9 +86,10 @@ def update_cluster_col(
     request: Request,
     cluster_col: str = Form(...),
     service: WizardService = Depends(get_wizard_service),
+    dataset_service: WizardDatasetService = Depends(get_wizard_dataset_service),
 ) -> Response:
     """Update active cluster selection and reload clusters."""
-    session = service.update_cluster_col(session_id, cluster_col if cluster_col else None)
+    session = dataset_service.update_cluster_col(session_id, cluster_col if cluster_col else None)
     store = get_session_store(request)
     return render_step(request, session, store, repo=service.repo)
 
@@ -98,9 +108,10 @@ def submit_dataset_config(
     x_col: str | None = Form(default=None),
     y_col: str | None = Form(default=None),
     service: WizardService = Depends(get_wizard_service),
+    dataset_service: WizardDatasetService = Depends(get_wizard_dataset_service),
 ) -> Response:
     """Submit the dataset setup choices and transition to Step 2 (Filters)."""
-    session = service.submit_dataset_config(
+    session = dataset_service.submit_dataset_config(
         session_id=session_id,
         group_column=group_column,
         selected_groups=selected_groups,

@@ -20,9 +20,11 @@ from fastapi.templating import Jinja2Templates
 
 from app.core.session import InMemorySessionStore, SessionStore, WizardSession
 from app.datasets.repository import DatasetRepository, MultiFormatDatasetRepository
-from app.filters.base import apply_filter_pipeline
 from app.plots.theme import normalize_plot_theme, plot_context, save_plot
-from app.stats.base import stat_registry
+from app.stats.base import OutcomeType, stat_registry
+from app.wizard.analysis_service import WizardAnalysisService
+from app.wizard.dataset_service import WizardDatasetService
+from app.wizard.filtering import get_filtered_df_with_groups
 from app.wizard.plotting import generate_individual_plots, select_top_plot_columns
 from app.wizard.service import WizardService
 from app.wizard.steps import _completed_steps
@@ -64,6 +66,22 @@ def get_wizard_service(
     return WizardService(store, repo)
 
 
+def get_wizard_analysis_service(
+    store: SessionStore = Depends(get_session_store),
+    repo: DatasetRepository = Depends(get_dataset_repository),
+) -> WizardAnalysisService:
+    """Dependency provider for the WizardAnalysisService."""
+    return WizardAnalysisService(store, repo)
+
+
+def get_wizard_dataset_service(
+    store: SessionStore = Depends(get_session_store),
+    repo: DatasetRepository = Depends(get_dataset_repository),
+) -> WizardDatasetService:
+    """Dependency provider for the WizardDatasetService."""
+    return WizardDatasetService(store, repo)
+
+
 def get_session(
     session_id: str,
     store: SessionStore = Depends(get_session_store),
@@ -83,26 +101,12 @@ def get_filtered_dataset(
     repo: DatasetRepository,
 ) -> pd.DataFrame:
     """Load the dataset and apply the session's filter pipeline."""
-    if session.dataset_id is None:
-        raise HTTPException(status_code=400, detail="Dataset not selected")
-
     try:
-        df = repo.load_dataset(session.dataset_id)
-    except KeyError:
-        raise HTTPException(status_code=400, detail="Dataset missing") from None
-
-    try:
-        df = apply_filter_pipeline(df, session.filters_config)
+        return get_filtered_df_with_groups(session, repo)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from None
     except KeyError as e:
         raise HTTPException(status_code=400, detail=f"Filter registration missing: {e}") from None
-
-    if session.group_column and session.selected_groups:
-        df = df[df[session.group_column].astype(str).isin(session.selected_groups)]
-    if session.hierarchy and session.hierarchy.selected_clusters:
-        df = df[df[session.hierarchy.cluster_col].astype(str).isin(session.hierarchy.selected_clusters)]
-    return df
 
 
 def generate_significance_chart_base64(
@@ -233,7 +237,8 @@ def render_step(
     plot_theme = normalize_plot_theme(request.cookies.get("expyri_theme"))
 
     active_repo = repo or get_dataset_repository()
-    service = WizardService(store, active_repo)
+    analysis_service = WizardAnalysisService(store, active_repo)
+    dataset_service = WizardDatasetService(store, active_repo)
 
     if session.dataset_id:
         try:
@@ -241,10 +246,10 @@ def render_step(
         except (AttributeError, KeyError, TypeError, ValueError):
             logger.exception("Failed to load schema for dataset %s while rendering wizard", session.dataset_id)
 
-    available_groups, available_clusters = service.get_available_groups_and_clusters(session)
+    available_groups, available_clusters = dataset_service.get_available_groups_and_clusters(session)
 
     if session.current_step == "stat_method":
-        applicable_continuous, applicable_discrete = service.get_applicable_methods(session)
+        applicable_continuous, applicable_discrete = analysis_service.get_applicable_methods(session)
 
     elif session.current_step in ("results", "plot_selection", "export"):
         if session.stat_results:
@@ -262,7 +267,7 @@ def render_step(
         _refresh_plot_theme_if_needed(session, store, active_repo, plots_sig_filter, plot_theme)
 
         if session.current_step == "plot_selection":
-            applicable_plots = service.get_applicable_plots(session)
+            applicable_plots = analysis_service.get_applicable_plots(session)
 
     render_session = session.model_copy(deep=True)
 
@@ -274,8 +279,16 @@ def render_step(
 
         render_session.stat_results = sorted(render_session.stat_results, key=sort_key, reverse=not sort_asc)
 
-    continuous_methods = [(name, method) for name, method in stat_registry.list_all().items() if name != "chi_square"]
-    discrete_methods = [(name, method) for name, method in stat_registry.list_all().items() if name == "chi_square"]
+    continuous_methods = [
+        (name, method)
+        for name, method in stat_registry.list_all().items()
+        if method.outcome_type == OutcomeType.CONTINUOUS
+    ]
+    discrete_methods = [
+        (name, method)
+        for name, method in stat_registry.list_all().items()
+        if method.outcome_type == OutcomeType.DISCRETE
+    ]
 
     context = {
         "request": request,
