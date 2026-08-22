@@ -26,7 +26,9 @@ flowchart TD
 
     subgraph Application
         Router["FastAPI wizard routes"]
-        Service["WizardService"]
+        Service["WizardService (Lifecycle & Nav)"]
+        DatasetService["WizardDatasetService (Setup)"]
+        AnalysisService["WizardAnalysisService (Stats & Plots)"]
         Guards["Step guards"]
     end
 
@@ -49,17 +51,23 @@ flowchart TD
         Reports["PDF CSV JSON Parquet exports"]
     end
 
-    HTML -->|forms and htmx| Router
-    JSON -->|JSON payloads| Router
+    HTML --> Router
+    JSON --> Router
     Router --> Service
+    Router --> DatasetService
+    Router --> AnalysisService
     Service --> Guards
     Service -->|read and write| StoreDB
+    DatasetService -->|read and write| StoreDB
+    AnalysisService -->|read and write| StoreDB
     StoreDB -->|session state| Service
-    Service -->|load schema and data| Repo
+    StoreDB -->|session state| DatasetService
+    StoreDB -->|session state| AnalysisService
+    DatasetService -->|load schema and data| Repo
     Repo --> DataDir
-    Service -->|apply preprocessing| Filters
-    Service -->|select and run methods| Stats
-    Service -->|generate visualizations| Plots
+    AnalysisService -->|apply preprocessing| Filters
+    AnalysisService -->|select and run methods| Stats
+    AnalysisService -->|generate visualizations| Plots
     Stats --> StatResults
     Plots --> PlotImages
     Router -->|download requests| Exporters
@@ -282,7 +290,9 @@ Quality gates are strictly enforced. All tasks can be run via the task runner:
 │   │   └── partials/         # Step-specific and sidebar layout partials
 │   └── wizard/               # Router endpoints, request schemas, and transition controls
 │       ├── router/           # Endpoint controllers for HTMX, JSON, and compatibility
-│       ├── service.py        # Centralized WizardService orchestrating all domain logic
+│       ├── service.py        # Centralized WizardService (lifecycle, navigation, filters)
+│       ├── dataset_service.py # WizardDatasetService (dataset selection, column mapping)
+│       ├── analysis_service.py # WizardAnalysisService (stats execution, plotting preview)
 │       ├── schemas.py        # Pydantic schemas for JSON payloads
 │       └── steps.py          # Step sequence, guards, and transition definitions
 ├── test_data/                # CSV datasets used for verification (e.g., nycflights.csv)
