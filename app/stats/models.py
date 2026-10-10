@@ -6,7 +6,6 @@ from typing import Annotated, Any, cast
 
 import pandas as pd
 from pydantic import BaseModel, BeforeValidator, Field, field_serializer, model_validator
-from ty_extensions._internal import Unknown
 
 
 class NormalityResult(BaseModel):
@@ -129,7 +128,7 @@ class DataProperties(BaseModel):
             return data
 
         # Shallow copy to avoid side-effects
-        data: dict[Unknown, Unknown] = dict(data)
+        data: dict[str, Any] = dict(data)
         _convert_old_normality(data)
         _convert_old_variance_homogeneity(data)
         _set_defaults_for_missing_fields(data)
