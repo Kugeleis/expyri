@@ -1,4 +1,4 @@
-from collections.abc import Hashable
+from collections.abc import Callable, Hashable
 from typing import Any, Literal, cast
 
 import numpy as np
@@ -9,71 +9,98 @@ from app.core.session import HierarchyConfig
 from app.stats.models import DataProperties, NormalityResult, OutlierSummary, VarianceHomogeneityResult
 from app.stats.properties.flat import compute_missing_summary
 
+MetricKind = Literal["continuous", "binary_proportion", "unsupported"]
+
+
+def _quantile_05(values: pd.Series) -> float:
+    """5th percentile of a value series."""
+    return float(values.quantile(0.05))
+
+
+def _quantile_95(values: pd.Series) -> float:
+    """95th percentile of a value series."""
+    return float(values.quantile(0.95))
+
+
+def _interquartile_range(values: pd.Series) -> float:
+    """Interquartile range (Q3 - Q1) of a value series."""
+    return float(values.quantile(0.75) - values.quantile(0.25))
+
+
+def _filter_unit_data(
+    unit_df: pd.DataFrame,
+    config: HierarchyConfig,
+    excluded_clusters: list[str],
+    metric: str,
+) -> pd.DataFrame:
+    """Drop excluded clusters and rows missing group/cluster/metric values."""
+    excluded_mask: pd.Series[bool] = unit_df[config.cluster_col].astype(str).isin(excluded_clusters)
+    filtered: pd.DataFrame = unit_df[~excluded_mask]
+    return filtered.dropna(subset=[config.group_col, config.cluster_col, metric])
+
+
+def _aggregate_continuous(unit_df: pd.DataFrame, config: HierarchyConfig, metric: str) -> pd.DataFrame:
+    """Aggregate unit-level values into continuous per-cluster summaries."""
+    return (
+        unit_df.groupby([config.group_col, config.cluster_col])[metric]
+        .agg(
+            mean="mean",
+            median="median",
+            std="std",
+            iqr=_interquartile_range,
+            p5=_quantile_05,
+            p95=_quantile_95,
+            n_units="count",
+        )
+        .reset_index()
+    )
+
+
+def _aggregate_proportion(unit_df: pd.DataFrame, config: HierarchyConfig, metric: str) -> pd.DataFrame:
+    """Aggregate unit-level binary values into per-cluster proportions.
+
+    ``proportion_corrected`` applies a half-unit continuity correction so
+    observed proportions of 0 and 1 are pulled towards the interval centre,
+    keeping log-odds style downstream analyses finite.
+    """
+    agg_df: pd.DataFrame = (
+        unit_df.groupby([config.group_col, config.cluster_col])[metric].agg(n_pass="sum", n_units="count").reset_index()
+    )
+    agg_df["proportion_raw"] = agg_df["n_pass"] / agg_df["n_units"]
+    agg_df["proportion_corrected"] = np.clip(
+        agg_df["proportion_raw"], 0.5 / agg_df["n_units"], 1.0 - 0.5 / agg_df["n_units"]
+    )
+    return agg_df
+
+
+def _aggregate_unsupported(unit_df: pd.DataFrame, config: HierarchyConfig, metric: str) -> pd.DataFrame:
+    """Return an empty aggregate frame for metrics that cannot be summarized."""
+    del unit_df, metric
+    return pd.DataFrame(columns=[config.group_col, config.cluster_col])
+
+
+_AGGREGATORS: dict[MetricKind, Callable[[pd.DataFrame, HierarchyConfig, str], pd.DataFrame]] = {
+    "continuous": _aggregate_continuous,
+    "binary_proportion": _aggregate_proportion,
+    "unsupported": _aggregate_unsupported,
+}
+
 
 def build_cluster_aggregates(
     unit_df: pd.DataFrame,
     config: HierarchyConfig,
     excluded_clusters: list[str],
     metric: str,
-    metric_kind: Literal["continuous", "binary_proportion", "unsupported"],
+    metric_kind: MetricKind,
 ) -> pd.DataFrame:
-    """Build cluster-level aggregates from unit-level data."""
-    if metric_kind == "unsupported":
-        return pd.DataFrame(columns=[config.group_col, config.cluster_col])
+    """Build cluster-level aggregates from unit-level data.
 
-    excluded_mask = unit_df[config.cluster_col].astype(str).isin(excluded_clusters)
-    filtered: pd.DataFrame = unit_df[~excluded_mask]
-    filtered = filtered.dropna(subset=[config.group_col, config.cluster_col, metric])
-
-    if filtered.empty:
-        if metric_kind == "continuous":
-            cols: list[str] = [
-                config.group_col,
-                config.cluster_col,
-                "mean",
-                "median",
-                "std",
-                "iqr",
-                "p5",
-                "p95",
-                "n_units",
-            ]
-        else:
-            cols = [
-                config.group_col,
-                config.cluster_col,
-                "n_pass",
-                "n_units",
-                "proportion_raw",
-                "proportion_corrected",
-            ]
-        return pd.DataFrame(columns=cols)
-
-    grouped = filtered.groupby([config.group_col, config.cluster_col])
-
-    if metric_kind == "continuous":
-        agg_df: pd.DataFrame = (
-            grouped[metric]
-            .agg(
-                mean="mean",
-                median="median",
-                std="std",
-                iqr=lambda x: float(x.quantile(0.75) - x.quantile(0.25)),
-                p5=lambda x: float(x.quantile(0.05)),
-                p95=lambda x: float(x.quantile(0.95)),
-                n_units="count",
-            )
-            .reset_index()
-        )
-    else:
-        # binary proportion
-        agg_df = grouped[metric].agg(n_pass="sum", n_units="count").reset_index()
-        agg_df["proportion_raw"] = agg_df["n_pass"] / agg_df["n_units"]
-        agg_df["proportion_corrected"] = np.clip(
-            agg_df["proportion_raw"], 0.5 / agg_df["n_units"], 1.0 - 0.5 / agg_df["n_units"]
-        )
-
-    return agg_df
+    Excluded clusters and rows with missing group/cluster/metric values are
+    dropped before aggregation; fully filtered input yields an empty frame
+    carrying the columns of the requested metric kind.
+    """
+    filtered = _filter_unit_data(unit_df, config, excluded_clusters, metric)
+    return _AGGREGATORS[metric_kind](filtered, config, metric)
 
 
 def run_iterative_grubbs(df: pd.DataFrame, cluster_col: str, value_col: str, alpha: float = 0.05) -> list[str]:
@@ -168,7 +195,7 @@ def compute_hierarchical_properties(  # noqa: C901
     is_numeric = bool(pd.api.types.is_numeric_dtype(df[metric]))
     is_boolean = pd.api.types.is_bool_dtype(df[metric])
     if unique_vals.issubset({0, 1}) and len(unique_vals) > 0:
-        metric_kind: Literal["continuous", "binary_proportion", "unsupported"] = "binary_proportion"
+        metric_kind: MetricKind = "binary_proportion"
     elif is_numeric or is_boolean:
         metric_kind = "continuous"
     else:
@@ -176,8 +203,7 @@ def compute_hierarchical_properties(  # noqa: C901
 
     agg_df = build_cluster_aggregates(df, config, excluded_clusters, metric, metric_kind)
 
-    clean_unit = df[~df[config.cluster_col].astype(str).isin(excluded_clusters)]
-    clean_unit = clean_unit.dropna(subset=[config.group_col, config.cluster_col, metric])
+    clean_unit = _filter_unit_data(df, config, excluded_clusters, metric)
 
     group_sizes: dict[str, int] = {
         str(g_name): int(g_size) for g_name, g_size in clean_unit.groupby(config.group_col).size().items()

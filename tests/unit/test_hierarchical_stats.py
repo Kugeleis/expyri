@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 import numpy as np
+import pandas as pd
 import pytest
 
 from app.core.session import ClusterExclusion, HierarchyConfig, WizardSession
@@ -292,3 +293,107 @@ def test_unsupported_hierarchical_columns(hierarchical_df: Any) -> None:
 
     assert props.icc is not None
     assert np.isnan(props.icc)
+
+
+def _unit_frame() -> pd.DataFrame:
+    """Hand-crafted unit-level frame with known aggregates."""
+    return pd.DataFrame(
+        {
+            "group": ["A", "A", "A", "A", None, "B", "B", "B", "B"],
+            "cluster": ["c1", "c1", "c2", "c3", "c1", None, "c1", "c2", "c2"],
+            "metric": [1.0, 3.0, 5.0, np.nan, 5.0, 5.0, 7.0, 9.0, 11.0],
+        }
+    )
+
+
+def test_build_cluster_aggregates_continuous_values() -> None:
+    """Aggregated continuous statistics match hand-computed values."""
+    config = HierarchyConfig(group_col="group", cluster_col="cluster", unit_col="unit")
+    agg = build_cluster_aggregates(_unit_frame(), config, [], "metric", "continuous")
+
+    assert list(agg.columns) == ["group", "cluster", "mean", "median", "std", "iqr", "p5", "p95", "n_units"]
+    # Rows with NaN group/cluster/metric are dropped, so c3 vanishes entirely.
+    assert sorted(zip(agg["group"], agg["cluster"], strict=True)) == [
+        ("A", "c1"),
+        ("A", "c2"),
+        ("B", "c1"),
+        ("B", "c2"),
+    ]
+    assert list(agg["n_units"]) == [2, 1, 1, 2]
+
+    c1_a = agg[(agg["group"] == "A") & (agg["cluster"] == "c1")].iloc[0]
+    assert c1_a["mean"] == pytest.approx(2.0)
+    assert c1_a["median"] == pytest.approx(2.0)
+    assert c1_a["std"] == pytest.approx(np.sqrt(2.0))  # sample std (ddof=1)
+    assert c1_a["iqr"] == pytest.approx(1.0)
+    assert c1_a["p5"] == pytest.approx(1.1)
+    assert c1_a["p95"] == pytest.approx(2.9)
+
+    # Single-unit clusters have undefined sample std.
+    c2_a = agg[(agg["group"] == "A") & (agg["cluster"] == "c2")].iloc[0]
+    assert np.isnan(c2_a["std"])
+
+
+def test_build_cluster_aggregates_excludes_clusters() -> None:
+    """Excluded clusters are removed before aggregation."""
+    config = HierarchyConfig(group_col="group", cluster_col="cluster", unit_col="unit")
+    agg = build_cluster_aggregates(_unit_frame(), config, ["c2"], "metric", "continuous")
+
+    assert "c2" not in set(agg["cluster"])
+    assert list(agg["n_units"]) == [2, 1]
+
+
+def test_build_cluster_aggregates_empty_after_filtering() -> None:
+    """Fully filtered input yields empty frames with the kind-specific columns."""
+    config = HierarchyConfig(group_col="group", cluster_col="cluster", unit_col="unit")
+    all_missing = pd.DataFrame({"group": ["A"], "cluster": ["c1"], "metric": [np.nan]})
+
+    agg_cont = build_cluster_aggregates(all_missing, config, [], "metric", "continuous")
+    assert agg_cont.empty
+    assert list(agg_cont.columns) == ["group", "cluster", "mean", "median", "std", "iqr", "p5", "p95", "n_units"]
+
+    agg_bin = build_cluster_aggregates(all_missing, config, [], "metric", "binary_proportion")
+    assert agg_bin.empty
+    assert list(agg_bin.columns) == ["group", "cluster", "n_pass", "n_units", "proportion_raw", "proportion_corrected"]
+
+    agg_unsupported = build_cluster_aggregates(all_missing, config, [], "metric", "unsupported")
+    assert agg_unsupported.empty
+    assert list(agg_unsupported.columns) == ["group", "cluster"]
+
+
+def _binary_frame() -> pd.DataFrame:
+    """Hand-crafted binary frame with boundary and mixed clusters."""
+    return pd.DataFrame(
+        {
+            "group": ["A", "A", "A", "A", "A", "B", "B", "B", "B", "B"],
+            "cluster": ["c1", "c1", "c1", "c2", "c2", "c1", "c1", "c2", "c2", "c2"],
+            "metric": [0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0],
+        }
+    )
+
+
+def test_build_cluster_aggregates_proportion_correction() -> None:
+    """Raw proportions are computed per cluster and corrected at the boundaries."""
+    config = HierarchyConfig(group_col="group", cluster_col="cluster", unit_col="unit")
+    agg = build_cluster_aggregates(_binary_frame(), config, [], "metric", "binary_proportion")
+
+    assert list(agg.columns) == ["group", "cluster", "n_pass", "n_units", "proportion_raw", "proportion_corrected"]
+
+    by_cluster = {(row["group"], row["cluster"]): row for _, row in agg.iterrows()}
+    a_c1 = by_cluster[("A", "c1")]
+    a_c2 = by_cluster[("A", "c2")]
+    b_c1 = by_cluster[("B", "c1")]
+    b_c2 = by_cluster[("B", "c2")]
+
+    assert a_c1["n_pass"] == 0 and a_c1["n_units"] == 3
+    assert a_c1["proportion_raw"] == pytest.approx(0.0)
+    assert a_c1["proportion_corrected"] == pytest.approx(0.5 / 3)
+
+    assert a_c2["proportion_raw"] == pytest.approx(1.0)
+    assert a_c2["proportion_corrected"] == pytest.approx(1.0 - 0.5 / 2)
+
+    # Interior proportions pass through uncorrected.
+    assert b_c1["proportion_raw"] == pytest.approx(0.5)
+    assert b_c1["proportion_corrected"] == pytest.approx(0.5)
+
+    assert b_c2["proportion_corrected"] == pytest.approx(1.0 - 0.5 / 3)
