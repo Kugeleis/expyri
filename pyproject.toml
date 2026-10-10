@@ -1,6 +1,6 @@
 [project]
 name = "expyri"
-version = "0.9.2"
+version = "0.9.3"
 description = "FastAPI Experiment Evaluation Wizard"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -110,7 +110,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.bumpversion]
-current_version = "0.9.2"
+current_version = "0.9.3"
 commit = true
 tag = true
 pre_commit_hooks = [
