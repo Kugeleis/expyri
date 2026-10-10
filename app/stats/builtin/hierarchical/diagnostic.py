@@ -47,7 +47,7 @@ class GrubbsClusterOutlier(StatMethod):
 
             temp_df["dev"] = (temp_df["mean"] - mean_val).abs()
             max_idx = temp_df["dev"].idxmax()
-            max_row = temp_df.loc[max_idx]
+            max_row = temp_df.loc[cast(Any, max_idx)]
             g_val = max_row["dev"] / std_val
 
             t_dist = stats.t.ppf(1 - alpha / (2 * n), n - 2)

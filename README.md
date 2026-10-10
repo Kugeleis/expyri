@@ -313,6 +313,7 @@ Here is how you can add a custom statistical method in under 10 lines:
 ```python
 from app.stats.base import DataProperties, StatMethod, StatResult, stat_registry
 
+
 @stat_registry.register("zscore_outliers")
 class ZScoreOutliersMethod(StatMethod):
     name = "zscore_outliers"
@@ -328,7 +329,7 @@ class ZScoreOutliersMethod(StatMethod):
             test_statistic=1.96,
             p_value=0.05,
             effect_size=None,
-            summary="Completed outlier check."
+            summary="Completed outlier check.",
         )
 ```
 

@@ -1,8 +1,11 @@
-from typing import Literal
+from collections.abc import Hashable
+from typing import Any, Literal, cast
 
 import numpy as np
 import pandas as pd
 import scipy.stats as stats
+from pandas.core.frame import DataFrame
+from pandas.core.groupby.generic import DataFrameGroupBy
 
 from app.core.session import HierarchyConfig
 from app.stats.models import DataProperties, NormalityResult, OutlierSummary, VarianceHomogeneityResult
@@ -20,20 +23,39 @@ def build_cluster_aggregates(
     if metric_kind == "unsupported":
         return pd.DataFrame(columns=[config.group_col, config.cluster_col])
 
-    filtered = unit_df[~unit_df[config.cluster_col].astype(str).isin(excluded_clusters)]
+    filtered: DataFrame = unit_df[~unit_df[config.cluster_col].astype(str).isin(excluded_clusters)]
     filtered = filtered.dropna(subset=[config.group_col, config.cluster_col, metric])
 
     if filtered.empty:
         if metric_kind == "continuous":
-            cols = [config.group_col, config.cluster_col, "mean", "median", "std", "iqr", "p5", "p95", "n_units"]
+            cols: list[str] = [
+                config.group_col,
+                config.cluster_col,
+                "mean",
+                "median",
+                "std",
+                "iqr",
+                "p5",
+                "p95",
+                "n_units",
+            ]
         else:
-            cols = [config.group_col, config.cluster_col, "n_pass", "n_units", "proportion_raw", "proportion_corrected"]
+            cols = [
+                config.group_col,
+                config.cluster_col,
+                "n_pass",
+                "n_units",
+                "proportion_raw",
+                "proportion_corrected",
+            ]
         return pd.DataFrame(columns=cols)
 
-    grouped = filtered.groupby([config.group_col, config.cluster_col])
+    grouped: DataFrameGroupBy[tuple[Hashable, ...], Literal[True]] = filtered.groupby(
+        [config.group_col, config.cluster_col]
+    )
 
     if metric_kind == "continuous":
-        agg_df = (
+        agg_df: DataFrame = (
             grouped[metric]
             .agg(
                 mean="mean",
@@ -59,19 +81,19 @@ def build_cluster_aggregates(
 
 def run_iterative_grubbs(df: pd.DataFrame, cluster_col: str, value_col: str, alpha: float = 0.05) -> list[str]:
     """Iteratively detect outliers using Grubbs test on cluster means."""
-    temp_df = df[[cluster_col, value_col]].dropna().copy()
-    outliers = []
+    temp_df: DataFrame = df[[cluster_col, value_col]].dropna().copy()
+    outliers: list[str] = []
 
     while len(temp_df) >= 3:
-        n = len(temp_df)
-        mean_val = temp_df[value_col].mean()
-        std_val = temp_df[value_col].std()
+        n: int = len(temp_df)
+        mean_val: float = temp_df[value_col].mean()
+        std_val: float = temp_df[value_col].std()
         if std_val == 0 or np.isnan(std_val):
             break
 
         temp_df["dev"] = (temp_df[value_col] - mean_val).abs()
-        max_idx = temp_df["dev"].idxmax()
-        max_row = temp_df.loc[max_idx]
+        max_idx: Hashable = temp_df["dev"].idxmax()
+        max_row = temp_df.loc[cast(Any, max_idx)]
         g_val = max_row["dev"] / std_val
 
         t_dist = stats.t.ppf(1 - alpha / (2 * n), n - 2)

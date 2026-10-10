@@ -140,7 +140,7 @@ def test_pdf_exporter_no_stats(
 ) -> None:
     """Test PdfExporter output without statistical results."""
     pdf_exp = PdfExporter()
-    res = pdf_exp.export(None, sample_plots, sample_df)
+    res = pdf_exp.export([], sample_plots, sample_df)
 
     assert res.content_type == "application/pdf"
     assert res.content.startswith(b"%PDF-")
