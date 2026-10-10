@@ -4,8 +4,6 @@ from typing import Any, Literal, cast
 import numpy as np
 import pandas as pd
 import scipy.stats as stats
-from pandas.core.frame import DataFrame
-from pandas.core.groupby.generic import DataFrameGroupBy
 
 from app.core.session import HierarchyConfig
 from app.stats.models import DataProperties, NormalityResult, OutlierSummary, VarianceHomogeneityResult
@@ -23,7 +21,8 @@ def build_cluster_aggregates(
     if metric_kind == "unsupported":
         return pd.DataFrame(columns=[config.group_col, config.cluster_col])
 
-    filtered: DataFrame = unit_df[~unit_df[config.cluster_col].astype(str).isin(excluded_clusters)]
+    excluded_mask = unit_df[config.cluster_col].astype(str).isin(excluded_clusters)
+    filtered: pd.DataFrame = unit_df[~excluded_mask]
     filtered = filtered.dropna(subset=[config.group_col, config.cluster_col, metric])
 
     if filtered.empty:
@@ -50,12 +49,10 @@ def build_cluster_aggregates(
             ]
         return pd.DataFrame(columns=cols)
 
-    grouped: DataFrameGroupBy[tuple[Hashable, ...], Literal[True]] = filtered.groupby(
-        [config.group_col, config.cluster_col]
-    )
+    grouped = filtered.groupby([config.group_col, config.cluster_col])
 
     if metric_kind == "continuous":
-        agg_df: DataFrame = (
+        agg_df: pd.DataFrame = (
             grouped[metric]
             .agg(
                 mean="mean",
@@ -81,7 +78,7 @@ def build_cluster_aggregates(
 
 def run_iterative_grubbs(df: pd.DataFrame, cluster_col: str, value_col: str, alpha: float = 0.05) -> list[str]:
     """Iteratively detect outliers using Grubbs test on cluster means."""
-    temp_df: DataFrame = df[[cluster_col, value_col]].dropna().copy()
+    temp_df: pd.DataFrame = df[[cluster_col, value_col]].dropna().copy()
     outliers: list[str] = []
 
     while len(temp_df) >= 3:
@@ -91,10 +88,10 @@ def run_iterative_grubbs(df: pd.DataFrame, cluster_col: str, value_col: str, alp
         if std_val == 0 or np.isnan(std_val):
             break
 
-        temp_df["dev"] = (temp_df[value_col] - mean_val).abs()
-        max_idx: Hashable = temp_df["dev"].idxmax()
+        dev: pd.Series = (temp_df[value_col] - mean_val).abs()
+        max_idx: Hashable = dev.idxmax()
         max_row = temp_df.loc[cast(Any, max_idx)]
-        g_val = max_row["dev"] / std_val
+        g_val = float(dev.max()) / std_val
 
         t_dist = stats.t.ppf(1 - alpha / (2 * n), n - 2)
         g_crit = ((n - 1) / np.sqrt(n)) * np.sqrt(t_dist**2 / (n - 2 + t_dist**2))
@@ -168,10 +165,11 @@ def compute_hierarchical_properties(  # noqa: C901
 ) -> DataProperties:
     """Compute properties for a hierarchical dataset."""
     unique_vals = set(df[metric].dropna().unique())
-    is_numeric = pd.api.types.is_numeric_dtype(df[metric]) or pd.api.types.is_bool_dtype(df[metric])
+    is_numeric = bool(pd.api.types.is_numeric_dtype(df[metric]))
+    is_boolean = pd.api.types.is_bool_dtype(df[metric])
     if unique_vals.issubset({0, 1}) and len(unique_vals) > 0:
         metric_kind: Literal["continuous", "binary_proportion", "unsupported"] = "binary_proportion"
-    elif is_numeric:
+    elif is_numeric or is_boolean:
         metric_kind = "continuous"
     else:
         metric_kind = "unsupported"
@@ -181,24 +179,25 @@ def compute_hierarchical_properties(  # noqa: C901
     clean_unit = df[~df[config.cluster_col].astype(str).isin(excluded_clusters)]
     clean_unit = clean_unit.dropna(subset=[config.group_col, config.cluster_col, metric])
 
-    group_sizes = {}
-    grouped_unit = clean_unit.groupby(config.group_col)
-    for g_name, g_df in grouped_unit:
-        group_sizes[str(g_name)] = len(g_df)
+    group_sizes: dict[str, int] = {
+        str(g_name): int(g_size) for g_name, g_size in clean_unit.groupby(config.group_col).size().items()
+    }
 
     n_groups = len(group_sizes)
 
-    n_clusters_per_group = {}
+    n_clusters_per_group: dict[str, int] = {}
+    n_units_per_cluster: dict[str, int] = {}
     if not agg_df.empty:
-        n_clusters_per_group = agg_df.groupby(config.group_col)[config.cluster_col].nunique().to_dict()
-    n_clusters_per_group = {str(k): int(v) for k, v in n_clusters_per_group.items()}
+        n_clusters_per_group = {
+            str(g_name): int(n_clusters)
+            for g_name, n_clusters in agg_df.groupby(config.group_col)[config.cluster_col].nunique().items()
+        }
+        n_units_per_cluster = {
+            str(cluster_id): int(n_units)
+            for cluster_id, n_units in agg_df.set_index(config.cluster_col)["n_units"].items()
+        }
 
     min_clusters_per_group = min(n_clusters_per_group.values()) if n_clusters_per_group else 0
-
-    n_units_per_cluster = {}
-    if not agg_df.empty:
-        n_units_per_cluster = agg_df.set_index(config.cluster_col)["n_units"].to_dict()
-    n_units_per_cluster = {str(k): int(v) for k, v in n_units_per_cluster.items()}
 
     normality_cluster_means = False
     homogeneity_cluster = False
@@ -297,8 +296,6 @@ def compute_hierarchical_properties(  # noqa: C901
     if small_groups:
         groups_str = ", ".join(small_groups)
         sample_size_warning = f"Warning: The following groups have small sample sizes (n < 5): {groups_str}."
-
-    is_numeric = bool(pd.api.types.is_numeric_dtype(df[metric]))
 
     return DataProperties(
         outcome_type_guess="continuous" if metric_kind == "continuous" else "categorical_nominal",
