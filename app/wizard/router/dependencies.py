@@ -19,9 +19,11 @@ from fastapi import Depends, HTTPException, Request, Response
 from fastapi.templating import Jinja2Templates
 
 from app.core.session import InMemorySessionStore, SessionStore, WizardSession
+from app.datasets.models import ColumnInfo
 from app.datasets.repository import DatasetRepository, MultiFormatDatasetRepository
+from app.plots.base import PlotGenerator
 from app.plots.theme import normalize_plot_theme, plot_context, save_plot
-from app.stats.base import OutcomeType, stat_registry
+from app.stats.base import OutcomeType, StatMethod, stat_registry
 from app.wizard.analysis_service import WizardAnalysisService
 from app.wizard.dataset_service import WizardDatasetService
 from app.wizard.filtering import get_filtered_df_with_groups
@@ -33,10 +35,13 @@ templates = Jinja2Templates(directory="app/templates")
 
 
 _fallback_store: SessionStore = InMemorySessionStore()
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
-def _applicable_first(methods: list[tuple[str, Any]], applicable: dict[str, Any]) -> list[tuple[str, Any]]:
+def _applicable_first(
+    methods: list[tuple[str, StatMethod]],
+    applicable: dict[str, StatMethod],
+) -> list[tuple[str, StatMethod]]:
     """Keep registry order while showing currently applicable methods first."""
     if not applicable:
         return methods
@@ -59,15 +64,15 @@ def get_dataset_repository() -> DatasetRepository:
 
 
 def get_wizard_service(
-    store: SessionStore = Depends(get_session_store),
-    repo: DatasetRepository = Depends(get_dataset_repository),
+    store: SessionStore = Depends(dependency=get_session_store),
+    repo: DatasetRepository = Depends(dependency=get_dataset_repository),
 ) -> WizardService:
     """Dependency provider for the WizardService."""
     return WizardService(store, repo)
 
 
 def get_wizard_analysis_service(
-    store: SessionStore = Depends(get_session_store),
+    store: SessionStore = Depends(dependency=get_session_store),
     repo: DatasetRepository = Depends(get_dataset_repository),
 ) -> WizardAnalysisService:
     """Dependency provider for the WizardAnalysisService."""
@@ -228,10 +233,10 @@ def render_step(
     completed = _completed_steps(session)
     completed_names = {s.value for s in completed}
 
-    columns: list[Any] = []
-    applicable_continuous: dict[str, Any] = {}
-    applicable_discrete: dict[str, Any] = {}
-    applicable_plots: dict[str, Any] = {}
+    columns: list[ColumnInfo] = []
+    applicable_continuous: dict[str, StatMethod] = {}
+    applicable_discrete: dict[str, StatMethod] = {}
+    applicable_plots: dict[str, PlotGenerator] = {}
     sig_chart_base64: str | None = None
     matched_count = 0
     plot_theme = normalize_plot_theme(request.cookies.get("expyri_theme"))
@@ -267,9 +272,9 @@ def render_step(
         _refresh_plot_theme_if_needed(session, store, active_repo, plots_sig_filter, plot_theme)
 
         if session.current_step == "plot_selection":
-            applicable_plots = analysis_service.get_applicable_plots(session)
+            applicable_plots: dict[str, PlotGenerator] = analysis_service.get_applicable_plots(session)
 
-    render_session = session.model_copy(deep=True)
+    render_session: WizardSession = session.model_copy(deep=True)
 
     if render_session.stat_results:
 
@@ -279,7 +284,7 @@ def render_step(
 
         render_session.stat_results = sorted(render_session.stat_results, key=sort_key, reverse=not sort_asc)
 
-    continuous_methods = [
+    continuous_methods: list[tuple[str, StatMethod]] = [
         (name, method)
         for name, method in stat_registry.list_all().items()
         if method.outcome_type == OutcomeType.CONTINUOUS

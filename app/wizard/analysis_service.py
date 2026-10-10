@@ -6,14 +6,13 @@ Handles execution of statistical tests, visualization generation, and applicabil
 from __future__ import annotations
 
 import logging
-from typing import Any
 
 from fastapi import HTTPException
 
 from app.core.session import SessionStore, WizardSession
 from app.datasets.repository import DatasetRepository
-from app.plots.base import plot_registry
-from app.stats.base import StatResult, stat_registry
+from app.plots.base import PlotGenerator, plot_registry
+from app.stats.base import StatMethod, StatResult, stat_registry
 from app.stats.properties import (
     compute_properties,
     compute_properties_for_columns,
@@ -153,10 +152,10 @@ class WizardAnalysisService:
         self.store.save(session)
         return session
 
-    def get_applicable_methods(self, session: WizardSession) -> tuple[dict[str, Any], dict[str, Any]]:
+    def get_applicable_methods(self, session: WizardSession) -> tuple[dict[str, StatMethod], dict[str, StatMethod]]:
         """Compute dataset properties and query registries for applicable statistical methods."""
-        applicable_continuous: dict[str, Any] = {}
-        applicable_discrete: dict[str, Any] = {}
+        applicable_continuous: dict[str, StatMethod] = {}
+        applicable_discrete: dict[str, StatMethod] = {}
         if session.current_step != "stat_method":
             return applicable_continuous, applicable_discrete
 
@@ -174,9 +173,9 @@ class WizardAnalysisService:
             logger.exception("Failed to compute applicable methods for session %s", session.session_id)
         return applicable_continuous, applicable_discrete
 
-    def get_applicable_plots(self, session: WizardSession) -> dict[str, Any]:
+    def get_applicable_plots(self, session: WizardSession) -> dict[str, PlotGenerator]:
         """Compute dataset properties and query registries for applicable plot generators."""
-        applicable_plots: dict[str, Any] = {}
+        applicable_plots: dict[str, PlotGenerator] = {}
         if session.current_step != "plot_selection":
             return applicable_plots
 

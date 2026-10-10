@@ -5,12 +5,13 @@ from typing import Any, cast
 import numpy as np
 import pandas as pd
 import scipy.stats as stats
+from pandas.core.frame import DataFrame
 
 from app.datasets.hierarchical import HierarchicalData
 from app.stats.base import DataProperties, StatMethod, StatResult, stat_registry
 
 
-@stat_registry.register("grubbs_cluster_outlier")
+@stat_registry.register(name="grubbs_cluster_outlier")
 class GrubbsClusterOutlier(StatMethod):
     """Diagnostic Grubbs outlier test on cluster means."""
 
@@ -34,8 +35,8 @@ class GrubbsClusterOutlier(StatMethod):
             raise ValueError("GrubbsClusterOutlier requires HierarchicalData.")
 
         temp_df = groups.cluster_agg[[groups.config.cluster_col, "mean"]].dropna().copy()
-        flagged_clusters = []
-        records = []
+        flagged_clusters: list[str] = []
+        records: list[dict[str, str | float]] = []
         alpha = 0.05
 
         while len(temp_df) >= 3:
@@ -73,13 +74,13 @@ class GrubbsClusterOutlier(StatMethod):
         p_val = 0.0 if flagged_clusters else 1.0
         test_stat = float(len(flagged_clusters))
 
-        flags = [f"OUTLIER_CLUSTER:{c_id}" for c_id in flagged_clusters]
+        flags: list[str] = [f"OUTLIER_CLUSTER:{c_id}" for c_id in flagged_clusters]
 
         summary = f"Iterative Grubbs outlier detection on cluster means flagged {len(flagged_clusters)} outlier(s)."
         if flagged_clusters:
             summary += f" Flagged cluster IDs: {', '.join(flagged_clusters)}."
 
-        posthoc_df = pd.DataFrame(records) if records else None
+        posthoc_df: DataFrame | None = pd.DataFrame(records) if records else None
 
         return StatResult(
             column_name=groups.metric,

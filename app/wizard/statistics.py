@@ -2,21 +2,21 @@
 
 from __future__ import annotations
 
-from typing import Any, Literal, cast
+from typing import Literal
 
 import pandas as pd
 from fastapi import HTTPException
 
 from app.core.session import WizardSession
 from app.datasets.hierarchical import HierarchicalData
-from app.stats.base import StatResult
+from app.stats.base import StatMethod, StatResult
 from app.stats.properties import build_cluster_aggregates, compute_quick_icc
 
 
 def run_stat_for_column(
     filtered_df: pd.DataFrame,
     value_col: str,
-    method: Any,
+    method: StatMethod,
     session: WizardSession,
 ) -> StatResult:
     """Run a statistical method on one column for flat or hierarchical data."""
@@ -32,7 +32,7 @@ def run_stat_for_column(
 def _run_hierarchical_stat(
     filtered_df: pd.DataFrame,
     value_col: str,
-    method: Any,
+    method: StatMethod,
     session: WizardSession,
 ) -> StatResult:
     unique_vals = set(filtered_df[value_col].dropna().unique())
@@ -65,7 +65,7 @@ def _run_hierarchical_stat(
         icc=icc,
     )
     try:
-        return cast(StatResult, method.run(h_data))
+        return method.run(h_data)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from None
 
@@ -73,7 +73,7 @@ def _run_hierarchical_stat(
 def _run_flat_stat(
     filtered_df: pd.DataFrame,
     value_col: str,
-    method: Any,
+    method: StatMethod,
     session: WizardSession,
 ) -> StatResult:
     if session.group_column is None:
@@ -82,6 +82,6 @@ def _run_flat_stat(
     grouped = filtered_df.groupby(session.group_column)[value_col]
     group_data = {str(name): list(group.dropna().values) for name, group in grouped}
     try:
-        return cast(StatResult, method.run(group_data))
+        return method.run(group_data)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from None

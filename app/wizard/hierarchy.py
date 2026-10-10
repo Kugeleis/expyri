@@ -2,15 +2,14 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 import pandas as pd
 from fastapi import HTTPException
 
 from app.core.session import HierarchyConfig, WizardSession
+from app.datasets.models import DatasetInfo
 
 
-def validate_cluster_col(schema: Any, group_column: str, cluster_col: str) -> None:
+def validate_cluster_col(schema: DatasetInfo, group_column: str, cluster_col: str) -> None:
     """Validate hierarchical cluster column constraints."""
     if cluster_col == group_column:
         raise HTTPException(
@@ -68,7 +67,7 @@ def filter_hierarchical_columns(
 
 def setup_hierarchy(
     session: WizardSession,
-    schema: Any,
+    schema: DatasetInfo,
     df: pd.DataFrame,
     group_column: str,
     cluster_col: str,
