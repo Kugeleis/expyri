@@ -1,5 +1,10 @@
 # Project Rules
 
+- **Shell is fish**: All terminal/shell commands must use fish shell syntax (the user's interactive shell is fish). In particular:
+  - Use `$status` instead of `$?` for exit codes.
+  - No bash-only syntax: no heredocs (`<<EOF`), no `[[ ]]`, no `${VAR}` manipulation, no `export VAR=value` (use `env VAR=value cmd` or `set -x VAR value`).
+  - Fine to use: `;`, `&&`, `||`, `>` / `>>` redirection, `$(...)` command substitution (fish ≥ 3.4), and piping into `grep`/`tail` etc.
+  - Prefer redirecting output to a temp file and reading the file, since long terminal output is hard to capture.
 - Use Playwright for user web browser UI tests.
 - Test-Driven Development (TDD) is preferable. First write focused tests, then implement the actual code if this is feasible.
 - Code files should not exceed 300 lines. Only in special cases code files can be larger. Readability is key! If code is too large it should be split in focused files named clearly.
