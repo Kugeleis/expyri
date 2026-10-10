@@ -273,7 +273,7 @@ def test_stats_edge_cases_and_fallbacks() -> None:
 def test_stats_properties_extra_edge_cases() -> None:
     """Test further statistical edge cases to maximize code coverage."""
     # 1. convert_old_format with non-dict input
-    assert DataProperties.convert_old_format([1, 2, 3]) == [1, 2, 3]  # type: ignore[operator]
+    assert DataProperties.convert_old_format([1, 2, 3]) == [1, 2, 3]  # ty: ignore[call-non-callable]
 
     # 2. _convert_old_normality with non-dict normality
     from app.stats.base import _convert_old_normality

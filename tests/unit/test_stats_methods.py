@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from typing import Any
 from unittest.mock import patch
 
 import numpy as np
@@ -14,6 +15,11 @@ from app.stats.builtin.anova import Anova
 from app.stats.builtin.kruskal_wallis import KruskalWallis
 from app.stats.builtin.mann_whitney import MannWhitney
 from app.stats.builtin.ttest import TTestInd
+
+
+def legacy_props(**kwargs: Any) -> DataProperties:
+    """Build DataProperties from legacy p-value shorthand via the old-format validator."""
+    return DataProperties.model_validate(kwargs)
 
 
 @pytest.fixture
@@ -75,7 +81,7 @@ def test_ttest_applicability() -> None:
     ttest = TTestInd()
 
     # Applicable: 2 normal groups, size >= 2
-    props_valid = DataProperties(
+    props_valid = legacy_props(
         n_groups=2,
         group_sizes={"A": 10, "B": 10},
         normality={"A": 0.5, "B": 0.6},
@@ -84,7 +90,7 @@ def test_ttest_applicability() -> None:
     assert ttest.is_applicable(props_valid) is True
 
     # Inapplicable: 3 groups
-    props_three_groups = DataProperties(
+    props_three_groups = legacy_props(
         n_groups=3,
         group_sizes={"A": 10, "B": 10, "C": 10},
         normality={"A": 0.5, "B": 0.6, "C": 0.7},
@@ -93,7 +99,7 @@ def test_ttest_applicability() -> None:
     assert ttest.is_applicable(props_three_groups) is False
 
     # Inapplicable: Small group size (< 2)
-    props_small = DataProperties(
+    props_small = legacy_props(
         n_groups=2,
         group_sizes={"A": 1, "B": 10},
         normality={"A": 0.5, "B": 0.6},
@@ -102,7 +108,7 @@ def test_ttest_applicability() -> None:
     assert ttest.is_applicable(props_small) is False
 
     # Inapplicable: Non-normal group
-    props_non_normal = DataProperties(
+    props_non_normal = legacy_props(
         n_groups=2,
         group_sizes={"A": 10, "B": 10},
         normality={"A": 0.01, "B": 0.6},
@@ -142,7 +148,7 @@ def test_mann_whitney_applicability() -> None:
     mw = MannWhitney()
 
     # Applicable: 2 groups, size >= 2, normality doesn't matter
-    props_valid = DataProperties(
+    props_valid = legacy_props(
         n_groups=2,
         group_sizes={"A": 10, "B": 10},
         normality={"A": 0.01, "B": 0.02},
@@ -151,7 +157,7 @@ def test_mann_whitney_applicability() -> None:
     assert mw.is_applicable(props_valid) is True
 
     # Inapplicable: 3 groups
-    props_three_groups = DataProperties(
+    props_three_groups = legacy_props(
         n_groups=3,
         group_sizes={"A": 10, "B": 10, "C": 10},
         normality={"A": 0.5, "B": 0.6, "C": 0.7},
@@ -160,7 +166,7 @@ def test_mann_whitney_applicability() -> None:
     assert mw.is_applicable(props_three_groups) is False
 
     # Inapplicable: Small group size
-    props_small = DataProperties(
+    props_small = legacy_props(
         n_groups=2,
         group_sizes={"A": 1, "B": 10},
         normality={"A": 0.5, "B": 0.6},
@@ -199,7 +205,7 @@ def test_anova_applicability() -> None:
     anova = Anova()
 
     # Applicable: >= 2 groups, size >= 2, normal, homogeneous
-    props_valid = DataProperties(
+    props_valid = legacy_props(
         n_groups=3,
         group_sizes={"A": 10, "B": 10, "C": 10},
         normality={"A": 0.5, "B": 0.6, "C": 0.7},
@@ -208,7 +214,7 @@ def test_anova_applicability() -> None:
     assert anova.is_applicable(props_valid) is True
 
     # Inapplicable: < 2 groups
-    props_one_group = DataProperties(
+    props_one_group = legacy_props(
         n_groups=1,
         group_sizes={"A": 10},
         normality={"A": 0.5},
@@ -217,7 +223,7 @@ def test_anova_applicability() -> None:
     assert anova.is_applicable(props_one_group) is False
 
     # Inapplicable: Small group size
-    props_small = DataProperties(
+    props_small = legacy_props(
         n_groups=3,
         group_sizes={"A": 1, "B": 10, "C": 10},
         normality={"A": 0.5, "B": 0.6, "C": 0.7},
@@ -226,7 +232,7 @@ def test_anova_applicability() -> None:
     assert anova.is_applicable(props_small) is False
 
     # Inapplicable: Non-normal
-    props_non_normal = DataProperties(
+    props_non_normal = legacy_props(
         n_groups=3,
         group_sizes={"A": 10, "B": 10, "C": 10},
         normality={"A": 0.01, "B": 0.6, "C": 0.7},
@@ -235,7 +241,7 @@ def test_anova_applicability() -> None:
     assert anova.is_applicable(props_non_normal) is False
 
     # Inapplicable: Heterogeneous variance
-    props_hetero = DataProperties(
+    props_hetero = legacy_props(
         n_groups=3,
         group_sizes={"A": 10, "B": 10, "C": 10},
         normality={"A": 0.5, "B": 0.6, "C": 0.7},
@@ -276,7 +282,7 @@ def test_kruskal_wallis_applicability() -> None:
     kw = KruskalWallis()
 
     # Applicable: >= 2 groups, size >= 2
-    props_valid = DataProperties(
+    props_valid = legacy_props(
         n_groups=3,
         group_sizes={"A": 10, "B": 10, "C": 10},
         normality={"A": 0.01, "B": 0.02, "C": 0.03},
@@ -285,7 +291,7 @@ def test_kruskal_wallis_applicability() -> None:
     assert kw.is_applicable(props_valid) is True
 
     # Inapplicable: < 2 groups
-    props_one_group = DataProperties(
+    props_one_group = legacy_props(
         n_groups=1,
         group_sizes={"A": 10},
         normality={"A": 0.5},
@@ -294,7 +300,7 @@ def test_kruskal_wallis_applicability() -> None:
     assert kw.is_applicable(props_one_group) is False
 
     # Inapplicable: Small group size
-    props_small = DataProperties(
+    props_small = legacy_props(
         n_groups=3,
         group_sizes={"A": 1, "B": 10, "C": 10},
         normality={"A": 0.5, "B": 0.6, "C": 0.7},
@@ -338,7 +344,7 @@ def test_chi_square_plugin() -> None:
     assert "Chi-Square" in chi2_method.description
 
     # Test applicability
-    props_cont = DataProperties(
+    props_cont = legacy_props(
         outcome_type_guess="continuous",
         n_groups=2,
         group_sizes={"A": 10, "B": 10},
@@ -352,7 +358,7 @@ def test_chi_square_plugin() -> None:
     )
     assert chi2_method.is_applicable(props_cont) is False
 
-    props_cat = DataProperties(
+    props_cat = legacy_props(
         outcome_type_guess="categorical_nominal",
         n_groups=2,
         group_sizes={"A": 10, "B": 10},
@@ -389,7 +395,7 @@ def test_stats_methods_extra_edge_cases() -> None:
     from app.stats.builtin.chi_square import ChiSquare
 
     chi2_method = ChiSquare()
-    props_one_group = DataProperties(
+    props_one_group = legacy_props(
         outcome_type_guess="categorical_nominal",
         n_groups=1,
         group_sizes={"A": 10},
