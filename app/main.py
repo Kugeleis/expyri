@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import importlib
 import importlib.metadata
-from collections.abc import AsyncIterator, Awaitable, Callable
+from collections.abc import AsyncGenerator, Awaitable, Callable
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request, Response
@@ -31,7 +31,7 @@ except importlib.metadata.PackageNotFoundError:
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     """Manage lifecycle of the FastAPI application, initializing session store."""
     from app.core.session import InMemorySessionStore
 

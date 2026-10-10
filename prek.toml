@@ -8,10 +8,7 @@ rev = "v6.0.0"
 hooks = [
   { id = "trailing-whitespace" },
   { id = "end-of-file-fixer" },
-  {
-    id = "check-yaml",
-    args = ["--unsafe"]
-  },
+  { id = "check-yaml", args = ["--unsafe"] },
   { id = "check-added-large-files" }
 ]
 
@@ -19,57 +16,27 @@ hooks = [
 repo = "https://github.com/astral-sh/ruff-pre-commit"
 rev = "v0.17.0"
 hooks = [
-  {
-    id = "ruff",
-    args = ["--fix"]
-  },
+  { id = "ruff", args = ["--fix"] },
   { id = "ruff-format" }
 ]
 
+# ty has no official pre-commit hook repository yet, so run it via uv directly.
 [[repos]]
-repo = "https://github.com/pre-commit/mirrors-mypy"
-rev = "v2.4.0"
+repo = "local"
 hooks = [
-  {
-    id = "mypy",
-    args = ["--strict"],
-    additional_dependencies = [
-      "fastapi>=0.115",
-      "pandas-stubs>=2.2",
-      "types-reportlab>=4.2",
-      "pyarrow"
-    ],
-    pass_filenames = false,
-    entry = "mypy --strict app"
-  }
+  { id = "ty", name = "ty type checker", entry = "uv run ty check app", language = "system", pass_filenames = false }
 ]
 
 [[repos]]
 repo = "https://github.com/pre-commit/mirrors-prettier"
 rev = "v4.0.0-alpha.8"
 hooks = [
-  {
-    id = "prettier",
-    types_or = [
-      "javascript",
-      "css",
-      "html"
-    ],
-    exclude = "^docs/",
-    args = ["--no-error-on-unmatched-pattern"]
-  }
+  { id = "prettier", types_or = ["javascript", "css", "html"], exclude = "^docs/", args = ["--no-error-on-unmatched-pattern"] }
 ]
 
 [[repos]]
 repo = "https://github.com/pre-commit/mirrors-eslint"
 rev = "v10.12.0"
 hooks = [
-  {
-    id = "eslint",
-    files = '\.[jt]sx?$',
-    exclude = "^docs/",
-    types = ["file"],
-    args = ["--quiet"],
-    additional_dependencies = ["eslint@9.16.0"]
-  }
+  { id = "eslint", files = '\.[jt]sx?$', exclude = "^docs/", types = ["file"], args = ["--quiet"], additional_dependencies = ["eslint@9.16.0"] }
 ]

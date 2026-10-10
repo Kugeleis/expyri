@@ -24,10 +24,8 @@ dependencies = [
 [dependency-groups]
 dev = [
     "ruff>=0.12",
-    "mypy>=1.15",
     "pytest>=8.3",
     "pytest-cov>=6.1",
-
     "pandas-stubs>=2.2",
     "types-reportlab>=4.2",
     "prek>=0.4.8",
@@ -37,6 +35,7 @@ dev = [
     "beautifulsoup4>=4.12.0",
     "types-beautifulsoup4>=4.12.0.20240511",
     "pytest-playwright>=0.8.0",
+    "ty>=0.0.86",
 ]
 
 [tool.ruff]
@@ -53,32 +52,16 @@ known-first-party = ["app"]
 [tool.ruff.lint.flake8-bugbear]
 extend-immutable-calls = ["fastapi.Depends", "fastapi.params.Depends", "fastapi.Query", "fastapi.Path", "fastapi.Body", "fastapi.Header", "fastapi.Cookie", "fastapi.Form", "fastapi.File"]
 
-[tool.mypy]
-strict = true
-plugins = ["pydantic.mypy"]
-
-warn_return_any = true
-warn_unused_configs = true
-disallow_untyped_defs = true
-disallow_incomplete_defs = true
-no_implicit_optional = true
-
-[[tool.mypy.overrides]]
-module = [
-    "scipy.*",
-    "matplotlib.*",
-    "statsmodels.*",
-    "pyarrow.*",
-    "pyarrow",
+[tool.ty.analysis]
+# These scientific packages lack complete type stubs; suppress unresolved imports.
+allowed-unresolved-imports = [
+    "scipy.**",
+    "matplotlib.**",
+    "statsmodels.**",
+    "pyarrow.**",
 ]
-ignore_missing_imports = true
 
-[[tool.mypy.overrides]]
-module = [
-    "app.datasets.repository",
-    "app.core.parquet",
-]
-warn_unused_ignores = false
+respect-type-ignore-comments = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

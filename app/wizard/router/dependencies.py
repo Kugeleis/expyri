@@ -43,7 +43,7 @@ def _applicable_first(methods: list[tuple[str, Any]], applicable: dict[str, Any]
     return [item for item in methods if item[0] in applicable] + [item for item in methods if item[0] not in applicable]
 
 
-def get_session_store(request: Request = None) -> SessionStore:  # type: ignore[assignment]
+def get_session_store(request: Request = None) -> SessionStore:  # ty: ignore[invalid-parameter-default]
     """Dependency provider for the SessionStore."""
     if request is None:
         return _fallback_store

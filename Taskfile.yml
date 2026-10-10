@@ -32,9 +32,9 @@ tasks:
       - uv run prek run prettier --all-files || true
 
   typecheck:
-    desc: Run mypy in strict mode
+    desc: Run ty type checker
     cmds:
-      - uv run mypy --strict app
+      - uv run ty check app
 
   test:
     desc: Run prek checks and all tests with coverage (including E2E)
@@ -52,7 +52,7 @@ tasks:
   clean:
     desc: Clean ruff, pytest, uv caches and remove merged local branches
     cmds:
-      - rm -rf .ruff_cache .pytest_cache
+      - rm -rf .ruff_cache .pytest_cache .mypy_cache
       - timeout 10 uv cache clean || true
       - git branch --merged | grep -v -E "^\*|master|main|develop" | xargs -r git branch -d || true
 

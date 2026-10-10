@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterator
+from collections.abc import Generator
 from contextlib import contextmanager
 from typing import Any, BinaryIO, Literal
 
@@ -56,7 +56,7 @@ def normalize_plot_theme(theme: str | None) -> PlotTheme:
 
 
 @contextmanager
-def plot_context(theme: str | None = "dark") -> Iterator[None]:
+def plot_context(theme: str | None = "dark") -> Generator[None]:
     """Render plots with a theme isolated from global Matplotlib styles."""
     normalized_theme = normalize_plot_theme(theme)
     with plt.style.context("default"), plt.rc_context(PLOT_RC[normalized_theme]):
@@ -64,7 +64,7 @@ def plot_context(theme: str | None = "dark") -> Iterator[None]:
 
 
 @contextmanager
-def light_plot_context() -> Iterator[None]:
+def light_plot_context() -> Generator[None]:
     """Render plots with a very light grey background, isolated from global styles."""
     with plot_context("light"):
         yield

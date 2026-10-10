@@ -261,7 +261,7 @@ Quality gates are strictly enforced. All tasks can be run via the task runner:
 | `task install` | Installs dependencies |
 | `task lint` | Runs `ruff check` and `ruff format --check` |
 | `task format` | Auto-formats code with `ruff` |
-| `task typecheck` | Runs `mypy --strict` on code |
+| `task typecheck` | Runs `ty` type checks on code |
 | `task test` | Runs the test suite with coverage check (>90% required) |
 | `task check` | Runs all quality gates (lint -> typecheck -> test) |
 | `task bump -- <patch/minor/major>` | Bumps the application version using `bump-my-version` |
