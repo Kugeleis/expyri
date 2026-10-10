@@ -37,8 +37,8 @@ jobs:
       - name: Run JS syntax and style checks
         run: task lint:js
 
-      - name: Run mypy type checks
-        run: uv run mypy --strict app
+      - name: Run ty type checks
+        run: uv run ty check app
 
       - name: Run pytest
         run: uv run pytest --cov=app --cov-report=term-missing --cov-fail-under=80 --ignore=tests/e2e/test_playwright_e2e.py

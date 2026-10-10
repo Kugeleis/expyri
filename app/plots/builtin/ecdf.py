@@ -74,7 +74,7 @@ class EcdfPlot(PlotGenerator):
             fig, ax = plt.subplots()
             try:
                 for g in groups:
-                    group_data = df[df[group_col] == g][value_col].dropna().values
+                    group_data = np.asarray(df[df[group_col] == g][value_col].dropna().values)
                     if len(group_data) > 0:
                         x = np.sort(group_data)
                         y = np.arange(1, len(x) + 1) / len(x)

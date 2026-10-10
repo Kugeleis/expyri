@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Any
 
 import matplotlib
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 
 from app.plots.base import PlotGenerator, PlotResult, plot_registry
@@ -69,7 +70,7 @@ class BoxPlot(PlotGenerator):
         """
         # Group and sort by group column
         groups = sorted(df[group_col].dropna().unique())
-        data = [df[df[group_col] == g][value_col].dropna().values for g in groups]
+        data = [np.asarray(df[df[group_col] == g][value_col].dropna().values) for g in groups]
 
         with plot_context(theme):
             fig, ax = plt.subplots()

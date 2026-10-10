@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterator
+from collections.abc import Generator
 from contextlib import contextmanager
 from typing import Any, BinaryIO, Literal
 
 import matplotlib.pyplot as plt
+from matplotlib import RcParams
 from matplotlib.figure import Figure
 
 PlotTheme = Literal["light", "dark"]
@@ -16,7 +17,7 @@ PLOT_BACKGROUNDS: dict[PlotTheme, str] = {
     "dark": "#11141c",
 }
 
-PLOT_RC: dict[PlotTheme, dict[Any, Any]] = {
+PLOT_RC: dict[PlotTheme, dict[str, str]] = {
     "light": {
         "figure.facecolor": PLOT_BACKGROUNDS["light"],
         "axes.facecolor": PLOT_BACKGROUNDS["light"],
@@ -56,24 +57,24 @@ def normalize_plot_theme(theme: str | None) -> PlotTheme:
 
 
 @contextmanager
-def plot_context(theme: str | None = "dark") -> Iterator[None]:
+def plot_context(theme: str | None = "dark") -> Generator[None]:
     """Render plots with a theme isolated from global Matplotlib styles."""
-    normalized_theme = normalize_plot_theme(theme)
-    with plt.style.context("default"), plt.rc_context(PLOT_RC[normalized_theme]):
+    normalized_theme: Literal["light", "dark"] = normalize_plot_theme(theme)
+    with plt.style.context(style="default"), plt.rc_context(RcParams(PLOT_RC[normalized_theme])):
         yield
 
 
 @contextmanager
-def light_plot_context() -> Iterator[None]:
+def light_plot_context() -> Generator[None]:
     """Render plots with a very light grey background, isolated from global styles."""
-    with plot_context("light"):
+    with plot_context(theme="light"):
         yield
 
 
 def save_plot(fig: Figure, buf: BinaryIO, theme: str | None = "dark", **kwargs: Any) -> None:
     """Save a figure while preserving the selected plot background."""
     background = PLOT_BACKGROUNDS[normalize_plot_theme(theme)]
-    fig.savefig(buf, facecolor=background, edgecolor=background, **kwargs)
+    fig.savefig(fname=buf, facecolor=background, edgecolor=background, **kwargs)
 
 
 def save_light_plot(fig: Figure, buf: BinaryIO, **kwargs: Any) -> None:

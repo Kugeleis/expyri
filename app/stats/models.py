@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Annotated, Any, cast
 
 import pandas as pd
-from pydantic import BaseModel, Field, field_serializer, model_validator
+from pydantic import BaseModel, BeforeValidator, Field, field_serializer, model_validator
+from ty_extensions._internal import Unknown
 
 
 class NormalityResult(BaseModel):
@@ -128,7 +129,7 @@ class DataProperties(BaseModel):
             return data
 
         # Shallow copy to avoid side-effects
-        data = dict(data)
+        data: dict[Unknown, Unknown] = dict(data)
         _convert_old_normality(data)
         _convert_old_variance_homogeneity(data)
         _set_defaults_for_missing_fields(data)
@@ -140,7 +141,7 @@ def _convert_old_normality(data: dict[str, Any]) -> None:
     norm = data.get("normality")
     if not isinstance(norm, dict):
         return
-    new_norm = {}
+    new_norm: dict[Any, dict[str, str | float | Any] | Any] = {}
     for k, v in norm.items():
         if isinstance(v, (int, float)):
             g_sizes = data.get("group_sizes", {})
@@ -205,6 +206,16 @@ def _set_defaults_for_missing_fields(data: dict[str, Any]) -> None:
         data["sampled"] = False
 
 
+def _coerce_posthoc_records(value: Any) -> Any:
+    """Rebuild a post-hoc DataFrame from its serialized records during validation."""
+    if isinstance(value, list):
+        return pd.DataFrame(value)
+    return value
+
+
+PosthocTable = Annotated[pd.DataFrame | None, BeforeValidator(_coerce_posthoc_records)]
+
+
 class StatResult(BaseModel):
     """The result of executing a statistical method."""
 
@@ -223,13 +234,13 @@ class StatResult(BaseModel):
     icc: float | None = Field(None, description="Intra-class correlation.")
     power: float | None = Field(None, description="Estimated power.")
     n_clusters_used: dict[str, int] | None = Field(None, description="Number of clusters used per group.")
-    posthoc: Any | None = Field(None, description="Post-hoc pairwise comparisons.")
+    posthoc: PosthocTable = Field(None, description="Post-hoc pairwise comparisons.")
     flags: list[str] = Field(default_factory=list, description="DECISION items for UI.")
 
     model_config = {"arbitrary_types_allowed": True}
 
     @field_serializer("posthoc")
-    def serialize_posthoc(self, posthoc: Any) -> Any:
-        if isinstance(posthoc, pd.DataFrame):
-            return posthoc.to_dict(orient="records")
-        return posthoc
+    def serialize_posthoc(self, posthoc: pd.DataFrame | None) -> list[dict[str, Any]] | None:
+        if posthoc is None:
+            return None
+        return cast("list[dict[str, Any]]", posthoc.to_dict(orient="records"))

@@ -146,9 +146,9 @@ def test_get_applicable_intersect() -> None:
         def is_applicable(self, properties: DataProperties) -> bool:
             return properties.n_groups in self._accept_n_groups
 
-    reg._plugins["p1"] = _CustomPlugin([2])  # type: ignore[assignment]
-    reg._plugins["p2"] = _CustomPlugin([3])  # type: ignore[assignment]
-    reg._plugins["p3"] = _CustomPlugin([2, 3])  # type: ignore[assignment]
+    reg._plugins["p1"] = _CustomPlugin([2])  # ty: ignore[invalid-assignment]
+    reg._plugins["p2"] = _CustomPlugin([3])  # ty: ignore[invalid-assignment]
+    reg._plugins["p3"] = _CustomPlugin([2, 3])  # ty: ignore[invalid-assignment]
 
     # Map of column names to properties
     properties_map = {

@@ -220,6 +220,7 @@ def test_stats_edge_cases_and_fallbacks() -> None:
         n_conditions=3,
     )
     assert res_spher is not None
+    assert res_spher.note is not None
     assert "Insufficient subjects" in res_spher.note
 
     # 5. compute_missing_summary with empty df
@@ -272,7 +273,7 @@ def test_stats_edge_cases_and_fallbacks() -> None:
 def test_stats_properties_extra_edge_cases() -> None:
     """Test further statistical edge cases to maximize code coverage."""
     # 1. convert_old_format with non-dict input
-    assert DataProperties.convert_old_format([1, 2, 3]) == [1, 2, 3]
+    assert DataProperties.convert_old_format([1, 2, 3]) == [1, 2, 3]  # ty: ignore[call-non-callable]
 
     # 2. _convert_old_normality with non-dict normality
     from app.stats.base import _convert_old_normality
@@ -345,18 +346,21 @@ def test_stats_properties_extra_edge_cases() -> None:
         df_spher_err = pd.DataFrame({"group": ["T1"] * 5 + ["T2"] * 5 + ["T3"] * 5, "value": [1.0] * 15})
         res_spher_err = compute_sphericity(df_spher_err, "value", "group", repeated_measures=True, n_conditions=3)
         assert res_spher_err is not None
+        assert res_spher_err.note is not None
         assert "Error constructing contrast matrix" in res_spher_err.note
 
     with patch("numpy.linalg.det", side_effect=np.linalg.LinAlgError("Mock Det Error")):
         df_spher_err2 = pd.DataFrame({"group": ["T1"] * 5 + ["T2"] * 5 + ["T3"] * 5, "value": [1.0] * 15})
         res_spher_err2 = compute_sphericity(df_spher_err2, "value", "group", repeated_measures=True, n_conditions=3)
         assert res_spher_err2 is not None
+        assert res_spher_err2.note is not None
         assert "Error computing transformed covariance matrix" in res_spher_err2.note
 
     with patch("numpy.trace", return_value=0.0):
         df_spher_trace = pd.DataFrame({"group": ["T1"] * 5 + ["T2"] * 5 + ["T3"] * 5, "value": [1.0] * 15})
         res_spher_trace = compute_sphericity(df_spher_trace, "value", "group", repeated_measures=True, n_conditions=3)
         assert res_spher_trace is not None
+        assert res_spher_trace.note is not None
         assert "Zero trace" in res_spher_trace.note
 
     # 9. compute_missing_summary chi2_contingency failure

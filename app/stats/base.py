@@ -87,7 +87,7 @@ class StatMethod(ABC):
         To avoid breaking existing flat-data plugins and maintain complete backwards compatibility,
         the `groups` parameter is typed as `Any` at the base class level. This allows subclasses
         to type `groups` either as `dict[str, list[float]]` (flat mode) or as `HierarchicalData`
-        (hierarchical mode) without causing type checker (mypy) override mismatches. Hierarchical
+        (hierarchical mode) without causing type checker override mismatches. Hierarchical
         plugins must check if the input is an instance of `HierarchicalData` and handle it accordingly.
 
         Args:

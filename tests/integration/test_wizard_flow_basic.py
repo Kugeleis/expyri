@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Generator
 from pathlib import Path
+from typing import Any, cast
 
 import numpy as np
 import pandas as pd
@@ -289,8 +290,9 @@ def test_export_get_routes(client: TestClient) -> None:
     """Test that the GET /wizard/sessions/{session_id}/export routes work."""
     from app.core.session import InMemorySessionStore
 
-    client.app.state.session_store = InMemorySessionStore()
-    store = client.app.state.session_store
+    client_app = cast(Any, client.app)
+    client_app.state.session_store = InMemorySessionStore()
+    store = client_app.state.session_store
     session = store.create()
     session_id = session.session_id
 

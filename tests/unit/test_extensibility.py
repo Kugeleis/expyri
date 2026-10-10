@@ -99,7 +99,7 @@ class DummyPlotGenerator(PlotGenerator):
         """Check if applicable."""
         return True
 
-    def generate(self, df: pd.DataFrame, group_col: str, value_col: str) -> PlotResult:
+    def generate(self, df: pd.DataFrame, group_col: str, value_col: str, **kwargs: Any) -> PlotResult:
         """Generate the plot."""
         return PlotResult(
             plot_type="dummy_plot",

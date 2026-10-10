@@ -261,7 +261,7 @@ Quality gates are strictly enforced. All tasks can be run via the task runner:
 | `task install` | Installs dependencies |
 | `task lint` | Runs `ruff check` and `ruff format --check` |
 | `task format` | Auto-formats code with `ruff` |
-| `task typecheck` | Runs `mypy --strict` on code |
+| `task typecheck` | Runs `ty` type checks on code |
 | `task test` | Runs the test suite with coverage check (>90% required) |
 | `task check` | Runs all quality gates (lint -> typecheck -> test) |
 | `task bump -- <patch/minor/major>` | Bumps the application version using `bump-my-version` |
@@ -313,6 +313,7 @@ Here is how you can add a custom statistical method in under 10 lines:
 ```python
 from app.stats.base import DataProperties, StatMethod, StatResult, stat_registry
 
+
 @stat_registry.register("zscore_outliers")
 class ZScoreOutliersMethod(StatMethod):
     name = "zscore_outliers"
@@ -328,7 +329,7 @@ class ZScoreOutliersMethod(StatMethod):
             test_statistic=1.96,
             p_value=0.05,
             effect_size=None,
-            summary="Completed outlier check."
+            summary="Completed outlier check.",
         )
 ```
 

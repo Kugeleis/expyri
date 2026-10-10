@@ -27,8 +27,8 @@ htmlcov/
 .coverage.*
 coverage.xml
 
-# mypy
-.mypy_cache/
+# ty
+.ty_cache/
 
 # ruff
 .ruff_cache/

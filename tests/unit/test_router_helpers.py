@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import io
 from pathlib import Path
+from typing import Any, cast
 
 import pytest
 from fastapi import UploadFile
@@ -134,8 +135,10 @@ def test_render_step_separates_discrete_and_continuous_methods(monkeypatch: pyte
         discrete_methods = captured_context["discrete_methods"]
 
         # Assert custom_discrete_test is classified under discrete methods
-        discrete_names = [name for name, _ in discrete_methods]
-        continuous_names = [name for name, _ in continuous_methods]
+        discrete_methods_typed = cast(list[tuple[str, Any]], discrete_methods)
+        continuous_methods_typed = cast(list[tuple[str, Any]], continuous_methods)
+        discrete_names = [name for name, _ in discrete_methods_typed]
+        continuous_names = [name for name, _ in continuous_methods_typed]
 
         assert "custom_discrete_test" in discrete_names
         assert "custom_discrete_test" not in continuous_names

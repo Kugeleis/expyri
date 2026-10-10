@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import base64
 import io
+from typing import Any
 
 import matplotlib.image as mpimg
 import pandas as pd
@@ -14,6 +15,11 @@ from app.plots.builtin.boxplot import BoxPlot
 from app.plots.builtin.ecdf import EcdfPlot
 from app.plots.builtin.violin import ViolinPlot
 from app.stats.base import DataProperties
+
+
+def legacy_props(**kwargs: Any) -> DataProperties:
+    """Build DataProperties from legacy p-value shorthand via the old-format validator."""
+    return DataProperties.model_validate(kwargs)
 
 
 @pytest.fixture
@@ -50,7 +56,7 @@ def test_boxplot_applicability() -> None:
     bp = BoxPlot()
 
     # Applicable
-    props_valid = DataProperties(
+    props_valid = legacy_props(
         n_groups=2,
         group_sizes={"A": 5, "B": 5},
         normality={"A": 0.5, "B": 0.5},
@@ -59,7 +65,7 @@ def test_boxplot_applicability() -> None:
     assert bp.is_applicable(props_valid) is True
 
     # Inapplicable: No groups
-    props_no_groups = DataProperties(
+    props_no_groups = legacy_props(
         n_groups=0,
         group_sizes={},
         normality={},
@@ -68,7 +74,7 @@ def test_boxplot_applicability() -> None:
     assert bp.is_applicable(props_no_groups) is False
 
     # Inapplicable: Empty group
-    props_empty_group = DataProperties(
+    props_empty_group = legacy_props(
         n_groups=2,
         group_sizes={"A": 0, "B": 5},
         normality={"A": 0.0, "B": 0.5},
@@ -77,7 +83,7 @@ def test_boxplot_applicability() -> None:
     assert bp.is_applicable(props_empty_group) is False
 
     # Inapplicable: Non-numeric outcome
-    props_non_numeric = DataProperties(
+    props_non_numeric = legacy_props(
         n_groups=2,
         group_sizes={"A": 5, "B": 5},
         normality={"A": 0.5, "B": 0.5},
@@ -92,7 +98,7 @@ def test_violin_applicability() -> None:
     vp = ViolinPlot()
 
     # Applicable: size >= 3
-    props_valid = DataProperties(
+    props_valid = legacy_props(
         n_groups=2,
         group_sizes={"A": 3, "B": 4},
         normality={"A": 0.5, "B": 0.5},
@@ -101,7 +107,7 @@ def test_violin_applicability() -> None:
     assert vp.is_applicable(props_valid) is True
 
     # Inapplicable: size < 3
-    props_small_group = DataProperties(
+    props_small_group = legacy_props(
         n_groups=2,
         group_sizes={"A": 2, "B": 5},
         normality={"A": 0.5, "B": 0.5},
@@ -110,7 +116,7 @@ def test_violin_applicability() -> None:
     assert vp.is_applicable(props_small_group) is False
 
     # Inapplicable: n_groups < 1
-    props_no_groups = DataProperties(
+    props_no_groups = legacy_props(
         n_groups=0,
         group_sizes={},
         normality={},
@@ -119,7 +125,7 @@ def test_violin_applicability() -> None:
     assert vp.is_applicable(props_no_groups) is False
 
     # Inapplicable: Non-numeric outcome
-    props_non_numeric = DataProperties(
+    props_non_numeric = legacy_props(
         n_groups=2,
         group_sizes={"A": 3, "B": 4},
         normality={"A": 0.5, "B": 0.5},
@@ -134,7 +140,7 @@ def test_ecdf_applicability() -> None:
     ep = EcdfPlot()
 
     # Applicable
-    props_valid = DataProperties(
+    props_valid = legacy_props(
         n_groups=2,
         group_sizes={"A": 1, "B": 1},
         normality={"A": 0.0, "B": 0.0},
@@ -143,7 +149,7 @@ def test_ecdf_applicability() -> None:
     assert ep.is_applicable(props_valid) is True
 
     # Inapplicable: No groups
-    props_no_groups = DataProperties(
+    props_no_groups = legacy_props(
         n_groups=0,
         group_sizes={},
         normality={},
@@ -152,7 +158,7 @@ def test_ecdf_applicability() -> None:
     assert ep.is_applicable(props_no_groups) is False
 
     # Inapplicable: Non-numeric outcome
-    props_non_numeric = DataProperties(
+    props_non_numeric = legacy_props(
         n_groups=2,
         group_sizes={"A": 1, "B": 1},
         normality={"A": 0.0, "B": 0.0},
