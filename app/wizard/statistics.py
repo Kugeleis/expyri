@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Literal
+from typing import Any, Literal
 
 import pandas as pd
 from fastapi import HTTPException
@@ -11,6 +11,12 @@ from app.core.session import WizardSession
 from app.datasets.hierarchical import HierarchicalData
 from app.stats.base import StatMethod, StatResult
 from app.stats.properties import build_cluster_aggregates, compute_quick_icc
+
+
+def significance_p_value(result: dict[str, Any]) -> float | None:
+    """Prefer adjusted significance, falling back for uncorrected and legacy results."""
+    adjusted = result.get("p_value_adjusted")
+    return adjusted if adjusted is not None else result.get("p_value")
 
 
 def run_stat_for_column(

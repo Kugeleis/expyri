@@ -11,12 +11,12 @@
         <div class="info-callout-body">
             Statistical methods are verified against the properties of your filtered data:
             <ul class="info-list">
-                <li><strong>Independent Two-Sample t-test:</strong> Requires exactly 2 groups of numeric data, with n &ge; 2 per group, and normality satisfied for all groups.</li>
-                <li><strong>One-way ANOVA:</strong> Requires &ge; 2 groups of numeric data, with n &ge; 2 per group, normality satisfied, and homogeneous variance.</li>
-                <li><strong>Mann-Whitney U:</strong> Non-parametric alternative to t-test; requires exactly 2 groups of numeric data with n &ge; 2 per group.</li>
-                <li><strong>Kruskal-Wallis H:</strong> Non-parametric alternative to ANOVA; requires &ge; 2 groups of numeric data with n &ge; 2 per group.</li>
-                <li><strong>Chi-Square test:</strong> Requires discrete/categorical outcome data across &ge; 2 groups.</li>
-                <li><strong>Hierarchical Regression (GMM):</strong> Requires hierarchical configuration enabled.</li>
+                <li><strong>{{ method_display_names.get('ttest_ind', 'ttest_ind') }}:</strong> Requires exactly 2 groups of numeric data, with n &ge; 2 per group, and normality satisfied for all groups.</li>
+                <li><strong>{{ method_display_names.get('anova', 'anova') }}:</strong> Requires &ge; 2 groups of numeric data, with n &ge; 2 per group, normality satisfied, and homogeneous variance.</li>
+                <li><strong>{{ method_display_names.get('mann_whitney', 'mann_whitney') }}:</strong> Non-parametric alternative to t-test; requires exactly 2 groups of numeric data with n &ge; 2 per group.</li>
+                <li><strong>{{ method_display_names.get('kruskal_wallis', 'kruskal_wallis') }}:</strong> Non-parametric alternative to ANOVA; requires &ge; 2 groups of numeric data with n &ge; 2 per group.</li>
+                <li><strong>{{ method_display_names.get('chi_square', 'chi_square') }}:</strong> Requires discrete/categorical outcome data across &ge; 2 groups.</li>
+                <li><strong>{{ method_display_names.get('linear_mixed_model', 'linear_mixed_model') }}:</strong> Requires hierarchical configuration enabled.</li>
             </ul>
         </div>
     </details>
@@ -39,14 +39,7 @@
                                    {% if session.selected_method == name %}checked{% endif %}
                             />
                             <div>
-                                <strong>
-                                    {% if name == "ttest" %}t-Test
-                                    {% elif name == "anova" %}One-Way ANOVA
-                                    {% elif name == "mann_whitney" %}Mann-Whitney U
-                                    {% elif name == "kruskal_wallis" %}Kruskal-Wallis H
-                                    {% elif name == "hierarchical_regression" %}Hierarchical Regression
-                                    {% else %}{{ name }}{% endif %}
-                                </strong>
+                                <strong>{{ method.display_name }}</strong>
                                 <span class="method-description">{{ method.description }}</span>
                             </div>
                         </label>
@@ -72,10 +65,7 @@
                                    {% if session.selected_discrete_method == name %}checked{% endif %}
                             />
                             <div>
-                                <strong>
-                                    {% if name == "chi_square" %}Chi-Square Test
-                                    {% else %}{{ name }}{% endif %}
-                                </strong>
+                                <strong>{{ method.display_name }}</strong>
                                 <span class="method-description">{{ method.description }}</span>
                             </div>
                         </label>

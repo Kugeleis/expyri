@@ -18,6 +18,10 @@ class Anova(StatMethod):
         return "anova"
 
     @property
+    def display_name(self) -> str:
+        return "One-way ANOVA"
+
+    @property
     def description(self) -> str:
         """Return a brief description of the statistical method."""
         return "One-way ANOVA (parametric)."

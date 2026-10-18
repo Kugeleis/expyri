@@ -22,6 +22,10 @@ class ClusterMeanANOVA(StatMethod):
         return "cluster_mean_anova"
 
     @property
+    def display_name(self) -> str:
+        return "One-way ANOVA on cluster means"
+
+    @property
     def description(self) -> str:
         return "One-way ANOVA on cluster-level means (two-stage)."
 

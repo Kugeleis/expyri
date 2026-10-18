@@ -20,7 +20,7 @@
 
             <div class="plots-selector-footer">
                 <span class="plots-generation-counter" id="plots-generation-counter">
-                    Will generate plots for variables with p-value &le; {{ plots_sig_filter | default(0.05) }}
+                    Will generate plots for variables with {% if has_adjusted_p_values %}adjusted {% endif %}p-value &le; {{ plots_sig_filter | default(0.05) }}
                 </span>
                 <button type="submit" id="btn-generate-plots">
                     Generate Plots
@@ -47,17 +47,10 @@
                         </div>
                         {% if ns.col_res %}
                             <div class="plot-result-meta">
-                                <span>Method:
-                                    {% if ns.col_res.method_name == "ttest" %}t-Test
-                                    {% elif ns.col_res.method_name == "anova" %}ANOVA
-                                    {% elif ns.col_res.method_name == "mann_whitney" %}Mann-Whitney U
-                                    {% elif ns.col_res.method_name == "kruskal_wallis" %}Kruskal-Wallis H
-                                    {% elif ns.col_res.method_name == "chi_square" %}Chi-Square
-                                    {% elif ns.col_res.method_name == "hierarchical_regression" %}Hierarchical Regression
-                                    {% else %}{{ ns.col_res.method_name }}{% endif %}
-                                </span>
+                                <span>Method: {{ method_display_names.get(ns.col_res.method_name, ns.col_res.method_name) }}</span>
                                 {% if ns.col_res.test_statistic is not none %} | <span title="Test Statistic">Stat: {{ "%.4f"|format(ns.col_res.test_statistic) }}</span>{% endif %}
-                                {% if ns.col_res.p_value is not none %} | <span title="p-value">p: {{ "%.6f"|format(ns.col_res.p_value) }}</span>{% endif %}
+                                {% if ns.col_res.p_value is not none %} | <span title="Raw p-value">p: {{ "%.6f"|format(ns.col_res.p_value) }}</span>{% endif %}
+                                {% if ns.col_res.get("p_value_adjusted") is not none %} | <span title="Adjusted p-value">Adjusted p: {{ "%.6f"|format(ns.col_res.p_value_adjusted) }}</span>{% endif %}
                                 {% if ns.col_res.effect_size is not none %} | <span title="Effect Size">Effect: {{ "%.4f"|format(ns.col_res.effect_size) }}</span>{% endif %}
                                 {% if ns.col_res.icc is not none %} | <span title="Intraclass Correlation Coefficient">ICC: {{ "%.4f"|format(ns.col_res.icc) }}</span>{% endif %}
                                 {% if ns.col_res.power is not none %} | <span title="Statistical Power">Power: {{ "%.4f"|format(ns.col_res.power) }}</span>{% endif %}

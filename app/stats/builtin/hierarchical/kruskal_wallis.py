@@ -21,6 +21,10 @@ class ClusterMeanKruskalWallis(StatMethod):
         return "cluster_mean_kruskal_wallis"
 
     @property
+    def display_name(self) -> str:
+        return "Kruskal-Wallis H test on cluster means"
+
+    @property
     def description(self) -> str:
         return "Kruskal-Wallis H test on cluster-level means (two-stage)."
 
@@ -118,6 +122,10 @@ class ProportionKruskalWallis(StatMethod):
     @property
     def name(self) -> str:
         return "proportion_kruskal_wallis"
+
+    @property
+    def display_name(self) -> str:
+        return "Kruskal-Wallis H test on corrected cluster proportions"
 
     @property
     def description(self) -> str:

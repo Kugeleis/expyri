@@ -4,6 +4,7 @@ import socket
 import threading
 import time
 from collections.abc import Generator
+from pathlib import Path
 
 import playwright.sync_api
 import pytest
@@ -41,8 +42,8 @@ def get_free_port() -> int:
 def nycflights_server(tmp_path_factory: pytest.TempPathFactory) -> Generator[str, None, None]:
     tmp_dir = tmp_path_factory.mktemp("nycflights_data")
 
-    # Copy nycflights.csv to the temp data directory
-    shutil.copy("data/nycflights.csv", tmp_dir / "nycflights.csv")
+    sample_path = Path(__file__).resolve().parents[2] / "test_data" / "nycflights.csv"
+    shutil.copy(sample_path, tmp_dir / "nycflights.csv")
 
     original_env = os.environ.get("EXPYRI_DATA_DIR")
     os.environ["EXPYRI_DATA_DIR"] = str(tmp_dir)

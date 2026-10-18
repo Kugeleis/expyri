@@ -58,6 +58,11 @@ class StatMethod(ABC):
         ...
 
     @property
+    def display_name(self) -> str:
+        """Return the human-readable label, independently of the stable method name."""
+        return self.name.replace("_", " ").title()
+
+    @property
     @abstractmethod
     def description(self) -> str:
         """Return a brief description of the statistical method."""

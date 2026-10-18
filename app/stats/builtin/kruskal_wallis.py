@@ -17,6 +17,10 @@ class KruskalWallis(StatMethod):
         return "kruskal_wallis"
 
     @property
+    def display_name(self) -> str:
+        return "Kruskal-Wallis H test"
+
+    @property
     def description(self) -> str:
         """Return a brief description of the statistical method."""
         return "Kruskal-Wallis H test (non-parametric)."

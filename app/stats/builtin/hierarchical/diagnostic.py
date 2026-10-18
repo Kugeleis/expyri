@@ -20,6 +20,10 @@ class GrubbsClusterOutlier(StatMethod):
         return "grubbs_cluster_outlier"
 
     @property
+    def display_name(self) -> str:
+        return "Grubbs outlier test on cluster means"
+
+    @property
     def description(self) -> str:
         return "Diagnostic Grubbs outlier test on cluster-level means."
 
@@ -101,6 +105,10 @@ class LeveneClusterUniformity(StatMethod):
     @property
     def name(self) -> str:
         return "levene_cluster_uniformity"
+
+    @property
+    def display_name(self) -> str:
+        return "Levene's test of within-cluster spread"
 
     @property
     def description(self) -> str:

@@ -35,6 +35,8 @@ def sample_stat_results() -> list[StatResult]:
             method_name="test_method",
             test_statistic=1.2345,
             p_value=0.0432,
+            p_value_adjusted=0.0864,
+            correction_method="holm",
             effect_size=0.85,
             summary="Test method summary showing p < 0.05",
         )
@@ -113,6 +115,9 @@ def test_json_exporter(
     assert "dataset" in data
     assert len(data["dataset"]) == 4
     assert data["statistical_results"][0]["method_name"] == "test_method"
+    assert data["statistical_results"][0]["p_value"] == 0.0432
+    assert data["statistical_results"][0]["p_value_adjusted"] == 0.0864
+    assert data["statistical_results"][0]["correction_method"] == "holm"
     assert len(data["plots"]) == 1
     assert data["plots"][0]["plot_type"] == "boxplot"
 

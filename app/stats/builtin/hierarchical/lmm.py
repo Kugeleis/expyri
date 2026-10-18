@@ -18,6 +18,10 @@ class LinearMixedModel(StatMethod):
         return "linear_mixed_model"
 
     @property
+    def display_name(self) -> str:
+        return "Linear mixed-effects model (LMM)"
+
+    @property
     def description(self) -> str:
         return "Linear Mixed-Effects Model (LMM) with a random intercept per cluster."
 

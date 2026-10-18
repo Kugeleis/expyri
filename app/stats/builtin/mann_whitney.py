@@ -18,6 +18,10 @@ class MannWhitney(StatMethod):
         return "mann_whitney"
 
     @property
+    def display_name(self) -> str:
+        return "Mann-Whitney U test"
+
+    @property
     def description(self) -> str:
         """Return a brief description of the statistical method."""
         return "Mann-Whitney U test (non-parametric)."

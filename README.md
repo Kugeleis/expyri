@@ -204,7 +204,7 @@ The wizard queries the backend to determine which methods are applicable based o
 Executes the selected methods and shows an interactive results table containing:
 
 - **Test Statistic**: The calculated value (e.g., $t$, $F$, $H$, $\chi^2$, or $z$).
-- **p-value**: Statistical significance. Cells are highlighted green if $p \le 0.01$ (strict significance) or yellow if $p \le 0.05$.
+- **Raw and adjusted p-values**: Flat submissions show each test's raw p-value and its Holm-adjusted p-value, correcting continuous and discrete outcomes as separate families. Row highlighting, the significance chart, and automatic plot filtering use adjusted p-values; uncorrected and legacy results fall back to raw p-values. At the default limit, green indicates $p \le 0.01$ and yellow indicates $p \le 0.05$.
 - **Effect Size**: Quantitative measure of the magnitude of the experimental effect.
 - **[Intraclass Correlation (ICC)](https://en.wikipedia.org/wiki/Intraclass_correlation)** (Hierarchical only): Indicates the proportion of total variance explained by the clustering level.
 - **Statistical Warnings**: Alerts you if assumptions are violated (e.g., severe non-[normality](https://en.wikipedia.org/wiki/Shapiro%E2%80%93Wilk_test), [heteroscedasticity](https://en.wikipedia.org/wiki/Levene%27s_test), or the presence of significant [outliers](https://en.wikipedia.org/wiki/Grubbs%27s_test_for_outliers)).
@@ -227,6 +227,8 @@ Download your final results and plots in one of these structured formats:
 - **PDF Report**: A publication-ready document compiling the test description, evaluation table, decision flags, and embedded high-resolution figures.
 - **CSV / JSON Exports**: Standardized raw outputs of the statistical results for downstream pipelines.
 - **Interactive Explorer (Parquet with Metadata)**: Launches a Marimo notebook instance preloaded with your preprocessed dataset saved as a `.parquet` file. This Parquet file contains extensive session metadata stored in its schema metadata headers, allowing full reproducibility of the ExPyRi session.
+
+Flat-mode result records retain the raw `p_value` and add `p_value_adjusted` and `correction_method: "holm"` in the JSON API, JSON exports, and Parquet result metadata. [Holm correction](https://www.statsmodels.org/stable/generated/statsmodels.stats.multitest.multipletests.html) is applied separately across continuous and discrete outcomes in each submission; a single outcome keeps its original p-value. The new fields are optional and default to `null` for legacy and hierarchical results; hierarchical post-hoc corrections are unchanged.
 
 #### Parquet Metadata Structure
 When the Interactive Explorer is selected, ExPyRi writes the cleaned dataset and all execution metadata directly to the Parquet file's schema metadata headers (as JSON-encoded UTF-8 bytes). This makes all choices and info from ExPyRi fully reproducible.
@@ -332,6 +334,19 @@ class ZScoreOutliersMethod(StatMethod):
             summary="Completed outlier check.",
         )
 ```
+
+Statistical methods inherit a read-only `display_name` property for wizard labels. By default,
+`zscore_outliers` becomes `Zscore Outliers`; optionally override the property for precise spelling:
+
+```python
+    @property
+    def display_name(self) -> str:
+        return "Z-score outlier test"
+```
+
+Labels appear in method selection, results, and plot annotations. Keep the registry key, `name`, and
+`StatResult.method_name` as stable machine identifiers: form values, sessions, APIs, and exports
+continue to use them. Existing plugins need no changes, and registration still takes no constructor arguments.
 
 The system will automatically:
 
