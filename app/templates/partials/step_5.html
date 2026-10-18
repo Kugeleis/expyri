@@ -47,15 +47,7 @@
                         </div>
                         {% if ns.col_res %}
                             <div class="plot-result-meta">
-                                <span>Method:
-                                    {% if ns.col_res.method_name == "ttest" %}t-Test
-                                    {% elif ns.col_res.method_name == "anova" %}ANOVA
-                                    {% elif ns.col_res.method_name == "mann_whitney" %}Mann-Whitney U
-                                    {% elif ns.col_res.method_name == "kruskal_wallis" %}Kruskal-Wallis H
-                                    {% elif ns.col_res.method_name == "chi_square" %}Chi-Square
-                                    {% elif ns.col_res.method_name == "hierarchical_regression" %}Hierarchical Regression
-                                    {% else %}{{ ns.col_res.method_name }}{% endif %}
-                                </span>
+                                <span>Method: {{ method_display_names.get(ns.col_res.method_name, ns.col_res.method_name) }}</span>
                                 {% if ns.col_res.test_statistic is not none %} | <span title="Test Statistic">Stat: {{ "%.4f"|format(ns.col_res.test_statistic) }}</span>{% endif %}
                                 {% if ns.col_res.p_value is not none %} | <span title="p-value">p: {{ "%.6f"|format(ns.col_res.p_value) }}</span>{% endif %}
                                 {% if ns.col_res.effect_size is not none %} | <span title="Effect Size">Effect: {{ "%.4f"|format(ns.col_res.effect_size) }}</span>{% endif %}

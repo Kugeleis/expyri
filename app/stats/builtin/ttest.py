@@ -18,6 +18,10 @@ class TTestInd(StatMethod):
         return "ttest_ind"
 
     @property
+    def display_name(self) -> str:
+        return "Independent two-sample t-test"
+
+    @property
     def description(self) -> str:
         """Return a brief description of the statistical method."""
         return "Independent two-sample t-test (parametric)."

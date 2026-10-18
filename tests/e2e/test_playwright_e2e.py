@@ -183,6 +183,7 @@ def test_playwright_full_wizard_flow(playwright_server: str, page: Page) -> None
     page.wait_for_selector("input[name='selected_method']")
 
     # Step 3: Choose method
+    expect(page.get_by_role("radio", name="Independent two-sample t-test")).to_be_visible()
     page.locator("input[name='selected_method'][value='ttest_ind']").check()
 
     # Step 4: Go to Results
@@ -190,7 +191,8 @@ def test_playwright_full_wizard_flow(playwright_server: str, page: Page) -> None
     page.wait_for_selector("input[id='plots-sig-filter']")
 
     # Assert results are displayed
-    expect(page.locator("table")).to_contain_text("ttest_ind")
+    expect(page.locator("table")).to_contain_text("Independent two-sample t-test")
+    expect(page.locator("table")).not_to_contain_text("ttest_ind")
     expect(page.locator("body")).to_contain_text("value")
 
     # Step 5: Go to Visualizations
@@ -364,6 +366,8 @@ def test_playwright_visualization_cards(playwright_server: str, page: Page) -> N
     # Verify each card contains statistical results in header
     expect(cards.nth(0).locator("header")).to_contain_text("p:")
     expect(cards.nth(1).locator("header")).to_contain_text("p:")
+    expect(cards.nth(0).locator(".plot-result-meta")).to_contain_text("Independent two-sample t-test")
+    expect(cards.nth(1).locator(".plot-result-meta")).to_contain_text("Independent two-sample t-test")
 
     # Verify each card contains exactly 2 images (one boxplot, one violin)
     first_card_images = cards.nth(0).locator("img")

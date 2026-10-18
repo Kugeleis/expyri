@@ -284,16 +284,14 @@ def render_step(
 
         render_session.stat_results = sorted(render_session.stat_results, key=sort_key, reverse=not sort_asc)
 
+    methods = stat_registry.list_all()
     continuous_methods: list[tuple[str, StatMethod]] = [
-        (name, method)
-        for name, method in stat_registry.list_all().items()
-        if method.outcome_type == OutcomeType.CONTINUOUS
+        (name, method) for name, method in methods.items() if method.outcome_type == OutcomeType.CONTINUOUS
     ]
     discrete_methods = [
-        (name, method)
-        for name, method in stat_registry.list_all().items()
-        if method.outcome_type == OutcomeType.DISCRETE
+        (name, method) for name, method in methods.items() if method.outcome_type == OutcomeType.DISCRETE
     ]
+    method_display_names: dict[str, str] = {name: method.display_name for name, method in methods.items()}
 
     context = {
         "request": request,
@@ -306,6 +304,7 @@ def render_step(
         "available_clusters": available_clusters,
         "continuous_methods": _applicable_first(continuous_methods, applicable_continuous),
         "discrete_methods": _applicable_first(discrete_methods, applicable_discrete),
+        "method_display_names": method_display_names,
         "applicable_continuous": applicable_continuous,
         "applicable_discrete": applicable_discrete,
         "applicable_plots": applicable_plots,

@@ -6,14 +6,14 @@ Plan: [plan.md](./plan.md) · Intent: [../docs/intent/expyri.md](../docs/intent/
 
 ### Task 1: Fix method display-name mappings in templates
 
-**Status:** Planning complete; implementation not started. Await owner approval before executing these steps.
+**Status:** Method-label implementation committed as `d8d05b3` on 2026-10-18. That commit left `task check` failing; the fixture correction and a direct passing aggregate run are recorded below. Narrow-viewport work is explicitly out of scope.
 
 **Description:** Give every statistical method one plugin-owned, human-readable label and use it consistently in selection, results, and plot annotations. Preserve machine IDs, existing plugin compatibility, statistical behavior, and API/export schemas. The detailed contract, label table, rationale, and risks are in [plan.md](./plan.md#task-1-implementation-plan-consistent-method-display-names).
 
 **Acceptance criteria:**
-- [ ] A non-abstract `StatMethod.display_name` property supplies a simple fallback; all eleven built-ins provide explicit labels, without a central hard-coded mapping.
-- [ ] Steps 3, 4, and 5 use those labels for continuous, categorical, hierarchical, and custom methods; unknown result IDs remain readable and HTML-escaped, and obsolete GMM wording is removed.
-- [ ] Registry/form/session/result IDs, sorting and applicability behavior, and API/export payloads remain unchanged; focused tests, browser checks, and final quality gates pass.
+- [x] A non-abstract `StatMethod.display_name` property supplies a simple fallback; all eleven built-ins provide explicit labels, without a central hard-coded mapping.
+- [x] Steps 3, 4, and 5 use those labels for continuous, categorical, hierarchical, and custom methods; unknown result IDs remain readable and HTML-escaped, and obsolete GMM wording is removed.
+- [x] Registry/form/session/result IDs, sorting and applicability behavior, and API/export payloads remain unchanged; focused tests, browser checks, and final quality gates pass (see verification record for the permanent fixture correction and direct aggregate rerun).
 
 **Dependencies:** None outside Task 1. **Total scope:** 18 implementation/test/README files, split into the small steps below; not the original four-to-five-file estimate. Do not start Tasks 2–10.
 
@@ -22,9 +22,9 @@ Plan: [plan.md](./plan.md) · Intent: [../docs/intent/expyri.md](../docs/intent/
 **Description:** First add focused regression tests, then add a concrete, read-only `display_name` property to the base class. Default to `self.name.replace("_", " ").title()`. Document the optional override in the existing plugin recipe; do not require existing plugins to change.
 
 **Acceptance criteria:**
-- [ ] An otherwise valid legacy subclass instantiates unchanged and gets a nonempty deterministic fallback (for example, `legacy_stat` → `Legacy Stat`).
-- [ ] A custom subclass can override the label without changing its machine `name` or zero-argument registration contract.
-- [ ] README explains friendly display labels versus stable registry/result IDs, with no new constructor argument, abstract method, or dependency.
+- [x] An otherwise valid legacy subclass instantiates unchanged and gets a nonempty deterministic fallback (for example, `legacy_stat` → `Legacy Stat`).
+- [x] A custom subclass can override the label without changing its machine `name` or zero-argument registration contract.
+- [x] README explains friendly display labels versus stable registry/result IDs, with no new constructor argument, abstract method, or dependency.
 
 **Verification:** Record red then green for `uv run pytest tests/unit/test_stats_display_names.py tests/unit/test_extensibility.py`.
 
@@ -39,8 +39,8 @@ Plan: [plan.md](./plan.md) · Intent: [../docs/intent/expyri.md](../docs/intent/
 **Description:** Add explicit property overrides to the independent t-test and Mann-Whitney plugins. Add exact label expectations to the new unit-test module before implementation.
 
 **Acceptance criteria:**
-- [ ] `ttest_ind` displays **Independent two-sample t-test**, and `mann_whitney` displays **Mann-Whitney U test**.
-- [ ] Registry keys and `name` values remain unchanged; do not change calculations, applicability, or result summaries.
+- [x] `ttest_ind` displays **Independent two-sample t-test**, and `mann_whitney` displays **Mann-Whitney U test**.
+- [x] Registry keys and `name` values remain unchanged; calculations, applicability, and result summaries are unchanged.
 
 **Verification:** `uv run pytest tests/unit/test_stats_display_names.py tests/unit/test_stats_methods.py -k 'display_name or ttest or mann_whitney'`.
 
@@ -55,8 +55,8 @@ Plan: [plan.md](./plan.md) · Intent: [../docs/intent/expyri.md](../docs/intent/
 **Description:** Add explicit labels to flat ANOVA, Kruskal-Wallis, and chi-square, with parameterized unit expectations from the label table.
 
 **Acceptance criteria:**
-- [ ] The three plugins return the exact labels in [plan.md](./plan.md#proposed-built-in-labels), preserving ANOVA capitalization and correct test names.
-- [ ] Their IDs, result payloads, descriptions, applicability, and numerical behavior remain unchanged.
+- [x] The three plugins return the exact labels in [plan.md](./plan.md#proposed-built-in-labels), preserving ANOVA capitalization and correct test names.
+- [x] Their IDs, result payloads, descriptions, applicability, and numerical behavior remain unchanged.
 
 **Verification:** `uv run pytest tests/unit/test_stats_display_names.py tests/unit/test_stats_methods.py`.
 
@@ -68,18 +68,18 @@ Plan: [plan.md](./plan.md) · Intent: [../docs/intent/expyri.md](../docs/intent/
 
 #### Checkpoint A: Contract and flat metadata
 
-- [ ] Steps 1.1–1.3 are green; old custom plugins still instantiate and register.
-- [ ] Diff contains only label metadata, its tests, and the plugin-documentation addition; no changed formulas, registry IDs, or API/result schemas.
-- [ ] Continue to hierarchical labels only after this checkpoint passes.
+- [x] Steps 1.1–1.3 are green; old custom plugins still instantiate and register.
+- [x] Checkpoint diff contains only label metadata, its tests, and the plugin-documentation addition; no changed formulas, registry IDs, or API/result schemas.
+- [x] Continued to hierarchical labels only after this checkpoint passed.
 
 #### Step 1.4: Label all hierarchical methods
 
 **Description:** Add labels for the six existing hierarchical methods in their four modules, including diagnostics. Extend the same focused unit tests; do not refactor or run additional statistical calculations to determine a label.
 
 **Acceptance criteria:**
-- [ ] All six hierarchical labels match [plan.md](./plan.md#proposed-built-in-labels), distinguishing cluster means, corrected proportions, LMM, and diagnostics.
-- [ ] An explicit parameterized test covers all eleven built-ins and verifies their stable IDs; do not assert the entire global registry has exactly eleven entries.
-- [ ] Properties have no side effects and introduce no changes to hierarchy eligibility, flags, test execution, or result serialization.
+- [x] All six hierarchical labels match [plan.md](./plan.md#proposed-built-in-labels), distinguishing cluster means, corrected proportions, LMM, and diagnostics.
+- [x] An explicit parameterized test covers all eleven built-ins and verifies their stable IDs without assuming a fixed global registry size.
+- [x] Properties have no side effects and introduce no changes to hierarchy eligibility, flags, test execution, or result serialization.
 
 **Verification:** `uv run pytest tests/unit/test_stats_display_names.py tests/unit/test_hierarchical_stats.py tests/unit/test_extensibility.py`.
 
@@ -94,9 +94,9 @@ Plan: [plan.md](./plan.md) · Intent: [../docs/intent/expyri.md](../docs/intent/
 **Description:** Add regression tests before changing the shared renderer and three templates. Use one registry snapshot for the existing method lists and a derived `method_display_names` context dictionary. Selection reads `method.display_name`; stored-result consumers read the map using `.get(method_name, method_name)`. Do not persist presentation fields or create another helper/service abstraction.
 
 **Acceptance criteria:**
-- [ ] Steps 3, 4, and 5 render the same labels for built-in and custom plugins (with overrides and fallback); no ID-to-label `if`/`elif` chains remain. Existing help headings use the same label source, and the nonexistent hierarchical-regression/GMM label is corrected.
-- [ ] Full-page and HTMX responses handle registered and unknown historical IDs without errors, autoescape label text, and never mutate the stored result dictionaries or their ordering.
-- [ ] Continuous/discrete radio values, checked/disabled state, applicability-first ordering, method-key sorting, route responses, and numerical result fields retain existing behavior. Tests isolate and restore temporary registry/session state.
+- [x] Steps 3, 4, and 5 render the same labels for built-in and custom plugins (with overrides and fallback); no ID-to-label `if`/`elif` chains remain. Existing help headings use the same label source, and the nonexistent hierarchical-regression/GMM label is corrected.
+- [x] Full-page and HTMX responses handle registered and unknown historical IDs without errors, autoescape label text, and never mutate the stored result dictionaries or their ordering.
+- [x] Continuous/discrete radio values, checked/disabled state, applicability-first ordering, method-key sorting, route responses, and numerical result fields retain existing behavior. Tests isolate and restore temporary registry/session state.
 
 **Verification:** `uv run pytest tests/integration/test_method_display_names.py tests/integration/test_wizard_flow_htmx.py tests/unit/test_router_helpers.py tests/unit/test_extensibility.py`.
 
@@ -113,9 +113,9 @@ Plan: [plan.md](./plan.md) · Intent: [../docs/intent/expyri.md](../docs/intent/
 **Description:** Update the existing Playwright flows rather than creating another server fixture or browser toolchain. The full-flow test currently asserts that the results table contains the raw `ttest_ind` ID; replace that text expectation with the friendly label while retaining key-based input selectors. Extend the visualization-card assertions to cover the same label on plots.
 
 **Acceptance criteria:**
-- [ ] The full wizard flow verifies a friendly selection/result label while submitting `ttest_ind` unchanged, then reaches Export successfully.
-- [ ] The visualization-card flow generates plots and verifies **Independent two-sample t-test** in plot metadata, consistent with the selection/results label.
-- [ ] No sleeps, skipped tests, weakened assertions, browser harness changes, or new dependencies are introduced to make the checks pass.
+- [x] The full wizard flow verifies a friendly selection/result label while submitting `ttest_ind` unchanged, then reaches Export successfully.
+- [x] The visualization-card flow generates plots and verifies **Independent two-sample t-test** in plot metadata, consistent with the selection/results label.
+- [x] No sleeps, skipped tests, weakened assertions, browser harness changes, or new dependencies are introduced to make the checks pass.
 
 **Verification:** `uv run pytest tests/e2e/test_playwright_e2e.py -k 'full_wizard_flow or visualization_cards'`. A missing-browser skip is a reported blocker, not a pass; resolve the existing runtime prerequisite and rerun before declaring browser behavior verified.
 
@@ -127,25 +127,25 @@ Plan: [plan.md](./plan.md) · Intent: [../docs/intent/expyri.md](../docs/intent/
 
 #### Checkpoint B: Complete label journey
 
-- [ ] Steps 1.4–1.6 pass: all eleven built-ins have labels; selection, results, and plot annotations agree.
-- [ ] Custom plugins work without core/template edits, legacy plugins still work, and unknown results remain visible without session/schema changes.
-- [ ] Inspect the browser result at a narrow viewport for wrapping; no CSS redesign is required for this text-only fix. Owner reviews the visible labels before the final commit gate.
+- [x] Steps 1.4–1.6 pass: all eleven built-ins have labels; selection, results, and plot annotations agree.
+- [x] Custom plugins work without core/template edits, legacy plugins still work, and unknown results remain visible without session/schema changes.
+- [x] Desktop browser labels verified; owner approved proceeding to the final commit. Narrow-viewport work was explicitly excluded by the owner; no CSS or layout changes were made.
 
 #### Step 1.7: Establish commit readiness
 
-**Description:** Validate the finished Task 1 slice, inspect the exact diff, and prepare a single atomic fix. This is a future implementation gate: no tests are marked passed and no commit is authorized by this planning document.
+**Description:** Validate the finished Task 1 slice, inspect the exact diff, and prepare the owner-approved single atomic fix, including Task 1 completion updates.
 
 **Acceptance criteria:**
-- [ ] Focused naming, plugin-extensibility, renderer, API compatibility, and browser checks pass, followed by the existing final quality gates at the unchanged 90% local coverage minimum.
-- [ ] Review confirms the planned SOLID/DRY/SRP/KISS boundaries, no new dependency/schema/registry abstraction, new files under 300 lines, no unrelated reformatting, and README documentation of the optional display-name contract.
-- [ ] Only explicitly reviewed Task 1 files are staged for the eventual atomic fix; unrelated existing work remains unstaged and no release/version bump is included.
+- [x] Focused naming, plugin-extensibility, renderer, API compatibility, and browser checks pass, followed by a direct successful `task check` run at the unchanged 90% local coverage minimum (see follow-up correction below).
+- [x] Review confirms the planned SOLID/DRY/SRP/KISS boundaries, no new dependency/schema/registry abstraction, new files under 300 lines, no unrelated reformatting, and README documentation of the optional display-name contract.
+- [x] Commit scope is explicitly reviewed: Task 1 implementation, tests, README, and owner-approved planning updates; no unrelated work or release/version bump is included.
 
 **Verification sequence:**
 
 1. Focused regression selection: `uv run pytest tests/unit/test_stats_display_names.py tests/unit/test_stats_methods.py tests/unit/test_hierarchical_stats.py tests/unit/test_router_helpers.py tests/unit/test_extensibility.py tests/integration/test_method_display_names.py tests/integration/test_wizard_flow_htmx.py tests/e2e/test_api_e2e.py`.
 2. Run the two Playwright selectors from Step 1.6 if not already verified on the final diff. Do not duplicate identical completed runs.
-3. Run `task check` once as the final aggregate gate (Ruff, HTML/JS checks, ty, hooks, and the suite with coverage). Report pre-existing/environment failures separately; do not silence them or lower thresholds. Use the existing unit-test/task integration when available.
-4. Inspect `git status --short`, `git diff --check`, `git diff`, and `git diff --cached`; include newly created implementation tests explicitly when staging. Never use `git add .`. The currently untracked intent, planning documents, and `.github/copilot-instructions.md` need a separate explicit staging decision.
+3. Run `task check` as the final aggregate gate (Ruff, HTML/JS checks, ty, hooks, and the suite with coverage). The command must exit successfully without temporary ignored-data repairs before declaring commit readiness. If it fails, report the failure and resolve the blocker, then rerun the exact command; do not silence failures or lower thresholds. Use the existing unit-test/task integration when available.
+4. Inspect `git status --short`, `git diff --check`, `git diff`, and `git diff --cached`; include newly created implementation tests explicitly when staging. Never use `git add .`. Owner approved including Task 1 status updates and the two pre-existing minor planning edits; leave the intent and repository-guidance documents unchanged.
 5. Commit only when requested, with subject `fix: centralize statistical method display names` and trailer `Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>`. Mark Task 1 complete only after verification, not when the plan is saved.
 
 **Dependencies:** Checkpoints A and B, which cover Steps 1.1–1.6.
@@ -154,6 +154,16 @@ Plan: [plan.md](./plan.md) · Intent: [../docs/intent/expyri.md](../docs/intent/
 
 **Estimated scope:** Small — validation and commit preparation.
 
+#### Verification record — 2026-10-18
+
+- TDD: contract tests failed before the base property (3 failures); explicit two-group labels (2), remaining flat labels (3), hierarchical labels (6), and each HTTP/HTMX presentation surface failed before their fixes. All corresponding focused selections subsequently passed.
+- Focused final regression selection: **142 passed**. The two affected Playwright flows passed after the owner-approved installation of missing Chromium; no browser harness or skip behavior was changed.
+- Review mutation: temporarily keyed the label map by plugin `name` instead of registry key; both alias-result tests failed. Restored registry-keyed lookup before final validation.
+- `task check`: Ruff, formatting, ESLint, Prettier, ty, and all hooks passed. Its suite reported **280 passed / 2 setup errors** because an existing flights-browser fixture expects ignored `data/nycflights.csv`, while the sample is tracked at `test_data/nycflights.csv`.
+- The initial workaround temporarily copied that tracked sample into the expected runtime path and reran the unchanged complete coverage command: **282 passed**, **94.15% coverage**, no skips. The copy was then removed and the fixture source was not fixed in `d8d05b3`, leaving `task check` reproducibly failing. Treating that temporary result as commit readiness was incorrect.
+- Follow-up after the owner reported the failure: reproduced the exact `task check` failure (**280 passed / 2 setup errors**), then changed the flights fixture to resolve tracked `test_data/nycflights.csv` relative to its own file. Both original failing browser tests passed (**2 passed**). The exact `task check` command then exited **0**: **282 passed**, **94.15% coverage**, no skips; lint, formatting, types, and hooks all passed. No ignored runtime dataset was present before or after the run. No tests, thresholds, dependency manifests, or task commands were weakened or changed.
+- Desktop browser verification confirmed the same independent t-test label in selection, results, and generated plot metadata. An existing navigation console warning about `hx-include="#workspace-container form"` was observed when leaving Results, whose template has no form; unrelated navigation changes remain out of scope.
+- Owner explicitly excluded narrow-viewport work and approved one final commit including implementation, tests, README, and Task 1 planning/status updates. Tasks 2–10 remain untouched.
 
 ### Task 2: Multiple-testing correction (Holm) for flat-mode results
 **Description:** When a user evaluates k value columns, k independent tests run with no correction — the classic multiple-comparisons misuse this tool exists to prevent. Apply Holm correction across all results of one submission, per method family (continuous / discrete). Store `p_value_adjusted` and `correction_method` on `StatResult`; render both raw and adjusted p-values in step_4 with a one-sentence legend; significance highlighting uses the adjusted value.

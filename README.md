@@ -333,6 +333,19 @@ class ZScoreOutliersMethod(StatMethod):
         )
 ```
 
+Statistical methods inherit a read-only `display_name` property for wizard labels. By default,
+`zscore_outliers` becomes `Zscore Outliers`; optionally override the property for precise spelling:
+
+```python
+    @property
+    def display_name(self) -> str:
+        return "Z-score outlier test"
+```
+
+Labels appear in method selection, results, and plot annotations. Keep the registry key, `name`, and
+`StatResult.method_name` as stable machine identifiers: form values, sessions, APIs, and exports
+continue to use them. Existing plugins need no changes, and registration still takes no constructor arguments.
+
 The system will automatically:
 
 1. Discover the plugin at startup (under `app/stats/builtin` or when imported).

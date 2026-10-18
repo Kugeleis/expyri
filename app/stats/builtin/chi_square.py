@@ -20,6 +20,10 @@ class ChiSquare(StatMethod):
         return "chi_square"
 
     @property
+    def display_name(self) -> str:
+        return "Chi-square test of independence"
+
+    @property
     def description(self) -> str:
         """Return a brief description of the statistical method."""
         return "Chi-Square Test of Independence (categorical)."

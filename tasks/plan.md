@@ -33,15 +33,15 @@ This plan closes those gaps. It is explicitly **not** a feature-count plan — e
 
 ## Task 1 Implementation Plan: Consistent Method Display Names
 
-**Status:** Proposed on 2026-10-18; implementation and commit require approval. This refines Task 1 of the existing roadmap, not a replacement plan. Tasks 2–10 remain unchanged. The authoritative execution checklist is [Task 1 in todo.md](./todo.md#task-1-fix-method-display-name-mappings-in-templates).
+**Status:** Method-label implementation committed as `d8d05b3` on 2026-10-18; its failing aggregate check was corrected and directly verified in the follow-up described below. This refines Task 1 of the existing roadmap, not a replacement plan. Tasks 2–10 remain unchanged. The authoritative execution checklist and verification record are in [Task 1 in todo.md](./todo.md#task-1-fix-method-display-name-mappings-in-templates).
 
 ### Verified scope
 
 - There are **11 built-in methods across nine plugin modules**: five flat methods and six hierarchical methods. The original estimate of four or five files was too small.
-- All three method-label consumers are affected: [method selection](../app/templates/partials/step_3.html), [results](../app/templates/partials/step_4.html), and [plot annotations](../app/templates/partials/step_5.html). Direct rendering currently produces `ttest_ind` in all three.
-- [StatMethod](../app/stats/base.py) has no display-name contract. Existing custom plugins must remain instantiable without adding one.
-- [render_step](../app/wizard/router/dependencies.py) supplies plugin objects for selection but dictionary results for later steps. It already copies the session before sorting; label resolution must not mutate stored results.
-- The existing [Playwright full-flow test](../tests/e2e/test_playwright_e2e.py) expects the raw `ttest_ind` text in the results table. That assertion must change with the UI; its radio-value selector must not change.
+- All three method-label consumers were affected: [method selection](../app/templates/partials/step_3.html), [results](../app/templates/partials/step_4.html), and [plot annotations](../app/templates/partials/step_5.html). Before implementation, direct rendering produced `ttest_ind` in all three; each now displays the plugin-owned label.
+- [StatMethod](../app/stats/base.py) now has a concrete display-name contract. Existing custom plugins remain instantiable without adding an override.
+- [render_step](../app/wizard/router/dependencies.py) supplies plugin objects for selection and dictionary results for later steps. It copies the session before sorting; label resolution does not mutate stored results.
+- The [Playwright full-flow test](../tests/e2e/test_playwright_e2e.py) now expects the friendly label in selection/results; its machine-ID radio selector is unchanged.
 
 ### Scope and non-goals
 
@@ -49,7 +49,7 @@ This plan closes those gaps. It is explicitly **not** a feature-count plan — e
 
 **Assumptions:** This is an English-label presentation fix. Labels describe the registered method, not a runtime-selected test variant. For example, the existing independent t-test plugin sometimes runs Welch's variant; that distinction stays in its existing result summary.
 
-**Out of scope:** Statistical calculations, applicability rules, sorting semantics, new methods, API response fields, result/session schema changes, exporter changes, localization, dependency changes, unrelated refactoring, and Tasks 2–10. Updating the misleading GMM label in the existing help text is in scope; redesigning that help or its eligibility explanations is not.
+**Out of scope:** Statistical calculations, applicability rules, sorting semantics, new methods, API response fields, result/session schema changes, exporter changes, localization, dependency changes, unrelated refactoring, narrow-viewport/layout work (explicitly excluded by the owner), and Tasks 2–10. Updating the misleading GMM label in the existing help text is in scope; redesigning that help or its eligibility explanations is not.
 
 ### Minimal design
 
@@ -99,10 +99,10 @@ Steps 1.2–1.4 are logically independent once 1.1 is complete, but share the un
 
 - Add tests before each behavior change; record the expected failure and focused passing result. Use a new `tests/unit/test_stats_display_names.py` rather than expanding the already 423-line statistical-method test module. Use a new `tests/integration/test_method_display_names.py` rather than expanding the already 306-line HTMX test module.
 - Unit tests cover the inherited fallback, explicit override, all eleven expected labels, unchanged IDs, and legacy subclasses with no `display_name` implementation. Rendering tests cover all three surfaces, continuous/discrete methods, custom methods with and without overrides, an unknown historical ID, autoescaping, and unchanged persisted results/selection values. Use explicit label expectations so a template returning a raw ID cannot pass by sharing the same faulty fallback.
-- Run the focused unit/integration selection first, then the two existing affected Playwright flows. Finish with **one** `task check` run, retaining the local coverage floor of at least 90%. Full commands and pass conditions are in Step 1.7. A skipped browser test is not evidence of verified browser behavior; record and resolve any missing prerequisite rather than suppressing it.
+- Run the focused unit/integration selection first, then the two existing affected Playwright flows. Finish with a successful direct `task check` run, retaining the local coverage floor of at least 90%. If a gate fails, fix the blocker and rerun the exact command without temporary ignored-data repairs. Full commands and pass conditions are in Step 1.7. A skipped browser test is not evidence of verified browser behavior; record and resolve any missing prerequisite rather than suppressing it.
 - Keep new code files under 300 lines. The renderer (323 lines) and Playwright module are already over the guideline; keep edits surgical and avoid unrelated file splitting.
-- Implementation should form one atomic `fix: centralize statistical method display names` commit, including its tests and directly related README change. No version bump or new dependency is required. Do not commit during this planning task.
-- Current planning documents, the intent document, and `.github/copilot-instructions.md` are untracked. Treat their staging as a separate, explicit decision: inspect `git status --short` and `git diff --cached`, stage only the Task 1 implementation paths, and never use `git add .` to sweep other work into the fix. Include the repository's required co-author trailer if a commit is later requested.
+- Owner approved one atomic `fix: centralize statistical method display names` commit, including its tests, directly related README change, and Task 1 completion updates. No version bump or new dependency is required.
+- The intent, guidance, and planning documents were tracked by the time implementation began. Owner explicitly approved including the planning/status updates and their two pre-existing minor edits. Inspect `git status --short` and `git diff --cached`, stage only reviewed Task 1 paths, and never use `git add .` to sweep other work into the fix. Include the repository's required co-author trailer.
 
 ### Risks and mitigations
 
@@ -115,14 +115,14 @@ Steps 1.2–1.4 are logically independent once 1.1 is complete, but share the un
 | A stale browser assertion breaks an otherwise working change | Update its text expectation while retaining key-based input selectors |
 | Shared unit-test edits conflict | Implement metadata steps sequentially; one unit-test file is sufficient |
 
-**Approval gate:** The plan is ready for review, not implemented or proven green. No additional product decision is required for Task 1; the roadmap's statistical open questions do not block this presentation-only fix.
+**Completion evidence:** The focused regression selection passed 142 tests; both affected Playwright flows passed. The original `task check` failed with two flights-fixture setup errors. A temporary runtime-data copy made the coverage command pass, but was removed before commit; that did not establish a reproducible passing gate. After the owner reported the failure, the [flights fixture](../tests/e2e/test_nycflights_playwright_e2e.py) was corrected to read the tracked sample relative to its own file. Both affected tests passed, then the exact `task check` command exited successfully: **282 tests at 94.15% coverage**, no skips, no ignored runtime-data copy, and no lowered checks. The follow-up fixture fix is separate from `d8d05b3`. See the [verification record](./todo.md#verification-record--2026-10-18) for details and the unrelated navigation warning observed during desktop verification. Narrow-viewport work is excluded.
 
 ## Task List
 
 (Tracked in detail in [todo.md](./todo.md).)
 
 ### Phase 1: Correctness core
-- [ ] Task 1: Fix method display-name mappings in templates (Steps 1.1–1.7 below; each implementation step touches at most five files)
+- [x] Task 1: Fix method display-name mappings in templates (Steps 1.1–1.7 and verification evidence detailed in todo.md; narrow-viewport work excluded by owner)
 - [ ] Task 2: Multiple-testing correction (Holm) for flat-mode results (M)
 - [ ] Task 3: Chi-square expected-count guard + Fisher exact fallback plugin (M)
 - [ ] Task 4: Surface assumption checks in wizard UI (M)

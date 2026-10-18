@@ -61,15 +61,7 @@
                             {% set is_strict = pval is not none and pval <= strictLimit %}
                             <tr class="{% if is_strict %}result-row-strict{% elif is_sig %}result-row-significant{% endif %}">
                                 <td>{{ res.column_name }}</td>
-                                <td>
-                                    {% if res.method_name == "ttest" %}t-Test
-                                    {% elif res.method_name == "anova" %}ANOVA
-                                    {% elif res.method_name == "mann_whitney" %}Mann-Whitney U
-                                    {% elif res.method_name == "kruskal_wallis" %}Kruskal-Wallis H
-                                    {% elif res.method_name == "chi_square" %}Chi-Square
-                                    {% elif res.method_name == "hierarchical_regression" %}Hierarchical Regression
-                                    {% else %}{{ res.method_name }}{% endif %}
-                                </td>
+                                <td>{{ method_display_names.get(res.method_name, res.method_name) }}</td>
                                 <td>{% if res.test_statistic is not none %}{{ "%.4f"|format(res.test_statistic) }}{% endif %}</td>
                                 <td>{% if res.p_value is not none %}{{ "%.6f"|format(res.p_value) }}{% endif %}</td>
                                 <td>{% if res.effect_size is not none %}{{ "%.4f"|format(res.effect_size) }}{% endif %}</td>
