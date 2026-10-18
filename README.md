@@ -204,7 +204,7 @@ The wizard queries the backend to determine which methods are applicable based o
 Executes the selected methods and shows an interactive results table containing:
 
 - **Test Statistic**: The calculated value (e.g., $t$, $F$, $H$, $\chi^2$, or $z$).
-- **p-value**: Statistical significance. Cells are highlighted green if $p \le 0.01$ (strict significance) or yellow if $p \le 0.05$.
+- **Raw and adjusted p-values**: Flat submissions show each test's raw p-value and its Holm-adjusted p-value, correcting continuous and discrete outcomes as separate families. Row highlighting, the significance chart, and automatic plot filtering use adjusted p-values; uncorrected and legacy results fall back to raw p-values. At the default limit, green indicates $p \le 0.01$ and yellow indicates $p \le 0.05$.
 - **Effect Size**: Quantitative measure of the magnitude of the experimental effect.
 - **[Intraclass Correlation (ICC)](https://en.wikipedia.org/wiki/Intraclass_correlation)** (Hierarchical only): Indicates the proportion of total variance explained by the clustering level.
 - **Statistical Warnings**: Alerts you if assumptions are violated (e.g., severe non-[normality](https://en.wikipedia.org/wiki/Shapiro%E2%80%93Wilk_test), [heteroscedasticity](https://en.wikipedia.org/wiki/Levene%27s_test), or the presence of significant [outliers](https://en.wikipedia.org/wiki/Grubbs%27s_test_for_outliers)).

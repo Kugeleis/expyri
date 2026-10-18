@@ -29,6 +29,7 @@ from app.wizard.dataset_service import WizardDatasetService
 from app.wizard.filtering import get_filtered_df_with_groups
 from app.wizard.plotting import generate_individual_plots, select_top_plot_columns
 from app.wizard.service import WizardService
+from app.wizard.statistics import significance_p_value
 from app.wizard.steps import _completed_steps
 
 templates = Jinja2Templates(directory="app/templates")
@@ -119,14 +120,19 @@ def generate_significance_chart_base64(
     limit: float,
     theme: str = "dark",
 ) -> str | None:
-    """Generate a significance scatter plot of p-values using matplotlib and encode it to base64."""
-    valid_results = [res for res in stat_results if res.get("p_value") is not None]
+    """Generate a scatter plot using adjusted significance where available."""
+    valid_results = [(res, p_value) for res in stat_results if (p_value := significance_p_value(res)) is not None]
     if not valid_results:
         return None
 
-    valid_results.sort(key=lambda x: x["p_value"])
-    labels = [res.get("column_name") or "Unknown" for res in valid_results]
-    p_values = [res["p_value"] for res in valid_results]
+    valid_results.sort(key=lambda item: item[1])
+    labels = [res.get("column_name") or "Unknown" for res, _ in valid_results]
+    p_values = [p_value for _, p_value in valid_results]
+    p_label = (
+        "Adjusted p-value (raw if unavailable)"
+        if any(res.get("p_value_adjusted") is not None for res, _ in valid_results)
+        else "p-value"
+    )
     strict_limit = limit * 0.2
 
     plot_theme = normalize_plot_theme(theme)
@@ -138,7 +144,7 @@ def generate_significance_chart_base64(
             y=limit,
             color=(250 / 255, 204 / 255, 21 / 255, 0.65),
             linestyle="--",
-            label=f"p-value Limit ({limit})",
+            label=f"{p_label} Limit ({limit})",
         )
         ax.axhline(
             y=strict_limit,
@@ -165,7 +171,7 @@ def generate_significance_chart_base64(
 
         ax.set_xticks(x_indices)
         ax.set_xticklabels(labels, rotation=30, ha="right", fontsize=9)
-        ax.set_ylabel("p-value", fontsize=10)
+        ax.set_ylabel(p_label, fontsize=10)
         ax.set_title("Statistical Significance by Column", fontsize=11)
         ax.set_ylim(-0.02, 1.02)
 
@@ -261,7 +267,7 @@ def render_step(
             matched_count = sum(
                 1
                 for res in session.stat_results
-                if res.get("p_value") is not None and res["p_value"] <= plots_sig_filter
+                if (p_value := significance_p_value(res)) is not None and p_value <= plots_sig_filter
             )
             sig_chart_base64 = generate_significance_chart_base64(
                 session.stat_results,
@@ -310,6 +316,8 @@ def render_step(
         "applicable_plots": applicable_plots,
         "sig_chart_base64": sig_chart_base64,
         "plots_sig_filter": plots_sig_filter,
+        "has_adjusted_p_values": any(res.get("p_value_adjusted") is not None for res in (session.stat_results or [])),
+        "significance_p_value": significance_p_value,
         "matched_count": matched_count,
         "sort_field": sort_field,
         "sort_asc": sort_asc,

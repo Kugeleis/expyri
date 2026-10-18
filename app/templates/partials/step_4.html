@@ -13,6 +13,11 @@
             {% if not session.stat_results %}
                 <p>No statistical results generated.</p>
             {% else %}
+                {% if has_adjusted_p_values %}
+                    <p class="step-desc" id="multiple-testing-legend">
+                        Holm adjustment controls family-wise error separately for continuous and discrete outcomes in this submission; highlighting and plots use adjusted p-values, or raw p-values when no adjustment is available.
+                    </p>
+                {% endif %}
                 <table class="results-table striped responsive">
                     <thead>
                         <tr>
@@ -20,7 +25,8 @@
                                 ("Column", "column_name"),
                                 ("Method", "method_name"),
                                 ("Statistic", "test_statistic"),
-                                ("p-value", "p_value"),
+                                ("Raw p-value", "p_value"),
+                                ("Adjusted p-value", "p_value_adjusted"),
                                 ("Effect Size", "effect_size")
                             ] %}
                                 <th class="sortable-heading" scope="col"
@@ -56,7 +62,7 @@
                         {% set limit = plots_sig_filter | default(0.05) | float %}
                         {% set strictLimit = limit * 0.2 %}
                         {% for res in session.stat_results %}
-                            {% set pval = res.p_value %}
+                            {% set pval = significance_p_value(res) %}
                             {% set is_sig = pval is not none and pval <= limit %}
                             {% set is_strict = pval is not none and pval <= strictLimit %}
                             <tr class="{% if is_strict %}result-row-strict{% elif is_sig %}result-row-significant{% endif %}">
@@ -64,6 +70,7 @@
                                 <td>{{ method_display_names.get(res.method_name, res.method_name) }}</td>
                                 <td>{% if res.test_statistic is not none %}{{ "%.4f"|format(res.test_statistic) }}{% endif %}</td>
                                 <td>{% if res.p_value is not none %}{{ "%.6f"|format(res.p_value) }}{% endif %}</td>
+                                <td>{% if res.get("p_value_adjusted") is not none %}{{ "%.6f"|format(res.p_value_adjusted) }}{% else %}N/A{% endif %}</td>
                                 <td>{% if res.effect_size is not none %}{{ "%.4f"|format(res.effect_size) }}{% endif %}</td>
                                 {% if session.hierarchy %}
                                     <td>{% if res.icc is not none %}{{ "%.4f"|format(res.icc) }}{% else %}N/A{% endif %}</td>
@@ -79,7 +86,7 @@
         <!-- Filter bar -->
         <div class="plots-filter-form" id="plots-filter-form">
             <div class="plots-filter-controls">
-                <label class="plots-filter-label" for="plots-sig-filter">Plot top variables with p-value &le;</label>
+                <label class="plots-filter-label" for="plots-sig-filter">Plot top variables with {% if has_adjusted_p_values %}adjusted {% endif %}p-value &le;</label>
                 <input
                     class="plots-sig-input"
                     type="number"

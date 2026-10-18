@@ -74,7 +74,16 @@ def update_sort(
     service: WizardService = Depends(get_wizard_service),
 ) -> Response:
     """Sort results table by clicked column header."""
-    available_sort_fields = {"column_name", "method_name", "test_statistic", "p_value", "effect_size", "icc", "power"}
+    available_sort_fields = {
+        "column_name",
+        "method_name",
+        "test_statistic",
+        "p_value",
+        "p_value_adjusted",
+        "effect_size",
+        "icc",
+        "power",
+    }
     safe_field = field if field in available_sort_fields else "column_name"
 
     current_sort_field = request.cookies.get("sort_field", "column_name")

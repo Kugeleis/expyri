@@ -10,6 +10,7 @@ import pandas as pd
 from app.core.session import WizardSession
 from app.plots.base import PlotResult, plot_registry
 from app.stats.properties import compute_properties
+from app.wizard.statistics import significance_p_value
 
 
 def select_top_plot_columns(
@@ -25,7 +26,9 @@ def select_top_plot_columns(
         return [
             res["column_name"]
             for res in session.stat_results
-            if "column_name" in res and res.get("p_value") is not None and res["p_value"] <= plots_sig_filter
+            if "column_name" in res
+            and (p_value := significance_p_value(res)) is not None
+            and p_value <= plots_sig_filter
         ]
     return session.selected_value_columns[:top_n_columns] if top_n_columns is not None else []
 

@@ -166,20 +166,33 @@ Plan: [plan.md](./plan.md) · Intent: [../docs/intent/expyri.md](../docs/intent/
 - Owner explicitly excluded narrow-viewport work and approved one final commit including implementation, tests, README, and Task 1 planning/status updates. Tasks 2–10 remain untouched.
 
 ### Task 2: Multiple-testing correction (Holm) for flat-mode results
+**Status:** Complete on 2026-10-18. Implemented and verified in two local commits: `b3dc4c7` (service/result contract and export persistence) and `fix: use adjusted significance throughout the wizard` (consistent presentation, plot filtering, and this completion record); not pushed. Minor review findings were amended into their logical slice.
+
 **Description:** When a user evaluates k value columns, k independent tests run with no correction — the classic multiple-comparisons misuse this tool exists to prevent. Apply Holm correction across all results of one submission, per method family (continuous / discrete). Store `p_value_adjusted` and `correction_method` on `StatResult`; render both raw and adjusted p-values in step_4 with a one-sentence legend; significance highlighting uses the adjusted value.
 **Acceptance criteria:**
-- [ ] `StatResult` gains `p_value_adjusted: float | None` and `correction_method: str | None`
-- [ ] `WizardAnalysisService.submit_method` applies Holm across continuous-family results and across discrete-family results (separate families)
-- [ ] Single-column submissions behave identically to before (adjusted == raw, method recorded)
-- [ ] Step 4 table shows adjusted p-value column + legend; row highlighting keyed on adjusted p
-- [ ] JSON/Parquet exports include the new fields automatically
+- [x] `StatResult` gains `p_value_adjusted: float | None` and `correction_method: str | None`
+- [x] `WizardAnalysisService.submit_method` applies Holm across continuous-family results and across discrete-family results (separate families)
+- [x] Single-column submissions behave identically to before (adjusted == raw, method recorded)
+- [x] Step 4 table shows adjusted p-value column + legend; row highlighting keyed on adjusted p
+- [x] JSON/Parquet exports include the new fields automatically
 **Verification:**
-- [ ] New unit tests: correction math (known p-vector → expected Holm output), family separation, single-result passthrough
-- [ ] `uv run pytest tests/unit/test_stats_methods.py tests/integration/test_wizard_flow_basic.py`
-- [ ] `task check` green
+- [x] New unit tests: correction math (known p-vector → expected Holm output), family separation, single-result passthrough
+- [x] `uv run pytest tests/unit/test_stats_methods.py tests/integration/test_wizard_flow_basic.py` (included in the focused selections below)
+- [x] `task check` green
+
+**Verification record — 2026-10-18:**
+- Owner confirmed flat-only correction, adjusted significance for highlighting/charts/automatic plot filtering, unchanged hierarchical/post-hoc calculations, and local commits without pushing.
+- TDD: the initial model/service tests failed in all 10 cases before implementation; the new presentation tests recorded 5 failures before template/sort support. The browser flow exposed a new rendering regression when dataset selection resets results to `None`; a focused failing HTTP test preceded its fix.
+- Service slice: **53 passed**, including known unsorted Holm vectors, ties/clamping, zero/one boundaries, separate families, single outcomes, resubmission, unchanged hierarchical/post-hoc output, JSON API/export, and Parquet metadata. Ruff, formatting, and ty passed before commit.
+- Final focused selection: `uv run pytest tests/unit/test_multiple_testing.py tests/unit/test_significance.py tests/unit/test_stats_methods.py tests/unit/test_router_helpers.py tests/unit/test_parquet_metadata.py tests/unit/test_exporters.py tests/integration/test_multiple_testing.py tests/integration/test_wizard_flow_basic.py tests/integration/test_wizard_flow_htmx.py tests/integration/test_wizard_flow_mixed.py tests/e2e/test_multiple_testing_playwright.py -q --tb=short` — **74 passed**.
+- Chromium verified real multi-column t-tests, raw-significant/adjusted-nonsignificant rows, adjusted sorting, live threshold changes, and generation of only the adjusted-significant plot; no uncaught page errors. Result-table screenshot inspected. No CSS/layout work was included.
+- Mutation checks: reversing the flat-only guard caused both single-outcome cases to fail; temporarily using raw significance caused 5 consumer/highlighting tests to fail. Both mutations were restored before final validation.
+- Exact `task check` exited **0**: **312 passed**, **94.23% coverage**, no skipped tests; Ruff, formatting, ESLint, Prettier, ty, and all hooks passed. No dependencies, thresholds, existing test skips, or task commands were changed. The new Chromium regression reuses the existing harness's browser-availability marker; it executed rather than skipped locally.
+- Raw values/statistics/summaries and existing explicit top-N plot selection are preserved; legacy and hierarchical results use raw significance when no adjusted value exists. Tasks 3–10 remain out of scope.
+
 **Dependencies:** None
-**Files likely touched:** `app/stats/models.py`, `app/wizard/analysis_service.py`, `app/templates/partials/step_4.html`, `tests/unit/test_stats_methods.py`
-**Estimated scope:** Medium
+**Files touched:** [result schema](../app/stats/models.py), [analysis service](../app/wizard/analysis_service.py), [significance policy](../app/wizard/statistics.py), [plot selection](../app/wizard/plotting.py), [renderer/chart](../app/wizard/router/dependencies.py), [sorting](../app/wizard/router/htmx_results.py), [results template](../app/templates/partials/step_4.html), [plot template](../app/templates/partials/step_5.html), [README](../README.md), three new focused [unit](../tests/unit/test_multiple_testing.py)/[significance](../tests/unit/test_significance.py)/[HTTP](../tests/integration/test_multiple_testing.py) test modules, one new [Chromium regression](../tests/e2e/test_multiple_testing_playwright.py), and existing [API flow](../tests/integration/test_wizard_flow_basic.py), [JSON exporter](../tests/unit/test_exporters.py), and [Parquet](../tests/unit/test_parquet_metadata.py) tests.
+**Scope:** 16 implementation/test/README files plus this completion record, delivered in two verified code slices.
 
 ### Task 3: Chi-square expected-count guard + Fisher exact fallback
 **Description:** `min_expected_cell_count` is computed but never enforced; chi-square runs on tables with tiny expected counts (invalid approximation). Enforce min expected ≥ 5 in `ChiSquare.is_applicable`, and add a `fisher_exact` builtin plugin for 2×2 tables with small counts so users always have a valid option. Update the step-3 info-callout to explain both.
