@@ -8,6 +8,7 @@ from __future__ import annotations
 import logging
 
 from fastapi import HTTPException
+from statsmodels.stats.multitest import multipletests
 
 from app.core.session import SessionStore, WizardSession
 from app.datasets.repository import DatasetRepository
@@ -91,15 +92,20 @@ class WizardAnalysisService:
         self._validate_and_save_methods(session, selected_method, selected_discrete_method)
 
         results: list[StatResult] = []
-        if session.selected_value_columns and session.selected_method:
-            method = stat_registry.get(session.selected_method)
-            for val_col in session.selected_value_columns:
-                results.append(run_stat_for_column(filtered_df, val_col, method, session))
-
-        if session.selected_discrete_columns and session.selected_discrete_method:
-            discrete_method = stat_registry.get(session.selected_discrete_method)
-            for disc_col in session.selected_discrete_columns:
-                results.append(run_stat_for_column(filtered_df, disc_col, discrete_method, session))
+        for columns, method_name in (
+            (session.selected_value_columns, session.selected_method),
+            (session.selected_discrete_columns, session.selected_discrete_method),
+        ):
+            if not columns or not method_name:
+                continue
+            method = stat_registry.get(method_name)
+            family_results = [run_stat_for_column(filtered_df, column, method, session) for column in columns]
+            if session.hierarchy is None:
+                _, adjusted_p_values, _, _ = multipletests([result.p_value for result in family_results], method="holm")
+                for result, adjusted_p_value in zip(family_results, adjusted_p_values, strict=True):
+                    result.p_value_adjusted = float(adjusted_p_value)
+                    result.correction_method = "holm"
+            results.extend(family_results)
 
         results.sort(key=lambda r: r.p_value if r.p_value is not None else 1.0)
         session.stat_results = [res.model_dump() for res in results]

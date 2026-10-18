@@ -226,6 +226,8 @@ class StatResult(BaseModel):
     method_name: str = Field(..., description="Name of the statistical method.")
     test_statistic: float = Field(..., description="Calculated test statistic.")
     p_value: float = Field(..., description="Calculated p-value.")
+    p_value_adjusted: float | None = Field(None, description="P-value adjusted across the submission's outcome family.")
+    correction_method: str | None = Field(None, description="Multiple-testing correction method, if applied.")
     effect_size: float | None = Field(None, description="Optional calculated effect size.")
     summary: str = Field(..., description="Human-readable text summary of results.")
 

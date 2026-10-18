@@ -108,6 +108,8 @@ def test_full_wizard_flow_success(client: TestClient) -> None:
     res = resp.json()
     assert res[0]["method_name"] == "ttest_ind"
     assert "p_value" in res[0]
+    assert res[0]["p_value_adjusted"] == res[0]["p_value"]
+    assert res[0]["correction_method"] == "holm"
     assert "test_statistic" in res[0]
 
     resp = client.get(f"/wizard/sessions/{session_id}/plots")

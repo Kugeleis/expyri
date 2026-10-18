@@ -228,6 +228,8 @@ Download your final results and plots in one of these structured formats:
 - **CSV / JSON Exports**: Standardized raw outputs of the statistical results for downstream pipelines.
 - **Interactive Explorer (Parquet with Metadata)**: Launches a Marimo notebook instance preloaded with your preprocessed dataset saved as a `.parquet` file. This Parquet file contains extensive session metadata stored in its schema metadata headers, allowing full reproducibility of the ExPyRi session.
 
+Flat-mode result records retain the raw `p_value` and add `p_value_adjusted` and `correction_method: "holm"` in the JSON API, JSON exports, and Parquet result metadata. [Holm correction](https://www.statsmodels.org/stable/generated/statsmodels.stats.multitest.multipletests.html) is applied separately across continuous and discrete outcomes in each submission; a single outcome keeps its original p-value. The new fields are optional and default to `null` for legacy and hierarchical results; hierarchical post-hoc corrections are unchanged.
+
 #### Parquet Metadata Structure
 When the Interactive Explorer is selected, ExPyRi writes the cleaned dataset and all execution metadata directly to the Parquet file's schema metadata headers (as JSON-encoded UTF-8 bytes). This makes all choices and info from ExPyRi fully reproducible.
 

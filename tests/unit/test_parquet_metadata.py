@@ -121,6 +121,8 @@ def test_parquet_export_route(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -
                 "method_name": "t-test",
                 "test_statistic": 1.23,
                 "p_value": 0.01,
+                "p_value_adjusted": 0.03,
+                "correction_method": "holm",
                 "summary": "Summary",
             }
         ]
@@ -157,3 +159,7 @@ def test_parquet_export_route(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -
     assert metadata is not None
     assert json.loads(metadata[b"dataset"].decode("utf-8")) == "ds_pq"
     assert json.loads(metadata[b"group_column"].decode("utf-8")) == "group"
+    results = json.loads(metadata[b"statistic_results"].decode("utf-8"))
+    assert results[0]["p_value"] == 0.01
+    assert results[0]["p_value_adjusted"] == 0.03
+    assert results[0]["correction_method"] == "holm"
